@@ -16,17 +16,27 @@ resource "azurerm_user_assigned_identity" "ohdsi_webapi_id" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_role_assignment" "keyvault_ohdsi_ws_role" {
-  scope                = data.azurerm_key_vault.ws.id
+# The web app reads only the secrets of its Key Vault references, so its identity gets a role on each of them.
+resource "azurerm_role_assignment" "keyvault_ohdsi_secret_role" {
+  for_each = {
+    jdbc_connection_string  = azurerm_key_vault_secret.jdbc_connection_string_webapi_admin.resource_versionless_id
+    webapi_admin_password   = azurerm_key_vault_secret.postgres_webapi_admin_password.resource_versionless_id
+    webapi_app_password     = azurerm_key_vault_secret.postgres_webapi_app_password.resource_versionless_id
+    workspace_client_id     = data.azurerm_key_vault_secret.workspace_client_id.resource_versionless_id
+    workspace_client_secret = data.azurerm_key_vault_secret.workspace_client_secret.resource_versionless_id
+  }
+
+  scope                = each.value
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.ohdsi_webapi_id.principal_id
 }
 
 resource "azurerm_linux_web_app" "ohdsi_webapi" {
-  name                      = local.ohdsi_webapi_name
-  location                  = data.azurerm_resource_group.ws.location
-  resource_group_name       = data.azurerm_resource_group.ws.name
-  virtual_network_subnet_id = data.azurerm_subnet.web_app.id
+  public_network_access_enabled = false
+  name                          = local.ohdsi_webapi_name
+  location                      = data.azurerm_resource_group.ws.location
+  resource_group_name           = data.azurerm_resource_group.ws.name
+  virtual_network_subnet_id     = data.azurerm_subnet.web_app.id
 
   service_plan_id         = data.azurerm_service_plan.workspace.id
   https_only              = true
@@ -110,7 +120,10 @@ resource "azurerm_linux_web_app" "ohdsi_webapi" {
   tags = local.tre_workspace_service_tags
 
   depends_on = [
-    terraform_data.deployment_ohdsi_webapi_init
+    terraform_data.deployment_ohdsi_webapi_init,
+    azurerm_role_assignment.keyvault_ohdsi_secret_role,
+    # Link the two web apps to the web app subnet one after the other.
+    azurerm_linux_web_app.atlas_ui,
   ]
 
   lifecycle { ignore_changes = [tags] }

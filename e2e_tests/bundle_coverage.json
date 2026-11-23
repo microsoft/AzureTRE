@@ -73,14 +73,29 @@
     "tre-shared-service-cyclecloud": {
       "manifest": "templates/shared_services/cyclecloud/porter.yaml",
       "family": "shared_service",
-      "prerequisites": [],
-      "tests": [],
-      "related_tests": [],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "prerequisites": [
+        "tre-shared-service-firewall"
       ],
-      "unavailable_reason": "The existing shared-service case is disabled pending repair (#5154)."
+      "tests": [
+        "test_cyclecloud.py::test_cyclecloud_lifecycle"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "create",
+        "update",
+        "custom_actions",
+        "delete",
+        "configuration"
+      ],
+      "limitations": [
+        "Requires AzureCloud, accepted CycleCloud marketplace image terms, the regional image and Standard_D4s_v5 capacity. The test does not accept terms or change quotas.",
+        "Requires an empty CycleCloud slot, current firewall and one writer in a dedicated environment. The fixed DNS zone prevents parallel CycleCloud services.",
+        "Checks VM power actions, ARM configuration, TRE firewall rules, the network rules of the VM network card, a same-version update of the metadata and cluster address spaces, and bounded cleanup. Reads the network rules from ARM and does not send traffic from a workspace. Previous-version upgrades remain unproven.",
+        "Does not configure the CycleCloud application, create HPC clusters or prove browser access, private DNS reachability or application TLS trust.",
+        "The existing bundle grants its VM subscription Contributor and allows SharedSubnet access to ARM and GitHub. Storage public access is not disabled by this bundle. These controls do not prove workspace isolation.",
+        "Cleanup verifies the VM, disk, NIC, network security group, storage, private endpoint, DNS zone, captured identity roles and firewall rules. Key Vault credentials can remain soft-deleted; secret purge is not attempted."
+      ],
+      "unavailable_reason": ""
     },
     "tre-shared-service-databricks-private-auth": {
       "manifest": "templates/shared_services/databricks-auth/porter.yaml",
@@ -420,15 +435,31 @@
       "manifest": "templates/workspace_services/ohdsi/porter.yaml",
       "family": "workspace_service",
       "prerequisites": [
-        "tre-workspace-base"
+        "tre-workspace-base",
+        "tre-shared-service-firewall"
       ],
-      "tests": [],
+      "tests": [
+        "test_ohdsi.py::test_private_ohdsi_lifecycle"
+      ],
       "related_tests": [],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "coverage": [
+        "install",
+        "private-arm-configuration",
+        "managed-identity",
+        "same-version-upgrade",
+        "callback-registration",
+        "firewall-restoration",
+        "uninstall"
       ],
-      "unavailable_reason": "Missing workspace-service case and parametrisation (#5126)."
+      "limitations": [
+        "Requires AzureCloud, matching Azure and authentication tenants, the checkout firewall and a fresh Automatic workspace. Use one writer in a dedicated environment.",
+        "Requires PostgreSQL 14 capacity in availability zone 1. Check regional SKU and capacity before the run.",
+        "Sets configure_data_source=false and omits data-source properties. Synapse provisioning, retained data-source properties, CDM queries and clinical workflows remain untested.",
+        "Checks private ARM configuration and successful bundle bootstrap. Browser sign-in, independent private HTTP and DNS probes, database data persistence and previous-version upgrades remain unproven.",
+        "Reserves 120 minutes for cleanup within a 270-minute job deadline. A failed service cleanup retains its workspace and fails validation.",
+        "Removes owned service resources, callbacks, app DNS records and firewall collections. The shared core PostgreSQL DNS link is retained; Key Vault items can remain soft-deleted."
+      ],
+      "unavailable_reason": ""
     },
     "tre-workspace-service-openai": {
       "manifest": "templates/workspace_services/openai/porter.yaml",
