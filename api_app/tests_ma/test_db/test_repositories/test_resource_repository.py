@@ -563,7 +563,7 @@ ACCOUNTS = {
 }
 
 
-def masking_template(properties, all_of=None, version="1.0.0") -> ResourceTemplate:
+def masking_template(properties, all_of=None, version="1.0.0", defs=None) -> ResourceTemplate:
     return ResourceTemplate(
         id="masking-template-id",
         name="masking-template",
@@ -573,6 +573,7 @@ def masking_template(properties, all_of=None, version="1.0.0") -> ResourceTempla
         required=[],
         properties=properties,
         allOf=all_of,
+        defs=defs,
     )
 
 
@@ -762,8 +763,18 @@ async def test_mask_stored_sensitive_values_finds_a_property_that_a_branch_decla
     )
 
 
+GROUPS = {
+    "groups": {
+        "type": "array",
+        "items": {"type": "array", "items": {"type": "object", "properties": {"token": SECRET}}},
+    }
+}
+
+
 def test_the_migration_finds_the_values_that_an_install_or_an_update_masks():
-    template = masking_template({**ACCOUNTS, "settings": {"type": "object", "properties": {"password": SECRET}}})
+    template = masking_template(
+        {**ACCOUNTS, **GROUPS, "settings": {"type": "object", "properties": {"password": SECRET}}}
+    )
     properties = {
         "accounts": [{"name": "a", "token": "first"}, {"name": "b", "token": strings.REDACTED_SENSITIVE_VALUE}],
         "groups": [[{"token": "nested"}]],
@@ -784,6 +795,87 @@ def test_the_migration_finds_the_values_that_an_install_or_an_update_masks():
         "/properties/groups/0/0/token",
         "/properties/settings/password",
     ]
+
+
+def test_a_key_with_the_name_of_a_sensitive_property_at_another_path_keeps_its_value():
+    # A later action reads the stored copy, so a value that is not sensitive must stay real.
+    template = masking_template(
+        {
+            "password": SECRET,
+            "settings": {"type": "object", "properties": {"password": {"type": "string"}}},
+            **ACCOUNTS,
+        }
+    )
+    properties = {
+        "password": "real",
+        "settings": {"password": "not sensitive", "token": "not declared"},
+        "accounts": [{"name": "a", "token": "real", "password": "not declared"}],
+        "token": "not declared",
+    }
+
+    assert mask_sensitive_properties(properties, template) == {
+        "password": strings.REDACTED_SENSITIVE_VALUE,
+        "settings": {"password": "not sensitive", "token": "not declared"},
+        "accounts": [{"name": "a", "token": strings.REDACTED_SENSITIVE_VALUE, "password": "not declared"}],
+        "token": "not declared",
+    }
+    assert masked_property_paths(properties, template) == ["/properties/password", "/properties/accounts/0/token"]
+
+
+def test_a_branch_can_declare_a_nested_property_as_sensitive():
+    template = masking_template(
+        {"settings": {"type": "object", "properties": {"password": {"type": "string"}}}},
+        [{"if": IF_MODE_A, "then": {"properties": {"settings": {"properties": {"password": SECRET}}}}}],
+    )
+
+    masked = mask_sensitive_properties({"mode": "a", "settings": {"password": "real", "name": "x"}}, template)
+
+    assert masked == {"mode": "a", "settings": {"password": strings.REDACTED_SENSITIVE_VALUE, "name": "x"}}
+
+
+def test_a_definition_that_a_ref_points_to_can_declare_a_sensitive_property():
+    template = masking_template(
+        {
+            "login": {"$ref": "#/$defs/credentials"},
+            "api_key": {"$ref": "#/$defs/secret"},
+            "settings": {"type": "object", "properties": {"password": {"type": "string"}}},
+        },
+        defs={
+            "credentials": {"type": "object", "properties": {"user": {"type": "string"}, "password": SECRET}},
+            "secret": SECRET,
+        },
+    )
+    properties = {"login": {"user": "u", "password": "real"}, "api_key": "real", "settings": {"password": "x"}}
+
+    assert mask_sensitive_properties(properties, template) == {
+        "login": {"user": "u", "password": strings.REDACTED_SENSITIVE_VALUE},
+        "api_key": strings.REDACTED_SENSITIVE_VALUE,
+        "settings": {"password": "x"},
+    }
+
+
+def test_a_recursive_definition_with_a_sensitive_property_masks_the_value_where_it_repeats():
+    node = {"type": "object", "properties": {"name": {"type": "string"}, "child": {"$ref": "#/$defs/node"}}}
+    secret_node = {"type": "object", "properties": {"token": SECRET, "child": {"$ref": "#/$defs/secret_node"}}}
+    template = masking_template(
+        {"tree": {"$ref": "#/$defs/node"}, "vault": {"$ref": "#/$defs/secret_node"}},
+        defs={"node": node, "secret_node": secret_node},
+    )
+    properties = {"tree": {"name": "a", "child": {"name": "b"}}, "vault": {"token": "real", "child": {"token": "real"}}}
+
+    assert mask_sensitive_properties(properties, template) == {
+        "tree": {"name": "a", "child": {"name": "b"}},
+        "vault": {"token": strings.REDACTED_SENSITIVE_VALUE, "child": strings.REDACTED_SENSITIVE_VALUE},
+    }
+
+
+def test_each_item_of_a_list_with_sensitive_items_is_masked():
+    template = masking_template({"keys": {"type": "array", "items": SECRET}})
+
+    assert mask_sensitive_properties({"keys": ["a", "b"]}, template) == {
+        "keys": [strings.REDACTED_SENSITIVE_VALUE, strings.REDACTED_SENSITIVE_VALUE]
+    }
+    assert masked_property_paths({"keys": ["a", strings.REDACTED_SENSITIVE_VALUE]}, template) == ["/properties/keys/0"]
 
 
 @pytest.mark.asyncio

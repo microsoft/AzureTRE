@@ -38,56 +38,105 @@ Draft7TREValidator = extend(
 )
 
 
-def sensitive_property_names(template: dict) -> set:
-    """Return the name of each property that has sensitive set to true in one or more of its declarations.
+def local_definition(root: dict, ref: str) -> Any:
+    """Return the part of root that a local reference such as #/$defs/label points to, or None."""
+    if not ref.startswith("#/"):
+        return None
+    part = root
+    for key in ref[2:].split("/"):
+        key = key.replace("~1", "/").replace("~0", "~")
+        if not isinstance(part, dict) or key not in part:
+            return None
+        part = part[key]
+    return part
 
-    The template can declare a name more than once, for example at the top level and in an allOf, anyOf, oneOf,
-    then or else branch. A declaration without the flag does not remove it. Nested objects and array items count,
-    but if conditions and the pipeline do not.
+
+def declares_sensitive(schema: Any, root: dict, refs: set) -> bool:
+    """Return True if schema, a part of it or a definition that it references has sensitive set to true."""
+    if isinstance(schema, list):
+        return any(declares_sensitive(item, root, refs) for item in schema)
+    if not isinstance(schema, dict):
+        return False
+    if schema.get("sensitive") is True:
+        return True
+    ref = schema.get("$ref")
+    if isinstance(ref, str) and ref not in refs:
+        refs.add(ref)
+        if declares_sensitive(local_definition(root, ref), root, refs):
+            return True
+    return any(declares_sensitive(value, root, refs) for key, value in schema.items() if key != "if")
+
+
+def sensitive_schema(schema: Any, root: Optional[dict] = None, refs: tuple = ()) -> dict:
+    """Return the schema paths to the sensitive properties of a template, or of a part of a template.
+
+    Each node is a dict with "sensitive": True for a sensitive value, "properties" for the nodes of its keys and
+    "items" for the node of its list items. A node is in the result only if it is sensitive or leads to a sensitive
+    node, so an empty dict means that the schema has no sensitive property.
+
+    The properties, items, allOf, anyOf, oneOf, then and else keywords and a local $ref at one place in the schema
+    describe the same place in the data. So the nodes of all declarations at that place merge, and a declaration
+    without the flag does not remove it. The if conditions and the pipeline do not count. Root is the template that
+    a $ref points into, and refs are the references on the current path.
     """
-    names = set()
+    node = {}
+    if not isinstance(schema, dict):
+        return node
+    root = schema if root is None else root
+    if schema.get("sensitive") is True:
+        node["sensitive"] = True
+    for name, declaration in (schema.get("properties") or {}).items():
+        child = sensitive_schema(declaration, root, refs)
+        if child:
+            merge_sensitive_schema(node.setdefault("properties", {}).setdefault(name, {}), child)
+    items = sensitive_schema(schema.get("items"), root, refs)
+    if items:
+        merge_sensitive_schema(node.setdefault("items", {}), items)
+    for keyword in ("allOf", "anyOf", "oneOf"):
+        for branch in schema.get(keyword) or []:
+            merge_sensitive_schema(node, sensitive_schema(branch, root, refs))
+    for keyword in ("then", "else"):
+        merge_sensitive_schema(node, sensitive_schema(schema.get(keyword), root, refs))
+    ref = schema.get("$ref")
+    if isinstance(ref, str) and ref not in refs:
+        merge_sensitive_schema(node, sensitive_schema(local_definition(root, ref), root, refs + (ref,)))
+    elif isinstance(ref, str) and declares_sensitive(local_definition(root, ref), root, {ref}):
+        # A recursive reference has no last path. If its definition has a sensitive value, the whole value is sensitive.
+        node["sensitive"] = True
+    return node
 
-    def collect(template_fragment: dict):
-        for key, value in template_fragment.items():
-            if key in ("pipeline", "if"):
-                continue
-            if key == "properties" and isinstance(value, dict):
-                names.update(
-                    name for name, prop in value.items() if isinstance(prop, dict) and prop.get("sensitive") is True
-                )
-            if isinstance(value, dict):
-                collect(value)
-            elif isinstance(value, list):
-                for item in value:
-                    if isinstance(item, dict):
-                        collect(item)
 
-    collect(template)
-    return names
+def merge_sensitive_schema(target: dict, source: dict):
+    if source.get("sensitive"):
+        target["sensitive"] = True
+    for name, child in source.get("properties", {}).items():
+        merge_sensitive_schema(target.setdefault("properties", {}).setdefault(name, {}), child)
+    if "items" in source:
+        merge_sensitive_schema(target.setdefault("items", {}), source["items"])
 
 
 def sensitive_values(properties: Dict[str, Any], template: ResourceTemplate) -> List[Tuple[tuple, Any]]:
     """Return the path and the value of each sensitive value in properties.
 
-    A path is a tuple of keys and list indexes. A value is sensitive if its key is a sensitive property name of the
-    template, also in a nested object or in an array item. The install, the update and the migration all use this
-    function, so they mask the same values.
+    A path is a tuple of keys and list indexes. A value is sensitive if the template declares it as sensitive at the
+    same schema path, also in a nested object or in an array item. A key with the same name at a different path is
+    not sensitive. The install, the update and the migration all use this function, so they mask the same values.
     """
-    names = sensitive_property_names(template.model_dump())
     found = []
 
-    def collect(value: Any, path: tuple):
-        if isinstance(value, dict):
+    def collect(value: Any, node: dict, path: tuple):
+        if node.get("sensitive"):
+            found.append((path, value))
+        elif isinstance(value, dict):
             for key, item in value.items():
-                if key in names:
-                    found.append((path + (key,), item))
-                else:
-                    collect(item, path + (key,))
-        elif isinstance(value, list):
+                if key in node.get("properties", {}):
+                    collect(item, node["properties"][key], path + (key,))
+        elif isinstance(value, list) and "items" in node:
             for index, item in enumerate(value):
-                collect(item, path + (index,))
+                collect(item, node["items"], path + (index,))
 
-    collect(properties, ())
+    # A template has no sensitive flag at its top level, so the first path always has a key.
+    collect(properties, sensitive_schema(template.model_dump()), ())
     return found
 
 
@@ -337,7 +386,7 @@ class ResourceRepository(BaseRepository):
         names_with_sensitive_values = {
             template["name"]
             for template in await resource_template_repo.query(query="SELECT * FROM c")
-            if sensitive_property_names(template)
+            if sensitive_schema(template)
         }
         resources = {resource["id"]: resource for resource in await self.query(query="SELECT * FROM c")}
         templates = {}
