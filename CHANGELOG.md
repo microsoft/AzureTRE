@@ -83,6 +83,7 @@ BUG FIXES:
   If that update fails, send it again with the new secret. The update form shows `REDACTED`, and an update with `REDACTED` keeps the earlier secret.
   Delete the old secret only after an update with the new secret succeeds.
   The placeholder also covers a sensitive property in an array item, at the install too. In a later action that does not give a new value for such a property, the bundle gets `REDACTED`, as for other sensitive properties.
+  The API finds a sensitive value by its path in the template schema, also through a local `$ref`, `additionalProperties`, `patternProperties` and `prefixItems`. A key with the same name at a different path keeps its value.
   If a template declares a property in more than one branch, one declaration with `sensitive` is enough. At an update that changes the template version, the new version decides which properties are sensitive.
   For a template whose action has more steps than `main`, for example the unrestricted workspace, the first message now also gets the real sensitive values at an install. (`api` 0.29.0) ([#5298](https://github.com/microsoft/AzureTRE/issues/5298))
 * Describe a schema error of a resource request without the submitted values. The API logged the full jsonschema error text and returned it in the HTTP 400 response of a create request.

@@ -17,6 +17,7 @@ from db.repositories.resources import (
     mask_sensitive_properties,
     masked_property_paths,
     restore_sensitive_values,
+    sensitive_schema,
 )
 from azure.core import MatchConditions
 from azure.cosmos.exceptions import (
@@ -867,6 +868,58 @@ def test_a_recursive_definition_with_a_sensitive_property_masks_the_value_where_
         "tree": {"name": "a", "child": {"name": "b"}},
         "vault": {"token": strings.REDACTED_SENSITIVE_VALUE, "child": strings.REDACTED_SENSITIVE_VALUE},
     }
+
+
+R = strings.REDACTED_SENSITIVE_VALUE
+NAME = {"name": {"type": "string"}}
+TOKEN_OBJECT = {"type": "object", "properties": {"label": {"type": "string"}, "token": SECRET}}
+
+
+@pytest.mark.parametrize(
+    "declaration, value, masked",
+    [
+        # A key that properties does not name gets the declaration of additionalProperties.
+        (
+            {"type": "object", "properties": NAME, "additionalProperties": TOKEN_OBJECT},
+            {"name": "n", "a": {"label": "l", "token": "real"}},
+            {"name": "n", "a": {"label": "l", "token": R}},
+        ),
+        (
+            {"type": "object", "properties": NAME, "additionalProperties": SECRET},
+            {"name": "n", "a": "real"},
+            {"name": "n", "a": R},
+        ),
+        # A key gets the declaration of each pattern that it matches.
+        (
+            {"type": "object", "patternProperties": {"^key_": SECRET}},
+            {"key_a": "real", "b": "x"},
+            {"key_a": R, "b": "x"},
+        ),
+        (
+            {"type": "object", "patternProperties": {"^a": TOKEN_OBJECT}},
+            {"a1": {"label": "l", "token": "real"}},
+            {"a1": {"label": "l", "token": R}},
+        ),
+        # A list item gets the declaration at its index, and the items after the prefix get the rest.
+        ({"type": "array", "prefixItems": [{"type": "string"}, SECRET]}, ["x", "real"], ["x", R]),
+        ({"type": "array", "prefixItems": [{"type": "string"}], "items": SECRET}, ["x", "real", "real"], ["x", R, R]),
+        # A declaration that depends on another key describes the same object.
+        (
+            {"type": "object", "properties": NAME, "dependentSchemas": {"name": {"properties": {"token": SECRET}}}},
+            {"name": "n", "token": "real"},
+            {"name": "n", "token": R},
+        ),
+        # A path cannot name the values of these keywords, so the whole value is masked.
+        ({"type": "object", "properties": NAME, "unevaluatedProperties": SECRET}, {"name": "n", "a": "real"}, R),
+        ({"type": "array", "contains": SECRET}, ["x", "real"], R),
+    ],
+)
+def test_each_schema_keyword_that_describes_a_value_can_declare_it_as_sensitive(declaration, value, masked):
+    template = masking_template({"setting": declaration})
+
+    assert mask_sensitive_properties({"setting": value}, template) == {"setting": masked}
+    # The migration selects the templates to read with the same function.
+    assert sensitive_schema(template.model_dump())
 
 
 def test_each_item_of_a_list_with_sensitive_items_is_masked():

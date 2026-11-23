@@ -1,4 +1,5 @@
 import copy
+import re
 import semantic_version
 from datetime import datetime, UTC
 from typing import Any, Dict, Optional, Tuple, List
@@ -67,17 +68,29 @@ def declares_sensitive(schema: Any, root: dict, refs: set) -> bool:
     return any(declares_sensitive(value, root, refs) for key, value in schema.items() if key != "if")
 
 
+# A sensitive flag under one of these keywords describes values that a path cannot name, so the whole value at that
+# place is sensitive.
+KEYWORDS_WITHOUT_A_PATH = ("unevaluatedProperties", "unevaluatedItems", "contains")
+
+
 def sensitive_schema(schema: Any, root: Optional[dict] = None, refs: tuple = ()) -> dict:
     """Return the schema paths to the sensitive properties of a template, or of a part of a template.
 
-    Each node is a dict with "sensitive": True for a sensitive value, "properties" for the nodes of its keys and
-    "items" for the node of its list items. A node is in the result only if it is sensitive or leads to a sensitive
-    node, so an empty dict means that the schema has no sensitive property.
+    Each node is a dict with only the keys that lead to a sensitive value, so an empty dict means that the schema has
+    no sensitive property:
+    - "sensitive": True for a sensitive value.
+    - "properties": the node of each key that properties names.
+    - "patternProperties": the node of the keys that match each pattern.
+    - "additionalProperties": a list of nodes for the other keys. Each node has the names and the patterns of its own
+      schema, because additionalProperties applies only to the keys that its own schema does not name.
+    - "prefixItems": the node of each list item by its index.
+    - "items": the node of all list items. If the same schema has prefixItems, the node goes in "itemsAfter".
+    - "itemsAfter": a list of nodes for the items after the prefixItems of their own schema, each with its start.
 
-    The properties, items, allOf, anyOf, oneOf, then and else keywords and a local $ref at one place in the schema
-    describe the same place in the data. So the nodes of all declarations at that place merge, and a declaration
-    without the flag does not remove it. The if conditions and the pipeline do not count. Root is the template that
-    a $ref points into, and refs are the references on the current path.
+    The allOf, anyOf, oneOf, then, else, dependentSchemas and dependencies keywords and a local $ref at one place in
+    the schema describe the same place in the data. So the nodes of all declarations at that place merge, and a
+    declaration without the flag does not remove it. The if conditions and the pipeline do not count. Root is the
+    template that a $ref points into, and refs are the references on the current path.
     """
     node = {}
     if not isinstance(schema, dict):
@@ -85,23 +98,42 @@ def sensitive_schema(schema: Any, root: Optional[dict] = None, refs: tuple = ())
     root = schema if root is None else root
     if schema.get("sensitive") is True:
         node["sensitive"] = True
-    for name, declaration in (schema.get("properties") or {}).items():
+    for keyword in ("properties", "patternProperties"):
+        for name, declaration in (schema.get(keyword) or {}).items():
+            child = sensitive_schema(declaration, root, refs)
+            if child:
+                merge_sensitive_schema(node.setdefault(keyword, {}).setdefault(name, {}), child)
+    additional = sensitive_schema(schema.get("additionalProperties"), root, refs)
+    if additional:
+        names = list(schema.get("properties") or {})
+        patterns = list(schema.get("patternProperties") or {})
+        node["additionalProperties"] = [{"names": names, "patterns": patterns, "node": additional}]
+    prefix = schema.get("prefixItems") or []
+    for index, declaration in enumerate(prefix):
         child = sensitive_schema(declaration, root, refs)
         if child:
-            merge_sensitive_schema(node.setdefault("properties", {}).setdefault(name, {}), child)
+            prefix_nodes = node.setdefault("prefixItems", [])
+            prefix_nodes.extend({} for _ in range(index + 1 - len(prefix_nodes)))
+            merge_sensitive_schema(prefix_nodes[index], child)
     items = sensitive_schema(schema.get("items"), root, refs)
-    if items:
+    if items and prefix:
+        node["itemsAfter"] = [{"start": len(prefix), "node": items}]
+    elif items:
         merge_sensitive_schema(node.setdefault("items", {}), items)
+    branches = [schema.get("then"), schema.get("else")]
     for keyword in ("allOf", "anyOf", "oneOf"):
-        for branch in schema.get(keyword) or []:
-            merge_sensitive_schema(node, sensitive_schema(branch, root, refs))
-    for keyword in ("then", "else"):
-        merge_sensitive_schema(node, sensitive_schema(schema.get(keyword), root, refs))
+        branches.extend(schema.get(keyword) or [])
+    for keyword in ("dependentSchemas", "dependencies"):
+        branches.extend((schema.get(keyword) or {}).values())
+    for branch in branches:
+        merge_sensitive_schema(node, sensitive_schema(branch, root, refs))
     ref = schema.get("$ref")
     if isinstance(ref, str) and ref not in refs:
         merge_sensitive_schema(node, sensitive_schema(local_definition(root, ref), root, refs + (ref,)))
     elif isinstance(ref, str) and declares_sensitive(local_definition(root, ref), root, {ref}):
         # A recursive reference has no last path. If its definition has a sensitive value, the whole value is sensitive.
+        node["sensitive"] = True
+    if declares_sensitive([schema.get(keyword) for keyword in KEYWORDS_WITHOUT_A_PATH], root, set()):
         node["sensitive"] = True
     return node
 
@@ -109,10 +141,54 @@ def sensitive_schema(schema: Any, root: Optional[dict] = None, refs: tuple = ())
 def merge_sensitive_schema(target: dict, source: dict):
     if source.get("sensitive"):
         target["sensitive"] = True
-    for name, child in source.get("properties", {}).items():
-        merge_sensitive_schema(target.setdefault("properties", {}).setdefault(name, {}), child)
+    for keyword in ("properties", "patternProperties"):
+        for name, child in source.get(keyword, {}).items():
+            merge_sensitive_schema(target.setdefault(keyword, {}).setdefault(name, {}), child)
+    target_prefix = target.setdefault("prefixItems", []) if "prefixItems" in source else None
+    for index, child in enumerate(source.get("prefixItems", [])):
+        target_prefix.extend({} for _ in range(index + 1 - len(target_prefix)))
+        merge_sensitive_schema(target_prefix[index], child)
     if "items" in source:
         merge_sensitive_schema(target.setdefault("items", {}), source["items"])
+    for keyword in ("additionalProperties", "itemsAfter"):
+        if keyword in source:
+            target.setdefault(keyword, []).extend(source[keyword])
+
+
+def matches(pattern: str, key: str) -> bool:
+    """Return True if key matches the pattern, as the jsonschema validator matches it. A pattern that Python cannot
+    read matches each key, so that no sensitive value stays unmasked."""
+    try:
+        return re.search(pattern, key) is not None
+    except re.error:
+        return True
+
+
+def node_for_key(node: dict, key: str) -> dict:
+    """Return the merged node of the declarations that apply to one key of an object."""
+    child = {}
+    if key in node.get("properties", {}):
+        merge_sensitive_schema(child, node["properties"][key])
+    for pattern, pattern_node in node.get("patternProperties", {}).items():
+        if matches(pattern, key):
+            merge_sensitive_schema(child, pattern_node)
+    for additional in node.get("additionalProperties", []):
+        if key not in additional["names"] and not any(matches(pattern, key) for pattern in additional["patterns"]):
+            merge_sensitive_schema(child, additional["node"])
+    return child
+
+
+def node_for_index(node: dict, index: int) -> dict:
+    """Return the merged node of the declarations that apply to one list item."""
+    child = {}
+    prefix = node.get("prefixItems", [])
+    if index < len(prefix):
+        merge_sensitive_schema(child, prefix[index])
+    merge_sensitive_schema(child, node.get("items", {}))
+    for after in node.get("itemsAfter", []):
+        if index >= after["start"]:
+            merge_sensitive_schema(child, after["node"])
+    return child
 
 
 def sensitive_values(properties: Dict[str, Any], template: ResourceTemplate) -> List[Tuple[tuple, Any]]:
@@ -129,11 +205,14 @@ def sensitive_values(properties: Dict[str, Any], template: ResourceTemplate) -> 
             found.append((path, value))
         elif isinstance(value, dict):
             for key, item in value.items():
-                if key in node.get("properties", {}):
-                    collect(item, node["properties"][key], path + (key,))
-        elif isinstance(value, list) and "items" in node:
+                child = node_for_key(node, key)
+                if child:
+                    collect(item, child, path + (key,))
+        elif isinstance(value, list):
             for index, item in enumerate(value):
-                collect(item, node["items"], path + (index,))
+                child = node_for_index(node, index)
+                if child:
+                    collect(item, child, path + (index,))
 
     # A template has no sensitive flag at its top level, so the first path always has a key.
     collect(properties, sensitive_schema(template.model_dump()), ())
