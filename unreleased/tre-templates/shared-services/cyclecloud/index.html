@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -2204,6 +2204,34 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network rules
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Network rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrade-to-version-100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade to version 1.0.0
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4564,6 +4592,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#network-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network rules
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Network rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrade-to-version-100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade to version 1.0.0
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#create-a-cluster" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4604,6 +4660,7 @@
 az<span class="w"> </span>vm<span class="w"> </span>image<span class="w"> </span>terms<span class="w"> </span>accept<span class="w"> </span>--urn<span class="w"> </span>almalinux:almalinux-hpc:8_5-hpc:latest
 </code></pre></div>
 <p>Deploy the CycleCloud server using UI or API.</p>
+<p>The CycleCloud server uses the <code>Standard_D4s_v5</code> VM size. Before you deploy, make sure that your subscription can use this size in the TRE region. An upgrade from a version before 1.0.0 keeps the size of the existing server.</p>
 <p>To connect to the CycleCloud server, the TRE Administrator must connect to the CycleCloud server from the administration jumpbox. Use Azure Bastion to connect to the jumpbox a with the username <code>admin</code> and the select the password located in your core KeyVault. Connect to the CycleCloud server at the URL: <code>https://cyclecloud-{TRE_ID}.{LOCATION}.cloudapp.azure.com/</code>.</p>
 <ul>
 <li>Provide a name for the cyclecloud server instance.</li>
@@ -4619,9 +4676,69 @@ az<span class="w"> </span>vm<span class="w"> </span>image<span class="w"> </span
 <ul>
 <li>Hit Save, and then "Back to Clusters"</li>
 </ul>
+<h2 id="network-rules">Network rules</h2>
+<p>The CycleCloud server has a network security group on its network card. The network security group has these inbound rules:</p>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Source</th>
+<th>Ports</th>
+<th>Access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>100</td>
+<td>The address space of the core virtual network</td>
+<td>TCP 443 and 22</td>
+<td>Allow</td>
+</tr>
+<tr>
+<td>110</td>
+<td>The address spaces in the <code>cluster_address_spaces</code> property</td>
+<td>TCP 9443</td>
+<td>Allow</td>
+</tr>
+<tr>
+<td>120</td>
+<td>The <code>AzureLoadBalancer</code> service tag</td>
+<td>All</td>
+<td>Allow</td>
+</tr>
+<tr>
+<td>4096</td>
+<td>The <code>VirtualNetwork</code> service tag</td>
+<td>All</td>
+<td>Deny</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>The admin jumpbox is in the core virtual network. Administrators connect to the CycleCloud server from the jumpbox, as the steps above describe.</li>
+<li>The <code>VirtualNetwork</code> service tag includes the peered workspace virtual networks. By default, workspaces cannot connect to the CycleCloud server.</li>
+<li>Other resources in the core virtual network, for example in the shared subnet, can connect only on TCP ports 443 and 22.</li>
+<li>The <code>VirtualNetwork</code> service tag also includes networks that connect through a gateway, for example on-premises networks. These networks cannot connect to the CycleCloud server, unless their range is in <code>cluster_address_spaces</code>. Then they can connect only on TCP port 9443.</li>
+<li>The bundle creates the rule for TCP port 9443 only when <code>cluster_address_spaces</code> has one or more address spaces. The default is an empty list.</li>
+<li>The outbound rules are the Azure default rules.</li>
+</ul>
+<p>Cluster nodes connect to the CycleCloud server on TCP port 9443 when the cluster does not use a return proxy. For the ports that CycleCloud uses, see <a href="https://learn.microsoft.com/azure/cyclecloud/how-to/network-security?view=cyclecloud-8#required-ports-and-traffic">CycleCloud required ports and traffic</a>.</p>
+<p>To let the nodes of a cluster connect, update the CycleCloud shared service and add the address space of the workspace to <code>cluster_address_spaces</code>. Use the CIDR format, for example <code>10.1.4.0/24</code>. If a range has host bits, for example <code>10.1.4.5/24</code>, the bundle uses its network address, <code>10.1.4.0/24</code>.</p>
+<p>The prefix length must be /16 or more. /16 is the largest predefined workspace size. A shorter prefix, for example <code>10.0.0.0/8</code>, can include the address spaces of all workspaces, so the bundle rejects it. If a custom workspace address space is larger than /16, add it as two or more ranges.</p>
+<p>All clusters in one workspace use the same address space. Keep the address space of a workspace in the list until you delete the last cluster in that workspace.</p>
+<h3 id="upgrade-to-version-100">Upgrade to version 1.0.0</h3>
+<p>Version 1.0.0 adds the network rules. After the upgrade, cluster nodes in workspaces cannot connect to the CycleCloud server until you set <code>cluster_address_spaces</code>. Other resources in the core virtual network can connect only on TCP ports 443 and 22, and networks outside it, for example on-premises networks, cannot connect. See <a href="#network-rules">Network rules</a>.</p>
+<ol>
+<li>Find the address space of each workspace that has a CycleCloud cluster. The <code>address_spaces</code> property of the workspace has this value.</li>
+<li>Upgrade the CycleCloud shared service to version 1.0.0. The upgrade needs a <a href="../../../tre-admins/upgrading-resources/#force-version-update">force version update</a>.</li>
+<li>Update the CycleCloud shared service. Set <code>cluster_address_spaces</code> to the address spaces from step 1.</li>
+</ol>
 <h2 id="create-a-cluster">Create a Cluster</h2>
 <ul>
 <li>Before you start creating the cluster retrieve the last 4 digits of the workspace ID that you want to deploy the cluster into.</li>
+</ul>
+<ul>
+<li>Update the CycleCloud shared service. Add the address space of the workspace to <code>cluster_address_spaces</code>, so that the cluster nodes can connect to the CycleCloud server. See <a href="#network-rules">Network rules</a>.</li>
 </ul>
 <ul>
 <li>Create a user in CycleCloud as per <a href="https://docs.microsoft.com/en-us/azure/cyclecloud/concepts/user-management?view=cyclecloud-8#adding-new-users-to-cyclecloud">https://docs.microsoft.com/en-us/azure/cyclecloud/concepts/user-management?view=cyclecloud-8#adding-new-users-to-cyclecloud</a> . The SSH key for the user will need to be created within the workspace and public key exporting. We suggest using the 4 digits retrieved in step 1 as part of the user account.</li>
@@ -4735,7 +4852,7 @@ rpm<span class="w"> </span>--import<span class="w"> </span>https://nexus-<span c
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.c21346df.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>
