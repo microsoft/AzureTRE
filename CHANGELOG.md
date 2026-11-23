@@ -2,6 +2,7 @@
 ## (Unreleased)
 **BREAKING CHANGES**
 * `tre-workspace-service-health` 1.0.0 stops an install, update or upgrade of a Health service without FHIR and DICOM before Terraform changes a resource. Azure fails a private endpoint to a healthcare workspace without a FHIR or DICOM service.
+  The API rejects a create or a PATCH without FHIR and DICOM with HTTP 400, before it stores the request. A create must give `deploy_fhir` and `deploy_dicom`. A PATCH that turns off one of them must give the other as `true`.
   If the upgrade of an earlier service without FHIR and DICOM stops, turn on FHIR or DICOM with an update, or delete the service. ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
 * Existing resources with legacy Porter parameter overrides must complete a resource upgrade before custom actions or uninstall. The current template version can be reused. See [upgrading resources](docs/tre-admins/upgrading-resources.md#upgrade-existing-resources-for-document-based-porter-parameters). (`resource_processor` 0.13.10) ([#4904](https://github.com/microsoft/AzureTRE/pull/4904))
 * Set `enable_legacy_airlock` explicitly to `true` in your `config.yaml`. It currently defaults to `true` but will default to `false` in a future release;

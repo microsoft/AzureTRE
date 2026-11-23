@@ -3,10 +3,16 @@
 import json
 from pathlib import Path
 import re
+from types import SimpleNamespace
 import unittest
+
+from jsonschema import ValidationError, validate
+
+from api_app.services.schema_service import enrich_workspace_service_template
 
 ROOT = Path(__file__).resolve().parents[2]
 BUNDLE = ROOT / "templates/workspace_services/health-services/terraform"
+NAMES = {"display_name": "Health", "description": "Health service"}
 
 
 def block(source, header):
@@ -15,6 +21,23 @@ def block(source, header):
 
 def version(text):
     return tuple(int(part) for part in text.split("."))
+
+
+def api_template(is_update=False):
+    # The API stores the template with unevaluatedProperties set to false.
+    schema = json.loads((BUNDLE.parent / "template_schema.json").read_text())
+    schema["unevaluatedProperties"] = False
+    return enrich_workspace_service_template(SimpleNamespace(model_dump=lambda **_: schema), is_update=is_update)
+
+
+def patch_template():
+    # The same reduced template as ResourceRepository.validate_patch in the API.
+    template = api_template(is_update=True)
+    template["required"] = []
+    template["properties"] = {
+        name: prop for name, prop in template["properties"].items() if prop.get("updateable", False) is True
+    }
+    return template
 
 
 class HealthBundleContractTests(unittest.TestCase):
@@ -60,6 +83,48 @@ class HealthBundleContractTests(unittest.TestCase):
         precondition = workspace.split("precondition {", 1)[1]
         self.assertIn("condition     = var.deploy_fhir || var.deploy_dicom", precondition)
         self.assertIn('error_message = "Deploy FHIR, DICOM or both.', precondition)
+
+    def test_the_api_rejects_a_create_without_fhir_and_dicom(self):
+        # A rejected request gets HTTP 400, so the API stores no resource that Terraform stops later.
+        template = api_template()
+        for properties in ({}, {"deploy_fhir": False, "deploy_dicom": False}, {"deploy_fhir": False}):
+            with self.subTest(properties=properties), self.assertRaises(ValidationError):
+                validate({**NAMES, **properties}, template)
+        for properties in (
+            {"deploy_fhir": True, "fhir_kind": "R4", "deploy_dicom": False},
+            {"deploy_fhir": False, "deploy_dicom": True},
+            {"deploy_fhir": True, "fhir_kind": "R4", "deploy_dicom": True},
+        ):
+            with self.subTest(properties=properties):
+                validate({**NAMES, **properties}, template)
+
+    def test_the_api_rejects_an_update_that_turns_off_the_last_service(self):
+        # The API stores the properties of a PATCH before the deployment, so Terraform is too late.
+        template = patch_template()
+        for properties in (
+            {"deploy_fhir": False},
+            {"deploy_dicom": False},
+            {"deploy_fhir": False, "deploy_dicom": False},
+        ):
+            with self.subTest(properties=properties), self.assertRaises(ValidationError):
+                validate(properties, template)
+        for properties in (
+            {"display_name": "Health"},
+            {"deploy_dicom": True},
+            {"deploy_fhir": False, "deploy_dicom": True},
+            {"deploy_fhir": True, "deploy_dicom": False},
+        ):
+            with self.subTest(properties=properties):
+                validate(properties, template)
+
+    def test_the_update_form_keeps_fhir_and_dicom_editable(self):
+        # The UI leaves a read-only property out of the PATCH, and a rule property without
+        # updateable is read-only on update.
+        for rule in api_template(is_update=True)["allOf"]:
+            for name, prop in rule["then"]["properties"].items():
+                if name in ("deploy_fhir", "deploy_dicom"):
+                    with self.subTest(name=name):
+                        self.assertNotIn("readOnly", prop)
 
     def test_the_form_and_the_bundle_use_the_same_defaults(self):
         # The API stores a request without schema defaults, so the bundle default applies to an absent property.

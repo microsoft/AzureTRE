@@ -29,7 +29,13 @@ Then delete the Health service, or upgrade it and turn on FHIR or DICOM with an 
 
 The service connects the healthcare workspace to the workspace network through one private endpoint.
 Azure fails an endpoint to a healthcare workspace without a FHIR or DICOM service. So Terraform creates the endpoint after FHIR and DICOM, and each Health service must deploy FHIR, DICOM or both.
-If an install, an update or an upgrade has neither FHIR nor DICOM, Terraform stops before it changes a resource, with the message "Deploy FHIR, DICOM or both".
+The API rejects a create or an update without FHIR and DICOM with HTTP 400, before it stores the request:
+
+- A create must give `deploy_fhir` and `deploy_dicom`, and one of them must be `true`.
+- A PATCH that turns off FHIR or DICOM must also give the other service as `true`. The update form of the TRE UI sends both values.
+
+The form of the TRE UI shows an error under FHIR and DICOM when both are off.
+If an install, an update or an upgrade has neither FHIR nor DICOM, Terraform also stops before it changes a resource, with the message "Deploy FHIR, DICOM or both".
 This applies to an upgrade of an earlier Health service without FHIR and DICOM. The upgrade dialog of the TRE UI cannot change a property.
 If the upgrade stops for this reason, update the service and turn on FHIR or DICOM, or delete the service.
 A disable of such a service also stops at this check, but the delete then works.
