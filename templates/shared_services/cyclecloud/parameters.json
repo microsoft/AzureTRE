@@ -57,6 +57,12 @@
       "source": {
         "env": "KEY_STORE_ID"
       }
+    },
+    {
+      "name": "cluster_address_spaces",
+      "source": {
+        "env": "CLUSTER_ADDRESS_SPACES"
+      }
     }
   ]
 }
