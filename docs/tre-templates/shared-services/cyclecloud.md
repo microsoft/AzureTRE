@@ -52,6 +52,8 @@ The CycleCloud server has a network security group on its network card. The netw
 
 - The admin jumpbox is in the core virtual network. Administrators connect to the CycleCloud server from the jumpbox, as the steps above describe.
 - The `VirtualNetwork` service tag includes the peered workspace virtual networks. By default, workspaces cannot connect to the CycleCloud server.
+- Other resources in the core virtual network, for example in the shared subnet, can connect only on TCP ports 443 and 22.
+- The `VirtualNetwork` service tag also includes networks that connect through a gateway, for example on-premises networks. These networks cannot connect to the CycleCloud server, unless their range is in `cluster_address_spaces`. Then they can connect only on TCP port 9443.
 - The bundle creates the rule for TCP port 9443 only when `cluster_address_spaces` has one or more address spaces. The default is an empty list.
 - The outbound rules are the Azure default rules.
 
@@ -59,11 +61,13 @@ Cluster nodes connect to the CycleCloud server on TCP port 9443 when the cluster
 
 To let the nodes of a cluster connect, update the CycleCloud shared service and add the address space of the workspace to `cluster_address_spaces`. Use the CIDR format, for example `10.1.4.0/24`. If a range has host bits, for example `10.1.4.5/24`, the bundle uses its network address, `10.1.4.0/24`.
 
+The prefix length must be /16 or more. /16 is the largest predefined workspace size. A shorter prefix, for example `10.0.0.0/8`, can include the address spaces of all workspaces, so the bundle rejects it. If a custom workspace address space is larger than /16, add it as two or more ranges.
+
 All clusters in one workspace use the same address space. Keep the address space of a workspace in the list until you delete the last cluster in that workspace.
 
 ### Upgrade to version 1.0.0
 
-Version 1.0.0 adds the network rules. After the upgrade, cluster nodes in workspaces cannot connect to the CycleCloud server until you set `cluster_address_spaces`.
+Version 1.0.0 adds the network rules. After the upgrade, cluster nodes in workspaces cannot connect to the CycleCloud server until you set `cluster_address_spaces`. Other resources in the core virtual network can connect only on TCP ports 443 and 22, and networks outside it, for example on-premises networks, cannot connect. See [Network rules](#network-rules).
 
 1. Find the address space of each workspace that has a CycleCloud cluster. The `address_spaces` property of the workspace has this value.
 1. Upgrade the CycleCloud shared service to version 1.0.0. The upgrade needs a [force version update](../../tre-admins/upgrading-resources.md#force-version-update).

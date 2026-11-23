@@ -21,8 +21,8 @@ variable "cluster_address_spaces" {
   validation {
     condition = try(alltrue([
       for cidr in jsondecode(base64decode(var.cluster_address_spaces)) :
-      can(cidrnetmask(cidr))
+      can(cidrnetmask(cidr)) && tonumber(split("/", cidr)[1]) >= 16
     ]), false)
-    error_message = "cluster_address_spaces must be a list of IPv4 address ranges in CIDR format, for example 10.1.4.0/24."
+    error_message = "cluster_address_spaces must be a list of IPv4 address ranges in CIDR format with a prefix length of /16 or more, for example 10.1.4.0/24."
   }
 }

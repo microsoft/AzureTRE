@@ -117,8 +117,10 @@ class CycleCloudBundleContractTests(unittest.TestCase):
         self.assertEqual((prop["type"], prop["default"], prop["updateable"]), ("array", [], True))
         self.assertEqual(prop["items"]["type"], "string")
         pattern = re.compile(prop["items"]["pattern"])
-        self.assertTrue(pattern.fullmatch("10.1.4.0/24"))
-        for value in ("10.1.4.0", "10.1.4.0/33", "256.1.4.0/24", "10.1.4/24"):
+        for value in ("10.1.4.0/24", "10.1.0.0/16", "10.1.4.5/32"):
+            self.assertTrue(pattern.fullmatch(value), value)
+        # A range larger than the largest workspace size, /16, can include the address spaces of all workspaces.
+        for value in ("10.1.4.0", "10.1.4.0/33", "256.1.4.0/24", "10.1.4/24", "0.0.0.0/0", "10.0.0.0/8", "10.0.0.0/15"):
             self.assertIsNone(pattern.fullmatch(value), value)
         manifest = yaml.safe_load((BUNDLE / "porter.yaml").read_text())
         parameter = next(p for p in manifest["parameters"] if p["name"] == "cluster_address_spaces")
