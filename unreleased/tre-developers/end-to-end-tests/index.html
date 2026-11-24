@@ -5007,6 +5007,13 @@ Use the same hostname and certificate name when testing reuse after reinstallati
 </ul>
 <p>If an E2E test fails while waiting for an operation, check its test log.
 Use the timestamp and operation ID to find the matching API logs.</p>
+<p>If an operation poll gets an unexpected HTTP status, the test logs the UTC time, the operation path, the status and the <code>request-id</code> header of the response.
+The API puts the trace of each request in this header as <code>|&lt;trace ID&gt;.&lt;span ID&gt;.</code>, also for HTTP 500.
+App Insights stores the trace ID as <code>OperationId</code>. Run this query in the Log Analytics workspace of the environment:</p>
+<div class="highlight"><pre><span></span><code><span class="k">union</span><span class="w"> </span><span class="n">AppRequests</span><span class="p">,</span><span class="w"> </span><span class="n">AppExceptions</span><span class="p">,</span><span class="w"> </span><span class="n">AppTraces</span>
+<span class="p">|</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">OperationId</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s">"&lt;trace ID&gt;"</span>
+<span class="p">|</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">TimeGenerated</span><span class="w"> </span><span class="n">asc</span>
+</code></pre></div>
 <h2 id="airlock-draft-deletion">Airlock draft deletion</h2>
 <p>The draft-deletion case requires AzureCloud, <code>ARM_SUBSCRIPTION_ID</code>, <code>TRE_ID</code> and the existing CI Azure login.
 The CI identity must have ARM read access to blob containers in the TRE Airlock storage account.

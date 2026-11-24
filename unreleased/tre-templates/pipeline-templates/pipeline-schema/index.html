@@ -4773,7 +4773,7 @@ The below example references 2 properties from the primary resource to be used i
 <p>It's possible that a resource property would actually be an array. As an example, the firewall shared service has the <code>rule_collections</code> property. This single property contains
 an array of objects. Since the values inside this array may have been sourced from different resources, it's important to leave other values in tact when modifying the property.
 To do so, the <code>arraySubstitutionAction</code> field supports the following values:
-- <code>append</code> - just append this object into the array
+- <code>append</code> - add this object to the end of the array. If the array already has an equal object, the array does not change. So if the API prepares a step again, for example after an API stop, the array does not get the same object two times.
 - <code>replace</code> - find this object in the array (using the <code>arrayMatchField</code> value), and replace it with this value
 - <code>remove</code> - remove this property from the array (useful for <code>uninstall</code> actions)</p>
 <h2 id="notes">Notes</h2>

@@ -4675,7 +4675,8 @@
 <p>This feature is undergoing active development, and is currently limited in the following ways:
 - Only statically addressable resources can be referred to - <code>shared_services</code>, as these are singletons and can be referenced by a template name.
 - Only the <code>upgrade</code> action for each secondary resource is supported. Support for <code>install</code> / <code>uninstall</code> of secondary resources is planned.
-- No current planned support for <code>customActions</code>.</p>
+- No current planned support for <code>customActions</code>.
+- Cosmos DB keeps the value of a sensitive property as <code>REDACTED</code>. Only the first message of a request has the real value. So put the <code>main</code> step first in each action that sets a sensitive property, as the templates in this repository do. A <code>main</code> step after another step gets <code>REDACTED</code>.</p>
 
 
 
