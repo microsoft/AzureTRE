@@ -328,6 +328,21 @@ def test_substitution_array_append_remove(pipeline_step, primary_resource, resou
     assert len(obj["rule_collections"]) == 0
 
 
+def test_substitution_array_append_does_not_add_an_equal_item(pipeline_step, primary_resource, resource_to_update):
+    # The API can prepare a step again, for example after it stopped between the patch and the send.
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].arraySubstitutionAction = "append"
+    resource_to_update.properties = substitute_properties(
+        copy.deepcopy(step), primary_resource, None, None, resource_to_update
+    )
+    first = copy.deepcopy(resource_to_update.properties["rule_collections"])
+
+    obj = substitute_properties(copy.deepcopy(step), primary_resource, None, None, resource_to_update)
+
+    assert len(first) == 1
+    assert obj["rule_collections"] == first
+
+
 def test_substitution_array_append_replace(pipeline_step, primary_resource, resource_to_update):
     # add object 1
     step = copy.deepcopy(pipeline_step)

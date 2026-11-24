@@ -16,6 +16,7 @@ from api.routes.api import router as api_router
 from api.errors.http_error import http_error_handler
 from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
+from api.request_id import RequestIdMiddleware
 from core import config
 from db.events import bootstrap_database
 from services.logging import initialize_logging, logger
@@ -101,6 +102,7 @@ async def lifespan(app: FastAPI):
         task.add_done_callback(_done_callback)
 
     track(asyncio.create_task(deploymentStatusUpdater.receive_messages(), name="deployment-status-updater"))
+    track(asyncio.create_task(deploymentStatusUpdater.resend_pending_dispatches(), name="pending-dispatch-resender"))
     track(asyncio.create_task(airlockStatusUpdater.receive_messages(), name="airlock-status-updater"))
 
     try:
@@ -139,6 +141,8 @@ def get_application() -> FastAPI:
     )
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
+    # Added after ServerErrorMiddleware, so it also wraps the response for an unhandled exception.
+    application.add_middleware(RequestIdMiddleware)
 
     # Allow local UI debugging with local API
     if config.ENABLE_LOCAL_DEBUGGING:

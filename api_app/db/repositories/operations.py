@@ -1,19 +1,28 @@
 from datetime import datetime, UTC
+import re
 import uuid
-from typing import List
+from typing import List, Optional
 
+from azure.core import MatchConditions
+from azure.cosmos.exceptions import CosmosHttpResponseError
 from pydantic import TypeAdapter
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, mask_sensitive_properties
 from models.domain.authentication import User
 from core import config
 from db.repositories.base import BaseRepository
 
 from db.errors import EntityDoesNotExist
 from models.domain.operation import Operation, OperationStep, Status
+
+# The operation document keeps this entry until the API sends the message of the first step.
+# The Operation model leaves it out, so API responses do not show it.
+PENDING_DISPATCH = "pendingDispatch"
+# Operation and step IDs are UUIDs. The filter predicate below accepts only these characters.
+MESSAGE_ID = re.compile(r"^[\w-]+:[\w-]+$")
 
 
 class OperationRepository(BaseRepository):
@@ -34,6 +43,52 @@ class OperationRepository(BaseRepository):
     @staticmethod
     def create_operation_id() -> str:
         return str(uuid.uuid4())
+
+    @staticmethod
+    def dispatch_message_id(operation_id: str, step_id: str) -> str:
+        message_id = f"{operation_id}:{step_id}"
+        if not MESSAGE_ID.match(message_id):
+            raise ValueError(f"Unexpected message ID {message_id}")
+        return message_id
+
+    async def get_operations_with_pending_dispatch(self, sent_before: float) -> List[dict]:
+        query = "SELECT * FROM c WHERE IS_DEFINED(c.pendingDispatch) AND c.pendingDispatch.createdWhen < @sentBefore"
+        return await self.query(query=query, parameters=[{"name": "@sentBefore", "value": sent_before}])
+
+    async def claim_pending_dispatch(self, operation: dict) -> Optional[str]:
+        """Move the send time of the entry forward. Only one API instance can claim the document that it read.
+        Return the etag after the claim, or None if another writer changed the document first.
+        """
+        try:
+            claimed = await self.container.patch_item(
+                item=operation["id"],
+                partition_key=operation["id"],
+                patch_operations=[
+                    {"op": "set", "path": f"/{PENDING_DISPATCH}/createdWhen", "value": self.get_timestamp()}
+                ],
+                etag=operation["_etag"],
+                match_condition=MatchConditions.IfNotModified,
+            )
+        except CosmosHttpResponseError as error:
+            if error.status_code != 412:
+                raise
+            return None
+        return claimed["_etag"]
+
+    async def clear_pending_dispatch(self, operation_id: str, message_id: str):
+        """Remove the entry if it still names this message. A full write of the operation also removes it."""
+        if not MESSAGE_ID.match(message_id):
+            raise ValueError(f"Unexpected message ID {message_id}")
+        try:
+            await self.container.patch_item(
+                item=operation_id,
+                partition_key=operation_id,
+                patch_operations=[{"op": "remove", "path": f"/{PENDING_DISPATCH}"}],
+                filter_predicate=f"FROM c WHERE c.{PENDING_DISPATCH}.messageId = '{message_id}'",
+            )
+        except CosmosHttpResponseError as error:
+            if error.status_code != 412:
+                raise
 
     def create_main_step(
         self, resource_template: dict, action: str, resource_id: str, status: Status, message: str
@@ -62,12 +117,17 @@ class OperationRepository(BaseRepository):
         user: User,
         resource_repo: ResourceRepository,
         resource_template_repo: ResourceTemplateRepository,
+        resource_properties: Optional[dict] = None,
     ) -> Operation:
+        """resource_properties are the properties of the resource in memory, from which the API builds the first
+        message. A cascade reads resource_list from Cosmos DB, which keeps a placeholder for each sensitive value.
+        """
         operation_id = self.create_operation_id()
 
         # get the right "awaiting" message based on the action
         status, message = self.get_initial_status(action)
         all_steps = []
+        sensitive_values = False
         for resource in resource_list:
             name = resource["templateName"]
             version = resource["templateVersion"]
@@ -81,6 +141,12 @@ class OperationRepository(BaseRepository):
             resource_template = await resource_template_repo.get_template_by_name_and_version(
                 name, version, resource_type, primary_parent_service_name
             )
+            if resource["id"] == resource_id:
+                # The API builds the first message from this resource, which can have real sensitive values.
+                # Cosmos DB keeps a placeholder for each of them.
+                properties = resource_properties if resource_properties is not None else resource.get("properties")
+                properties = properties or {}
+                sensitive_values = mask_sensitive_properties(properties, resource_template) != properties
             resource_template_dict = resource_template.model_dump(exclude_none=True)
             # if the template has a pipeline defined for this action, copy over all the steps to the ops document
             steps = await self.build_step_list(
@@ -122,7 +188,16 @@ class OperationRepository(BaseRepository):
             steps=all_steps,
         )
 
-        await self.save_item(operation)
+        # The message of the first step goes out after this write. Write the entry in the same document,
+        # so that the deployment status updater can send the message if the API stops before the send.
+        document = operation.model_dump()
+        document[PENDING_DISPATCH] = {
+            "stepId": all_steps[0].id,
+            "messageId": self.dispatch_message_id(operation_id, all_steps[0].id),
+            "createdWhen": timestamp,
+            "sensitiveValues": sensitive_values,
+        }
+        await self.save_item_dict(document)
         return operation
 
     async def build_step_list(
@@ -259,6 +334,19 @@ class OperationRepository(BaseRepository):
     async def get_operations_by_resource_id(self, resource_id: str) -> List[Operation]:
         query = self.operations_query() + f' c.resourceId = "{resource_id}"'
         operations = await self.query(query=query)
+        return TypeAdapter(List[Operation]).validate_python(operations)
+
+    async def get_later_operations_for_resource(self, resource_id: str, created_after: float) -> List[Operation]:
+        """Return the operations after a time on the resource, or with a step for it, for example a cascade."""
+        query = (
+            "SELECT * FROM c WHERE c.createdWhen > @createdAfter AND (c.resourceId = @resourceId"
+            " OR EXISTS(SELECT VALUE s FROM s IN c.steps WHERE s.resourceId = @resourceId))"
+        )
+        parameters = [
+            {"name": "@createdAfter", "value": created_after},
+            {"name": "@resourceId", "value": resource_id},
+        ]
+        operations = await self.query(query=query, parameters=parameters)
         return TypeAdapter(List[Operation]).validate_python(operations)
 
     async def resource_has_deployed_operation(self, resource_id: str) -> bool:

@@ -10,6 +10,7 @@ resource "local_file" "config_local" {
 }
 
 resource "azurerm_storage_share_file" "config_local" {
+  provider         = azurerm.shared_key
   name             = "config-local.js"
   storage_share_id = azurerm_storage_share.atlas_ui.id
   source           = local.config_local_file_path
@@ -20,10 +21,11 @@ resource "azurerm_storage_share_file" "config_local" {
 }
 
 resource "azurerm_linux_web_app" "atlas_ui" {
-  name                      = local.atlas_ui_name
-  location                  = data.azurerm_resource_group.ws.location
-  resource_group_name       = data.azurerm_resource_group.ws.name
-  virtual_network_subnet_id = data.azurerm_subnet.web_app.id
+  public_network_access_enabled = false
+  name                          = local.atlas_ui_name
+  location                      = data.azurerm_resource_group.ws.location
+  resource_group_name           = data.azurerm_resource_group.ws.name
+  virtual_network_subnet_id     = data.azurerm_subnet.web_app.id
 
   service_plan_id         = data.azurerm_service_plan.workspace.id
   https_only              = true
@@ -68,6 +70,9 @@ resource "azurerm_linux_web_app" "atlas_ui" {
 
   depends_on = [
     azurerm_storage_share_file.config_local,
+    # Azure rejects the web app subnet link while another subnet write runs in the same VNet.
+    # The PostgreSQL server create makes the last write to the PostgreSQL subnet.
+    azurerm_postgresql_flexible_server.postgres,
   ]
 
   tags = local.tre_workspace_service_tags
