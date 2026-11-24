@@ -4,6 +4,11 @@ from shared.logging import logger, tracer
 
 
 VERSION = __version__
+STORAGE_SUFFIXES = {
+    "AzureCloud": "core.windows.net",
+    "AzureUSGovernment": "core.usgovcloudapi.net",
+    "AzureChinaCloud": "core.chinacloudapi.cn",
+}
 
 
 def get_config() -> dict:
@@ -24,6 +29,9 @@ def get_config() -> dict:
         config["azure_environment"] = os.environ.get("AZURE_ENVIRONMENT", "AzureCloud")
         config["aad_authority_url"] = os.environ.get("AAD_AUTHORITY_URL", "https://login.microsoftonline.com")
         config["microsoft_graph_fqdn"] = os.environ.get("MICROSOFT_GRAPH_FQDN", "graph.microsoft.com")
+        # The execution leases use the Terraform state account, which the identity of the RP can already write.
+        suffix = STORAGE_SUFFIXES.get(config["azure_environment"], STORAGE_SUFFIXES["AzureCloud"])
+        config["mgmt_blob_url"] = f"https://{config['tfstate_storage_account_name']}.blob.{suffix}"
 
         try:
             config["number_processes_int"] = int(config["number_processes"])
@@ -87,5 +95,10 @@ def get_config() -> dict:
             for env_var_name in os.environ
             if env_var_name.startswith("RP_BUNDLE")
         }
+        # Test setting, off by default. While Porter runs, the RP does not renew the session lock,
+        # so that Service Bus gives the message to another worker. Never turn it on in production.
+        config["test_skip_session_lock_renewal"] = (
+            str(config["bundle_params"].get("test_skip_session_lock_renewal", "")).lower() == "true"
+        )
 
     return config

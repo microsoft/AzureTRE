@@ -33,6 +33,7 @@ async def test_lifespan_lifecycle_normal(mock_airlock, mock_deployment, mock_boo
 
     mock_deployment_instance = MagicMock()
     mock_deployment_instance.init_repos = AsyncMock()
+    mock_deployment_instance.resend_pending_dispatches = AsyncMock()
     mock_deployment_instance.receive_messages = AsyncMock()
     mock_deployment.return_value = mock_deployment_instance
 
@@ -47,9 +48,10 @@ async def test_lifespan_lifecycle_normal(mock_airlock, mock_deployment, mock_boo
         assert hasattr(app.state, "background_tasks")
         assert isinstance(app.state.background_tasks, BackgroundTaskManager)
         tasks = app.state.background_tasks.get_tasks()
-        assert len(tasks) == 2
+        assert len(tasks) == 3
         names = {t.get_name() for t in tasks}
         assert "deployment-status-updater" in names
+        assert "pending-dispatch-resender" in names
         assert "airlock-status-updater" in names
 
     assert app.state.background_tasks.is_shutting_down is True
@@ -65,6 +67,7 @@ async def test_lifespan_task_failure_during_runtime(mock_logger, mock_airlock, m
 
     mock_deployment_instance = MagicMock()
     mock_deployment_instance.init_repos = AsyncMock()
+    mock_deployment_instance.resend_pending_dispatches = AsyncMock()
 
     async def fail_immediately():
         raise ValueError("Runtime failure")
@@ -101,6 +104,7 @@ async def test_lifespan_task_failure_during_shutdown(mock_logger, mock_airlock, 
 
     mock_deployment_instance = MagicMock()
     mock_deployment_instance.init_repos = AsyncMock()
+    mock_deployment_instance.resend_pending_dispatches = AsyncMock()
 
     async def raise_teardown_exception():
         try:
@@ -146,6 +150,7 @@ async def test_lifespan_timeout_preserves_completed_task_exceptions(
 
     mock_deployment_instance = MagicMock()
     mock_deployment_instance.init_repos = AsyncMock()
+    mock_deployment_instance.resend_pending_dispatches = AsyncMock()
 
     # Deployment updater completes quickly during cancellation by raising an exception
     async def raise_teardown_exception():
@@ -226,6 +231,7 @@ async def test_lifespan_cancellation_suppression_strictly_bounded(
 
     mock_deployment_instance = MagicMock()
     mock_deployment_instance.init_repos = AsyncMock()
+    mock_deployment_instance.resend_pending_dispatches = AsyncMock()
 
     hang_event = asyncio.Event()
 

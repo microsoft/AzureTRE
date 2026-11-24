@@ -36,6 +36,16 @@ Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", 
 If an E2E test fails while waiting for an operation, check its test log.
 Use the timestamp and operation ID to find the matching API logs.
 
+If an operation poll gets an unexpected HTTP status, the test logs the UTC time, the operation path, the status and the `request-id` header of the response.
+The API puts the trace of each request in this header as `|<trace ID>.<span ID>.`, also for HTTP 500.
+App Insights stores the trace ID as `OperationId`. Run this query in the Log Analytics workspace of the environment:
+
+```kusto
+union AppRequests, AppExceptions, AppTraces
+| where OperationId == "<trace ID>"
+| order by TimeGenerated asc
+```
+
 ## Airlock draft deletion
 
 The draft-deletion case requires AzureCloud, `ARM_SUBSCRIPTION_ID`, `TRE_ID` and the existing CI Azure login.
