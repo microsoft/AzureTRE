@@ -29,22 +29,13 @@ env:
 jobs:
   renew_letsencrypt_certs:
     name: Renew Lets Encrypt Certificates
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: ${{ github.event.inputs.environment || 'CICD' }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
-
-      - name: Install specific Azure CLI version
-        run: |
-          AZ_DIST=$(lsb_release -cs)
-          AZ_VER=2.81.0
-
-          apt-cache policy azure-cli
-          sudo apt-get install azure-cli="${AZ_VER}-1~${AZ_DIST}" --allow-downgrades
-          az version
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
@@ -59,6 +50,9 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+
+      - name: Update apt package index
+        run: sudo apt-get update
 
       - name: Renew Certificates
         shell: bash
