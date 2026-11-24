@@ -122,8 +122,9 @@ async def test_private_fhir_access_and_dicom_update(verify):
                     client, {"fhir": f"{fhir_url}/metadata", "dicom": f"{dicom_url}/health/check"}
                 )
             # Read the resources again after the update.
-            # FHIR is not in this list: Azure keeps publicNetworkAccess Enabled on FHIR, also after a request
-            # sets Disabled. The private endpoint on the workspace blocks public traffic to FHIR (checked above).
+            # FHIR is not in this list, because the bundle does not set publicNetworkAccess on FHIR. FHIR from
+            # Health 1.0.0 reports Disabled, but FHIR from 0.3.8 reports Enabled, also after a request sets
+            # Disabled. The public requests above make sure that the private endpoint blocks FHIR.
             network = {}
             for name, resource_id in (("workspace", workspace_arm_id), ("dicom", dicom_id)):
                 record = await arm.request("GET", resource_id, HEALTH_API)

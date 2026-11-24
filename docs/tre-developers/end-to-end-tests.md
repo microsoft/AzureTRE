@@ -234,7 +234,8 @@ It then reads the Patient again and makes sure that the DICOM host is private an
 At the end, the case sends FHIR and DICOM requests without a token from the test runner, outside the workspace network.
 Azure must reject each request with HTTP 403. The case tries again for up to 5 minutes, because Azure can take this time to block public traffic.
 The case then reads the healthcare workspace and DICOM again, and makes sure that each has public network access disabled.
-The case does not read this value on FHIR. Azure keeps `publicNetworkAccess` `Enabled` on FHIR, also after a request sets `Disabled`.
+The case does not read this value on FHIR, because the bundle does not set it.
+FHIR from Health 1.0.0 reports `Disabled`, but FHIR from Health 0.3.8 reports `Enabled`, also after a request sets `Disabled`.
 The Health job uses the SQL time limits with its own `HEALTH_VALIDATION_DEADLINE`.
 
 ### Run the branch workflow before merge

@@ -34,7 +34,8 @@ The API rejects a create or an update without FHIR and DICOM with HTTP 400, befo
 - A create must give `deploy_fhir` and `deploy_dicom`, and one of them must be `true`.
 - A PATCH that turns off FHIR or DICOM must also give the other service as `true`. The update form of the TRE UI sends both values.
 
-The form of the TRE UI shows an error under FHIR and DICOM when both are off.
+If FHIR and DICOM are both off, the form of the TRE UI does not send the request.
+The error list at the top of the form shows an error for `deploy_fhir` and for `deploy_dicom`.
 If an install, an update or an upgrade has neither FHIR nor DICOM, Terraform also stops before it changes a resource, with the message "Deploy FHIR, DICOM or both".
 This applies to an upgrade of an earlier Health service without FHIR and DICOM. The upgrade dialog of the TRE UI cannot change a property.
 If the upgrade stops for this reason, update the service and turn on FHIR or DICOM, or delete the service.
@@ -64,8 +65,9 @@ An upgrade to version 1.0.0 turns it off.
 
 The private endpoint on the healthcare workspace blocks public traffic to FHIR and DICOM.
 A request from outside the workspace network gets HTTP 403.
-The FHIR service reports `publicNetworkAccess` `Enabled`, but Azure does not use this value when the workspace has an approved private endpoint.
-Azure also keeps this value when a request sets it to `Disabled`.
+A FHIR service from version 1.0.0 reports `publicNetworkAccess` `Disabled`.
+A FHIR service from version 0.3.8 reports `Enabled`, but Azure does not use this value when the workspace has an approved private endpoint.
+Azure keeps `Enabled` when a request sets the value to `Disabled`. The bundle does not set this value, so the upgrade to version 1.0.0 does not change it.
 
 ## Authentication
 
