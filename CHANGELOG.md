@@ -10,6 +10,11 @@ Setting to `false` will delete existing airlock storage accounts and must only b
   The upgrade needs a [force version update](docs/tre-admins/upgrading-resources.md#force-version-update). After the upgrade, update the CycleCloud shared service and add the address space of each workspace that has a cluster to `cluster_address_spaces`.
   Other resources in the core virtual network can then connect only on TCP ports 443 and 22. Networks outside it, for example on-premises networks, cannot connect.
   See the [CycleCloud upgrade steps](docs/tre-templates/shared-services/cyclecloud.md#upgrade-to-version-100). ([#5301](https://github.com/microsoft/AzureTRE/issues/5301))
+* A bundle gets `REDACTED` for a sensitive property in a later action that does not give a new value for it. This now also applies after an update that set the property.
+  It also applies to a sensitive property in an array item. It also applies to a property with more than one declaration in the template, if one declaration has `sensitive`.
+  If a custom bundle needs such a value in a later action, make the bundle keep it, for example in Key Vault. The base workspace does this for its client secret. (`api` 0.29.0) ([#5298](https://github.com/microsoft/AzureTRE/issues/5298))
+* The `append` array action of a pipeline step does not add an item that the array already has. So a custom pipeline cannot append the same item two times.
+  The API does this because it can prepare a step again, for example at a resend after the patch of the resource. See the [pipeline schema](docs/tre-templates/pipeline-templates/pipeline-schema.md). (`api` 0.29.0) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
 
 ENHANCEMENTS:
 * Register the OpenAI bundle for branch validation, add GPT-5.1 as the default model and check regional model and quota prerequisites before its private lifecycle test. (`tre-workspace-service-openai` 1.1.0) ([#5150](https://github.com/microsoft/AzureTRE/issues/5150))
@@ -20,6 +25,7 @@ ENHANCEMENTS:
 * Add an independent CycleCloud server lifecycle with marketplace checks, VM power actions and bounded cleanup. ([#5159](https://github.com/microsoft/AzureTRE/issues/5159))
 * Add independent private OHDSI lifecycle validation with callback, firewall, shared DNS preservation and bounded cleanup checks. ([#5149](https://github.com/microsoft/AzureTRE/issues/5149))
 * Add a bundle evidence helper that records the deployed template version of a resource that a test gives to it, without the resource properties. ([#5302](https://github.com/microsoft/AzureTRE/pull/5302))
+* Add a `Request-Id` header with the trace ID to each API response, also to an HTTP 500. The E2E operation poll already logs this header, so a failed poll can be found in App Insights. (`api` 0.29.0) ([#5202](https://github.com/microsoft/AzureTRE/issues/5202))
 * Select individual bundle tests and record lifecycle evidence for base workspaces, private Azure SQL, Airlock, Linux VMs and certificate reuse across reinstallation. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
@@ -72,6 +78,35 @@ BUG FIXES:
 * Upload the OHDSI Atlas UI config with the storage account key, as the share and its web app mount already do. Since azurerm 4, the upload used Azure AD and failed with HTTP 403, because the resource processor has no file data role. (`tre-workspace-service-ohdsi` 0.3.14) ([#5300](https://github.com/microsoft/AzureTRE/issues/5300))
 * Create the OHDSI Atlas UI web app after the PostgreSQL server, and the WebAPI web app after the Atlas UI web app. Azure rejected the web app subnet link with ReferencedResourceNotProvisioned while a PostgreSQL subnet write ran in the same VNet. (`tre-workspace-service-ohdsi` 0.3.14) ([#5300](https://github.com/microsoft/AzureTRE/issues/5300))
 * Declare the `Microsoft.Storage` service endpoint on the OHDSI PostgreSQL subnet. The PostgreSQL service adds it during the server create, and each upgrade removed it again. (`tre-workspace-service-ohdsi` 0.3.14) ([#5300](https://github.com/microsoft/AzureTRE/issues/5300))
+* Send an empty outputs list when the resource processor cannot read the Porter outputs. The API rejected the empty dict, so a pipeline step that failed to read its outputs, for example after a transient container registry login failure, stayed in progress until the caller stopped waiting.
+  The resource processor also sends the failed status for the step if the output text of Porter is not a JSON list. (`resource_processor` 0.13.16) ([#5297](https://github.com/microsoft/AzureTRE/issues/5297))
+* Give each resource processor worker its own Azure CLI folder. Each worker signs in before each Porter action. When two workers did this at the same time, one worker read the shared profile file while the other wrote it, and the next `az acr login` failed with `Please run 'az login'`. The action then failed after 3 seconds. (`resource_processor` 0.13.16)
+  ([#5297](https://github.com/microsoft/AzureTRE/issues/5297))
+* Prevent a second run of a resource processor step when Service Bus gives its message to a second worker. The resource processor renews the session lock with retries, and a blob lease lets one worker at a time run Porter for a resource. The API ignores a status from another run of a finished step.
+  An upgrade no longer installs a resource that Porter uninstalled. An upgrade also fails with `updating_failed` if the resource processor cannot read the Porter installation in 30 seconds.
+  A worker that lost its session while it waited for the lease does not run Porter.
+  Two runs can still overlap if a worker loses the lease and its session during one Porter run. They can also overlap if a worker stops and its Porter action continues. The resource processor document gives the [known limits](docs/tre-developers/resource-processor.md#known-limits).
+  (`core` 0.19.1, `resource_processor` 0.13.16, `api` 0.29.0) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
+* Send the first step message of a request again if the API stops after it writes the operation and before it sends the message. The API keeps a `pendingDispatch` entry in the operation until the send, and the deployment status updater handles older entries every 5 minutes.
+  If that message has sensitive values from an install or an update, the request fails with a clear message, because the API does not store these values.
+  The resend does not change a resource that a later request changed, and it does not change the resource of a first step on another resource.
+  (`api` 0.29.0) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
+* Store a placeholder for each sensitive property when the API saves an update of a resource, as it already does at the install. The new value goes to the resource processor only in the request message.
+  Before this change, an update stored the new value of a sensitive property in Cosmos DB and in the resource history. An example is the `client_secret` of a workspace.
+  API responses with the resource properties then included this value.
+  A database migration replaces the values that earlier updates stored. If an update set the client secret of a workspace before this version, you can create a new secret for the workspace application.
+  Then update the workspace with the new secret, and delete the old secret.
+  If that update fails, send it again with the new secret. The update form shows `REDACTED`, and an update with `REDACTED` keeps the earlier secret.
+  Delete the old secret only after an update with the new secret succeeds.
+  The placeholder also covers a sensitive property in an array item, at the install too. In a later action that does not give a new value for such a property, the bundle gets `REDACTED`, as for other sensitive properties.
+  The API finds a sensitive value by its path in the template schema, also through a local `$ref` and the keywords for other keys and list items, for example `additionalProperties`, `patternProperties` and `prefixItems`. A key with the same name at a different path keeps its value.
+  If a template declares a property in more than one branch, one declaration with `sensitive` is enough. At an update that changes the template version, the new version decides which properties are sensitive.
+  For a template whose action has more steps than `main`, for example the unrestricted workspace, the first message now also gets the real sensitive values at an install. (`api` 0.29.0) ([#5298](https://github.com/microsoft/AzureTRE/issues/5298))
+* Describe a schema error of a resource request without the submitted values. The API logged the full jsonschema error text and returned it in the HTTP 400 response of a create request.
+  The create route of an Airlock review VM did the same in its HTTP 500 response.
+  That text contains the submitted properties, for example a client secret. The response now names the property and the template rule.
+  A Pydantic model error of a create request had the same problem, because it is also a `ValueError` and its text has the input values. Its response and its log entry now give the location and the message of each error, without the input value.
+  The API also wrote this text to its console log, which the core Log Analytics workspace keeps for 30 days by default. If a create request with a client secret got a schema error before this version, create a new secret for the workspace application. (`api` 0.29.0) ([#5298](https://github.com/microsoft/AzureTRE/issues/5298))
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
 * Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))

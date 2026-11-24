@@ -67,6 +67,9 @@ class OperationStep(AzureTREModel):
     statusUpdateComplete: bool = Field(
         False, description="Whether the terminal status resource writes and next-step dispatch have completed"
     )
+    executionId: Optional[str] = Field(
+        default=None, description="The resource processor run whose status the step shows last"
+    )
     # An example for this property will be if we have a step that is responsible for updating the firewall, and its origin was the guacamole workspace service, the id here will be the guacamole id
     sourceTemplateResourceId: Optional[str] = Field(
         default=None, title="sourceTemplateResourceId", description="Id of the parent of the resource to update"
@@ -130,3 +133,5 @@ class DeploymentStatusUpdateMessage(AzureTREModel):
     status: Status = Field(title="", description="")
     message: str = Field(title="", description="")
     outputs: List[Output] = Field(title="", description="", default_factory=list)
+    # A resource processor before 0.13.16 does not send this field.
+    executionId: Optional[str] = Field(default=None, title="", description="The resource processor run")
