@@ -49,7 +49,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Let a fork run CI in a shared subscription with the `CI_ENV_PREFIX` variable and a `ci_repository` tag, which scope cleanup and destruction. Keep a CI environment, for example for a demo, with a `ci_keep_until` tag. (`core` 0.18.15, `devops` 0.7.0, `build-scripts` 1.1.5) ([#5272](https://github.com/microsoft/AzureTRE/pull/5272))
 
 BUG FIXES:
-* Fix workspace NSG rule name `outbound-within-services-subnet` to `outbound-within-workspace-vnet` and correct the Terraform `moved` blocks in `tre-workspace-base` to reference existing resources. (`tre-workspace-base` 2.12.5) ([#5311](https://github.com/microsoft/AzureTRE/issues/5311))
+* Update workspace templates to rename NSG rule name `outbound-within-services-subnet` to `outbound-within-workspace-vnet` and correct the Terraform `moved` blocks in `tre-workspace-base` to reference existing resources. ([#5311](https://github.com/microsoft/AzureTRE/issues/5311))
 * Update Nexus from 3.94.0 to 3.94.3. The Nexus 3.94.3 image stops trusting the eMudhra certificate chains that Sonatype reports as compromised. (`tre-shared-service-sonatype-nexus` 3.11.3) ([#5276](https://github.com/microsoft/AzureTRE/issues/5276))
 * Change the Azure Monitor private link scope of the core and of each workspace only after its private endpoint exists. In workspaces, also wait 5 minutes after the scope changes before Terraform deletes the endpoint.
   A scope change makes Azure update the endpoint, and during the update Azure rejects DNS zone group changes with 409 AnotherOperationInProgress, so some workspaces failed to deploy or delete.
