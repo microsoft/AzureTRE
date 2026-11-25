@@ -28,6 +28,12 @@ ARG TERRAFORM_VERSION="1.14.3"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
+# Install tflint
+# Keep in sync with the Super-Linter image used by CI and make lint.
+ARG TFLINT_VERSION="0.63.1"
+COPY .devcontainer/scripts/tflint.sh /tmp/
+RUN bash /tmp/tflint.sh "${TFLINT_VERSION}" /usr/bin
+
 ARG DOCKER_GROUP_ID
 COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
@@ -37,7 +43,7 @@ ARG DOCKER_CE_VERSION="5:29.1.3-1~debian.12~bookworm"
 ARG DOCKER_CE_CLI_VERSION="5:29.1.3-1~debian.12~bookworm"
 ARG DOCKER_CONTAINERD_VERSION="2.2.1-1~debian.12~bookworm"
 ARG DOCKER_COMPOSE_PLUGIN_VERSION="5.0.0-1~debian.12~bookworm"
-RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release --no-install-recommends \
+RUN apt-get update && apt-get install -y ca-certificates curl dnsutils gnupg lsb-release --no-install-recommends \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \

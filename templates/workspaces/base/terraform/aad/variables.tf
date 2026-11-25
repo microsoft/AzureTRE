@@ -29,4 +29,3 @@ variable "auto_grant_workspace_consent" {
 variable "core_api_client_id" {
   type = string
 }
-

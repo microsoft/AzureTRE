@@ -1,7 +1,7 @@
 import { AuthenticationResult, InteractionRequiredAuthError } from "@azure/msal-browser";
 import { useMsal, useAccount } from "@azure/msal-react";
 import { useCallback } from "react";
-import { APIError } from "../models/exceptions";
+import { APIError, API_UNAVAILABLE_MESSAGE } from "../models/exceptions";
 import config from "../config.json";
 
 export enum ResultType {
@@ -118,42 +118,66 @@ export const useAuthApiCall = () => {
       // add a body if we're given one
       if (body) opts.body = JSON.stringify(body);
 
-      let resp;
-      try {
-        resp = await fetch(`${config.treUrl}/${endpoint}`, opts);
-      } catch (err: any) {
-        let e = err as APIError;
+      const controller = new AbortController();
+      // The timeout covers the whole call, including reading the response body.
+      const timeout = window.setTimeout(() => controller.abort(), 30000);
+      const unavailableError = (err: any) => {
+        const e = new APIError();
         e.name = "API call failure";
-        e.message = "Unable to make call to API Backend";
+        e.message = err?.message || "Unable to reach the TRE API";
+        e.status = controller.signal.aborted || err?.name === "AbortError" ? 408 : 503;
+        e.userMessage = API_UNAVAILABLE_MESSAGE;
         e.endpoint = `${config.treUrl}/${endpoint}`;
-        throw e;
-      }
-
-      if (!resp.ok) {
-        let e = new APIError();
-        e.message = await resp.text();
-        e.status = resp.status;
-        e.endpoint = endpoint;
-        throw e;
-      }
-
+        e.stack = err?.stack;
+        e.exception = err instanceof Error ? err.message : String(err);
+        return e;
+      };
       try {
-        switch (resultType) {
-          case ResultType.Text:
-            let text = await resp.text();
-            config.debug && console.log(text);
-            return text;
-          case ResultType.JSON:
-            let json = await resp.json();
-            config.debug && console.log(json);
-            return json;
-          case ResultType.None:
-            return;
+        let resp;
+        try {
+          opts.signal = controller.signal;
+          resp = await fetch(`${config.treUrl}/${endpoint}`, opts);
+        } catch (err: any) {
+          throw unavailableError(err);
         }
-      } catch (err: any) {
-        let e = err as APIError;
-        e.name = "Error with response data";
-        throw e;
+
+        if (!resp.ok) {
+          let e = new APIError();
+          try {
+            e.message = await resp.text();
+          } catch (err: any) {
+            if (controller.signal.aborted) throw unavailableError(err);
+            throw err;
+          }
+          e.status = resp.status;
+          e.endpoint = endpoint;
+          if (resp.status === 408 || resp.status === 429 || resp.status >= 500) {
+            e.userMessage = API_UNAVAILABLE_MESSAGE;
+          }
+          throw e;
+        }
+
+        try {
+          switch (resultType) {
+            case ResultType.Text:
+              let text = await resp.text();
+              config.debug && console.log(text);
+              return text;
+            case ResultType.JSON:
+              let json = await resp.json();
+              config.debug && console.log(json);
+              return json;
+            case ResultType.None:
+              return;
+          }
+        } catch (err: any) {
+          if (controller.signal.aborted) throw unavailableError(err);
+          let e = err as APIError;
+          e.name = "Error with response data";
+          throw e;
+        }
+      } finally {
+        window.clearTimeout(timeout);
       }
     },
     [account, instance],

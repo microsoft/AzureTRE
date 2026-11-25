@@ -26,29 +26,44 @@ class UserResourceRepository(ResourceRepository):
 
     @staticmethod
     def user_resources_query(workspace_id: str, service_id: str):
-        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
+        query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId"
         parameters = [
-            {'name': '@resourceType', 'value': ResourceType.UserResource},
-            {'name': '@serviceId', 'value': service_id},
-            {'name': '@workspaceId', 'value': workspace_id}
+            {"name": "@resourceType", "value": ResourceType.UserResource},
+            {"name": "@serviceId", "value": service_id},
+            {"name": "@workspaceId", "value": workspace_id},
         ]
         return query, parameters
 
     @staticmethod
     def active_user_resources_query(workspace_id: str, service_id: str):
-        query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
+        query = "SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId"
         parameters = [
-            {'name': '@deletedStatus', 'value': Status.Deleted},
-            {'name': '@resourceType', 'value': ResourceType.UserResource},
-            {'name': '@serviceId', 'value': service_id},
-            {'name': '@workspaceId', 'value': workspace_id}
+            {"name": "@deletedStatus", "value": Status.Deleted},
+            {"name": "@resourceType", "value": ResourceType.UserResource},
+            {"name": "@serviceId", "value": service_id},
+            {"name": "@workspaceId", "value": workspace_id},
         ]
         return query, parameters
 
-    async def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, parent_template_name: str, user_id: str, user_roles: List[str], owner_id: str = None) -> Tuple[UserResource, ResourceTemplate]:
+    async def create_user_resource_item(
+        self,
+        user_resource_input: UserResourceInCreate,
+        workspace_id: str,
+        parent_workspace_service_id: str,
+        parent_template_name: str,
+        user_id: str,
+        user_roles: List[str],
+        owner_id: str = None,
+    ) -> Tuple[UserResource, ResourceTemplate]:
         full_user_resource_id = str(uuid.uuid4())
 
-        template = await self.validate_input_against_template(user_resource_input.templateName, user_resource_input, ResourceType.UserResource, user_roles, parent_template_name)
+        template = await self.validate_input_against_template(
+            user_resource_input.templateName,
+            user_resource_input,
+            ResourceType.UserResource,
+            user_roles,
+            parent_template_name,
+        )
 
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
         resource_spec_parameters = {**user_resource_input.properties, **self.get_user_resource_spec_params()}
@@ -61,8 +76,8 @@ class UserResourceRepository(ResourceRepository):
             templateName=user_resource_input.templateName,
             templateVersion=template.version,
             properties=resource_spec_parameters,
-            resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{full_user_resource_id}',
-            etag=''
+            resourcePath=f"/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{full_user_resource_id}",
+            etag="",
         )
 
         return user_resource, template
@@ -77,9 +92,9 @@ class UserResourceRepository(ResourceRepository):
 
     async def get_user_resource_by_id(self, workspace_id: str, service_id: str, resource_id: str) -> UserResource:
         query, parameters = self.user_resources_query(str(workspace_id), str(service_id))
-        query += ' AND c.id = @resourceId AND c.deploymentStatus != @deletedStatus'
-        parameters.append({'name': '@resourceId', 'value': str(resource_id)})
-        parameters.append({'name': '@deletedStatus', 'value': Status.Deleted})
+        query += " AND c.id = @resourceId AND c.deploymentStatus != @deletedStatus"
+        parameters.append({"name": "@resourceId", "value": str(resource_id)})
+        parameters.append({"name": "@deletedStatus", "value": Status.Deleted})
         user_resources = await self.query(query=query, parameters=parameters)
         if not user_resources:
             raise EntityDoesNotExist
@@ -88,7 +103,32 @@ class UserResourceRepository(ResourceRepository):
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    async def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, parent_template_name: str, user: User, force_version_update: bool) -> Tuple[UserResource, ResourceTemplate]:
+    async def patch_user_resource(
+        self,
+        user_resource: UserResource,
+        user_resource_patch: ResourcePatch,
+        etag: str,
+        resource_template_repo: ResourceTemplateRepository,
+        resource_history_repo: ResourceHistoryRepository,
+        parent_template_name: str,
+        user: User,
+        force_version_update: bool,
+    ) -> Tuple[UserResource, ResourceTemplate]:
         # get user resource template
-        user_resource_template = await resource_template_repo.get_template_by_name_and_version(user_resource.templateName, user_resource.templateVersion, ResourceType.UserResource, parent_service_name=parent_template_name)
-        return await self.patch_resource(user_resource, user_resource_patch, user_resource_template, etag, resource_template_repo, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE, force_version_update)
+        user_resource_template = await resource_template_repo.get_template_by_name_and_version(
+            user_resource.templateName,
+            user_resource.templateVersion,
+            ResourceType.UserResource,
+            parent_service_name=parent_template_name,
+        )
+        return await self.patch_resource(
+            user_resource,
+            user_resource_patch,
+            user_resource_template,
+            etag,
+            resource_template_repo,
+            resource_history_repo,
+            user,
+            strings.RESOURCE_ACTION_UPDATE,
+            force_version_update,
+        )

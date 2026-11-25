@@ -1,19 +1,28 @@
 from datetime import datetime, UTC
+import re
 import uuid
-from typing import List
+from typing import List, Optional
 
+from azure.core import MatchConditions
+from azure.cosmos.exceptions import CosmosHttpResponseError
 from pydantic import TypeAdapter
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, mask_sensitive_properties
 from models.domain.authentication import User
 from core import config
 from db.repositories.base import BaseRepository
 
 from db.errors import EntityDoesNotExist
 from models.domain.operation import Operation, OperationStep, Status
+
+# The operation document keeps this entry until the API sends the message of the first step.
+# The Operation model leaves it out, so API responses do not show it.
+PENDING_DISPATCH = "pendingDispatch"
+# Operation and step IDs are UUIDs. The filter predicate below accepts only these characters.
+MESSAGE_ID = re.compile(r"^[\w-]+:[\w-]+$")
 
 
 class OperationRepository(BaseRepository):
@@ -25,7 +34,7 @@ class OperationRepository(BaseRepository):
 
     @staticmethod
     def operations_query():
-        return 'SELECT * FROM c WHERE'
+        return "SELECT * FROM c WHERE"
 
     @staticmethod
     def get_timestamp() -> float:
@@ -35,7 +44,55 @@ class OperationRepository(BaseRepository):
     def create_operation_id() -> str:
         return str(uuid.uuid4())
 
-    def create_main_step(self, resource_template: dict, action: str, resource_id: str, status: Status, message: str) -> OperationStep:
+    @staticmethod
+    def dispatch_message_id(operation_id: str, step_id: str) -> str:
+        message_id = f"{operation_id}:{step_id}"
+        if not MESSAGE_ID.match(message_id):
+            raise ValueError(f"Unexpected message ID {message_id}")
+        return message_id
+
+    async def get_operations_with_pending_dispatch(self, sent_before: float) -> List[dict]:
+        query = "SELECT * FROM c WHERE IS_DEFINED(c.pendingDispatch) AND c.pendingDispatch.createdWhen < @sentBefore"
+        return await self.query(query=query, parameters=[{"name": "@sentBefore", "value": sent_before}])
+
+    async def claim_pending_dispatch(self, operation: dict) -> Optional[str]:
+        """Move the send time of the entry forward. Only one API instance can claim the document that it read.
+        Return the etag after the claim, or None if another writer changed the document first.
+        """
+        try:
+            claimed = await self.container.patch_item(
+                item=operation["id"],
+                partition_key=operation["id"],
+                patch_operations=[
+                    {"op": "set", "path": f"/{PENDING_DISPATCH}/createdWhen", "value": self.get_timestamp()}
+                ],
+                etag=operation["_etag"],
+                match_condition=MatchConditions.IfNotModified,
+            )
+        except CosmosHttpResponseError as error:
+            if error.status_code != 412:
+                raise
+            return None
+        return claimed["_etag"]
+
+    async def clear_pending_dispatch(self, operation_id: str, message_id: str):
+        """Remove the entry if it still names this message. A full write of the operation also removes it."""
+        if not MESSAGE_ID.match(message_id):
+            raise ValueError(f"Unexpected message ID {message_id}")
+        try:
+            await self.container.patch_item(
+                item=operation_id,
+                partition_key=operation_id,
+                patch_operations=[{"op": "remove", "path": f"/{PENDING_DISPATCH}"}],
+                filter_predicate=f"FROM c WHERE c.{PENDING_DISPATCH}.messageId = '{message_id}'",
+            )
+        except CosmosHttpResponseError as error:
+            if error.status_code != 412:
+                raise
+
+    def create_main_step(
+        self, resource_template: dict, action: str, resource_id: str, status: Status, message: str
+    ) -> OperationStep:
         return OperationStep(
             id=str(uuid.uuid4()),
             templateStepId="main",
@@ -47,23 +104,49 @@ class OperationRepository(BaseRepository):
             sourceTemplateResourceId=resource_id,
             status=status,
             message=message,
-            updatedWhen=self.get_timestamp())
+            updatedWhen=self.get_timestamp(),
+        )
 
-    async def create_operation_item(self, resource_id: str, resource_list: List, action: str, resource_path: str, resource_version: int, user: User, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository) -> Operation:
+    async def create_operation_item(
+        self,
+        resource_id: str,
+        resource_list: List,
+        action: str,
+        resource_path: str,
+        resource_version: int,
+        user: User,
+        resource_repo: ResourceRepository,
+        resource_template_repo: ResourceTemplateRepository,
+        resource_properties: Optional[dict] = None,
+    ) -> Operation:
+        """resource_properties are the properties of the resource in memory, from which the API builds the first
+        message. A cascade reads resource_list from Cosmos DB, which keeps a placeholder for each sensitive value.
+        """
         operation_id = self.create_operation_id()
 
         # get the right "awaiting" message based on the action
         status, message = self.get_initial_status(action)
         all_steps = []
+        sensitive_values = False
         for resource in resource_list:
             name = resource["templateName"]
             version = resource["templateVersion"]
             resource_type = ResourceType(resource["resourceType"])
             primary_parent_service_name = None
             if resource_type == ResourceType.UserResource:
-                primary_parent_workspace_service = await resource_repo.get_resource_by_id(resource["parentWorkspaceServiceId"])
+                primary_parent_workspace_service = await resource_repo.get_resource_by_id(
+                    resource["parentWorkspaceServiceId"]
+                )
                 primary_parent_service_name = primary_parent_workspace_service.templateName
-            resource_template = await resource_template_repo.get_template_by_name_and_version(name, version, resource_type, primary_parent_service_name)
+            resource_template = await resource_template_repo.get_template_by_name_and_version(
+                name, version, resource_type, primary_parent_service_name
+            )
+            if resource["id"] == resource_id:
+                # The API builds the first message from this resource, which can have real sensitive values.
+                # Cosmos DB keeps a placeholder for each of them.
+                properties = resource_properties if resource_properties is not None else resource.get("properties")
+                properties = properties or {}
+                sensitive_values = mask_sensitive_properties(properties, resource_template) != properties
             resource_template_dict = resource_template.model_dump(exclude_none=True)
             # if the template has a pipeline defined for this action, copy over all the steps to the ops document
             steps = await self.build_step_list(
@@ -73,12 +156,20 @@ class OperationRepository(BaseRepository):
                 resource_repo=resource_repo,
                 resource_id=resource["id"],
                 status=status,
-                message=message
+                message=message,
             )
 
             # if no pipeline is defined for this action, create a main step only
             if len(steps) == 0:
-                all_steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource["id"], status=status, message=message))
+                all_steps.append(
+                    self.create_main_step(
+                        resource_template=resource_template_dict,
+                        action=action,
+                        resource_id=resource["id"],
+                        status=status,
+                        message=message,
+                    )
+                )
             else:
                 all_steps.extend(steps)
 
@@ -94,57 +185,98 @@ class OperationRepository(BaseRepository):
             action=action,
             message=message,
             user=user.model_dump(),
-            steps=all_steps
+            steps=all_steps,
         )
 
-        await self.save_item(operation)
+        # The message of the first step goes out after this write. Write the entry in the same document,
+        # so that the deployment status updater can send the message if the API stops before the send.
+        document = operation.model_dump()
+        document[PENDING_DISPATCH] = {
+            "stepId": all_steps[0].id,
+            "messageId": self.dispatch_message_id(operation_id, all_steps[0].id),
+            "createdWhen": timestamp,
+            "sensitiveValues": sensitive_values,
+        }
+        await self.save_item_dict(document)
         return operation
 
-    async def build_step_list(self, steps: List[OperationStep], resource_template_dict: dict, action: str, resource_repo: ResourceRepository, resource_id: str, status: Status, message: str):
+    async def build_step_list(
+        self,
+        steps: List[OperationStep],
+        resource_template_dict: dict,
+        action: str,
+        resource_repo: ResourceRepository,
+        resource_id: str,
+        status: Status,
+        message: str,
+    ):
         if "pipeline" in resource_template_dict and resource_template_dict["pipeline"] is not None:
             if action in resource_template_dict["pipeline"] and resource_template_dict["pipeline"][action] is not None:
                 for step in resource_template_dict["pipeline"][action]:
                     if step["stepId"] == "main":
-                        steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource_id, status=status, message=message))
+                        steps.append(
+                            self.create_main_step(
+                                resource_template=resource_template_dict,
+                                action=action,
+                                resource_id=resource_id,
+                                status=status,
+                                message=message,
+                            )
+                        )
                     else:
                         resource_for_step = None
 
                         # if it's a shared service, should be a singleton across the TRE, get it by template name
                         if step["resourceType"] == ResourceType.SharedService:
-                            resource_for_step = await resource_repo.get_active_resource_by_template_name(step["resourceTemplateName"])
+                            resource_for_step = await resource_repo.get_active_resource_by_template_name(
+                                step["resourceTemplateName"]
+                            )
 
                         # if it's a workspace, find the parent workspace of where we are
                         if step["resourceType"] == ResourceType.Workspace:
                             primary_resource = await resource_repo.get_resource_by_id(uuid.UUID(resource_id))
-                            if primary_resource.resourceType == ResourceType.SharedService or primary_resource.resourceType == ResourceType.Workspace:
-                                raise Exception("You can only reference a workspace from a workspace service or user resource")
-                            resource_for_step = await resource_repo.get_resource_by_id(uuid.UUID(primary_resource.workspaceId))
+                            if (
+                                primary_resource.resourceType == ResourceType.SharedService
+                                or primary_resource.resourceType == ResourceType.Workspace
+                            ):
+                                raise Exception(
+                                    "You can only reference a workspace from a workspace service or user resource"
+                                )
+                            resource_for_step = await resource_repo.get_resource_by_id(
+                                uuid.UUID(primary_resource.workspaceId)
+                            )
 
                         # if it's a workspace service, we must be a user-resource - find the parent
                         if step["resourceType"] == ResourceType.WorkspaceService:
                             primary_resource = await resource_repo.get_resource_by_id(uuid.UUID(resource_id))
                             if primary_resource.resourceType != ResourceType.UserResource:
                                 raise Exception("Only user resources can update their parent workspace services")
-                            resource_for_step = await resource_repo.get_resource_by_id(uuid.UUID(primary_resource.parentWorkspaceServiceId))
+                            resource_for_step = await resource_repo.get_resource_by_id(
+                                uuid.UUID(primary_resource.parentWorkspaceServiceId)
+                            )
 
                         if resource_for_step is None:
                             raise Exception(f"Error finding resource to update, triggered by resource ID {resource_id}")
 
-                        resource_for_step_status, resource_for_step_message = self.get_initial_status(step["resourceAction"])
+                        resource_for_step_status, resource_for_step_message = self.get_initial_status(
+                            step["resourceAction"]
+                        )
 
-                        steps.append(OperationStep(
-                            id=str(uuid.uuid4()),
-                            templateStepId=step["stepId"],
-                            stepTitle=step["stepTitle"],
-                            resourceId=resource_for_step.id,
-                            resourceTemplateName=resource_for_step.templateName,
-                            resourceType=resource_for_step.resourceType,
-                            resourceAction=step["resourceAction"],
-                            status=resource_for_step_status,
-                            message=resource_for_step_message,
-                            updatedWhen=self.get_timestamp(),
-                            sourceTemplateResourceId=resource_id
-                        ))
+                        steps.append(
+                            OperationStep(
+                                id=str(uuid.uuid4()),
+                                templateStepId=step["stepId"],
+                                stepTitle=step["stepTitle"],
+                                resourceId=resource_for_step.id,
+                                resourceTemplateName=resource_for_step.templateName,
+                                resourceType=resource_for_step.resourceType,
+                                resourceAction=step["resourceAction"],
+                                status=resource_for_step_status,
+                                message=resource_for_step_message,
+                                updatedWhen=self.get_timestamp(),
+                                sourceTemplateResourceId=resource_id,
+                            )
+                        )
         return steps
 
     def get_initial_status(self, action: RequestAction):
@@ -180,8 +312,22 @@ class OperationRepository(BaseRepository):
             raise EntityDoesNotExist
         return TypeAdapter(Operation).validate_python(operation[0])
 
+    async def get_operation_by_id_for_resource(self, operation_id: str, resource_id: str) -> Operation:
+        query = self.operations_query() + " c.id = @operationId AND c.resourceId = @resourceId"
+        parameters = [
+            {"name": "@operationId", "value": operation_id},
+            {"name": "@resourceId", "value": resource_id},
+        ]
+        operation = await self.query(query=query, parameters=parameters)
+        if not operation:
+            raise EntityDoesNotExist
+        return TypeAdapter(Operation).validate_python(operation[0])
+
     async def get_my_operations(self, user_id: str) -> List[Operation]:
-        query = self.operations_query() + f' c.user.id = "{user_id}" AND c.status IN ("{Status.AwaitingAction}", "{Status.InvokingAction}", "{Status.AwaitingDeployment}", "{Status.Deploying}", "{Status.AwaitingDeletion}", "{Status.Deleting}", "{Status.AwaitingUpdate}", "{Status.Updating}", "{Status.PipelineRunning}") ORDER BY c.createdWhen ASC'
+        query = (
+            self.operations_query()
+            + f' c.user.id = "{user_id}" AND c.status IN ("{Status.AwaitingAction}", "{Status.InvokingAction}", "{Status.AwaitingDeployment}", "{Status.Deploying}", "{Status.AwaitingDeletion}", "{Status.Deleting}", "{Status.AwaitingUpdate}", "{Status.Updating}", "{Status.PipelineRunning}") ORDER BY c.createdWhen ASC'
+        )
         operations = await self.query(query=query)
         return TypeAdapter(List[Operation]).validate_python(operations)
 
@@ -190,7 +336,23 @@ class OperationRepository(BaseRepository):
         operations = await self.query(query=query)
         return TypeAdapter(List[Operation]).validate_python(operations)
 
+    async def get_later_operations_for_resource(self, resource_id: str, created_after: float) -> List[Operation]:
+        """Return the operations after a time on the resource, or with a step for it, for example a cascade."""
+        query = (
+            "SELECT * FROM c WHERE c.createdWhen > @createdAfter AND (c.resourceId = @resourceId"
+            " OR EXISTS(SELECT VALUE s FROM s IN c.steps WHERE s.resourceId = @resourceId))"
+        )
+        parameters = [
+            {"name": "@createdAfter", "value": created_after},
+            {"name": "@resourceId", "value": resource_id},
+        ]
+        operations = await self.query(query=query, parameters=parameters)
+        return TypeAdapter(List[Operation]).validate_python(operations)
+
     async def resource_has_deployed_operation(self, resource_id: str) -> bool:
-        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'
+        query = (
+            self.operations_query()
+            + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'
+        )
         operations = await self.query(query=query)
         return len(operations) > 0

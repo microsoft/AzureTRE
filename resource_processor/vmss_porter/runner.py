@@ -1,30 +1,98 @@
+import re
 import time
-from typing import Optional
+from datetime import datetime
+from typing import Awaitable, Callable, Optional
 from multiprocessing import Process
 import json
 import asyncio
+import os
 import sys
-from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command, run_command_helper
+
+from uuid import uuid4
+from helpers.commands import (
+    azure_acr_login_command,
+    azure_login_command,
+    build_porter_command,
+    build_porter_command_for_outputs,
+    apply_porter_credentials_sets_command,
+    run_command_helper,
+    cleanup_parameter_value_files,
+    PorterParameterDiscoveryError,
+)
 from shared.config import get_config
 from helpers.httpserver import start_server
+from helpers.execution_lease import CONTAINER_NAME, execution_lease
+from helpers.lock_renewal import keep_renewed, seconds_until, stop
 
 from shared.logging import initialize_logging, logger, tracer
 from shared.config import VERSION
 from helpers import statuses
 from contextlib import asynccontextmanager
+from azure.core.exceptions import HttpResponseError
 from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
-from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
-from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
+from azure.servicebus.exceptions import (
+    OperationTimeoutError,
+    ServiceBusConnectionError,
+    ServiceBusError,
+    SessionLockLostError,
+)
+from azure.servicebus.aio import ServiceBusClient
 from azure.identity.aio import DefaultAzureCredential
+from azure.storage.blob.aio import ContainerClient
+
+
+RESOURCE_REQUEST_FIELD_TYPES = {
+    "id": str,
+    "action": str,
+    "stepId": str,
+    "operationId": str,
+    "name": str,
+    "version": str,
+    "parameters": dict,
+}
+OPTIONAL_RESOURCE_REQUEST_FIELD_TYPES = {"user": dict}
+# The workspace queue keeps a session lock for 5 minutes.
+SESSION_RENEW_SECONDS = 60
+
+
+def validate_resource_request(message: object) -> None:
+    if not isinstance(message, dict):
+        raise ValueError("Resource request message must be a JSON object")
+
+    missing_fields = set(RESOURCE_REQUEST_FIELD_TYPES) - message.keys()
+    if missing_fields:
+        raise ValueError(f"Resource request message is missing fields: {sorted(missing_fields)}")
+
+    invalid_fields = [
+        field_name
+        for field_name, field_type in RESOURCE_REQUEST_FIELD_TYPES.items()
+        if not isinstance(message[field_name], field_type)
+    ]
+    if invalid_fields:
+        raise ValueError(f"Resource request message has invalid field types: {sorted(invalid_fields)}")
+
+    invalid_optional_fields = [
+        field_name
+        for field_name, field_type in OPTIONAL_RESOURCE_REQUEST_FIELD_TYPES.items()
+        if field_name in message and not isinstance(message[field_name], field_type)
+    ]
+    if invalid_optional_fields:
+        raise ValueError(f"Resource request message has invalid field types: {sorted(invalid_optional_fields)}")
 
 
 def set_up_config() -> Optional[dict]:
     try:
         config = get_config()
-        return config
     except KeyError as e:
         logger.error(f"Environment variable {e} is not set correctly...Exiting")
         sys.exit(1)
+    if config.get("test_skip_session_lock_renewal"):
+        logger.warning(
+            "The test setting test_skip_session_lock_renewal is on. While Porter runs, the resource processor does "
+            "not renew the session lock, so Service Bus can give a message to a second worker. Do not use it in "
+            "production. Remove it from RP_BUNDLE_VALUES after the test."
+        )
+    return config
 
 
 @asynccontextmanager
@@ -39,7 +107,7 @@ async def default_credentials(msi_id):
         await credential.close()
 
 
-async def receive_message(service_bus_client, config: dict, keep_running=lambda: True):
+async def receive_message(service_bus_client, config: dict, executions: ContainerClient, keep_running=lambda: True):
     """
     This method is run per process. Each process will connect to service bus and try to establish a session.
     If messages are there, the process will continue to receive all the messages associated with that session.
@@ -61,39 +129,115 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
 
             logger.debug("Looking for new session...")
             # max_wait_time=1 -> don't hold the session open after processing of the message has finished
-            async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                logger.info(f"Got a session containing messages: {receiver.session.session_id}")
-                async with AutoLockRenewer() as renewer:
-                    # allow a session to be auto lock renewed for up to an hour - if it's processing a message
-                    renewer.register(receiver, receiver.session, max_lock_renewal_duration=3600)
-
+            async with service_bus_client.get_queue_receiver(
+                queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION
+            ) as receiver:
+                session = receiver.session
+                logger.info(f"Got a session containing messages: {session.session_id}")
+                step = {"text": f"session {session.session_id}", "running": False}
+                renewal = asyncio.create_task(
+                    keep_renewed(
+                        "Session lock",
+                        session.renew_lock,
+                        lambda: seconds_until(session.locked_until_utc),
+                        lambda: step["text"],
+                        interval=SESSION_RENEW_SECONDS,
+                        paused=lambda: config.get("test_skip_session_lock_renewal", False) and step["running"],
+                    )
+                )
+                try:
                     async for msg in receiver:
                         result = True
                         message = ""
 
                         try:
                             message = json.loads(str(msg))
-                        except (json.JSONDecodeError) as e:
+                        except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as e:
                             logger.error(f"Received bad service bus resource request message: {e}")
+                            try:
+                                await receiver.dead_letter_message(msg, reason="InvalidJSON", error_description=str(e))
+                            except Exception:
+                                logger.exception("Failed to dead-letter malformed message")
+                                raise
+                            continue
+
+                        try:
+                            validate_resource_request(message)
+                        except ValueError as e:
+                            logger.error(f"Received invalid service bus resource request message: {e}")
+                            try:
+                                await receiver.dead_letter_message(
+                                    msg, reason="InvalidResourceRequest", error_description=str(e)
+                                )
+                            except Exception:
+                                logger.exception("Failed to dead-letter invalid resource request message")
+                                raise
+                            continue
 
                         with tracer.start_as_current_span("receive_message") as current_span:
                             current_span.set_attribute("resource_id", message["id"])
                             current_span.set_attribute("action", message["action"])
                             current_span.set_attribute("step_id", message["stepId"])
                             current_span.set_attribute("operation_id", message["operationId"])
-                            logger.info(f"Message received for resource_id={message['id']}, operation_id={message['operationId']}, step_id={message['stepId']}")
+                            step["text"] = (
+                                f"resource_id={message['id']}, operation_id={message['operationId']}, step_id={message['stepId']}"
+                            )
+                            logger.info(f"Message received for {step['text']}")
 
-                            result = await invoke_porter_action(message, service_bus_client, config)
+                            # Service Bus can give the same message to a second worker. The lease lets
+                            # one worker at a time run Porter for the resource.
+                            try:
+                                async with execution_lease(
+                                    executions, message["id"], lambda: step["text"]
+                                ) as execution:
+                                    # The session can end while the worker waits for the lease. Then Service Bus
+                                    # gives this message to another worker, and a later step for the resource can
+                                    # finish before this worker gets the lease. So run Porter only with the session.
+                                    try:
+                                        await session.renew_lock()
+                                    except ServiceBusError:
+                                        logger.warning(
+                                            f"The worker lost its session while it waited for the lease. Porter does not run for {step['text']}"
+                                        )
+                                        break
+                                    step["running"] = True
+                                    try:
+                                        result = await run_step(message, execution, service_bus_client, config)
+                                    finally:
+                                        step["running"] = False
 
-                            if result:
-                                logger.info(f"Resource request for {message} is complete")
-                            else:
-                                logger.error('Message processing failed!')
+                                    if result:
+                                        logger.info(f"Resource request for {message['id']} is complete")
+                                    else:
+                                        logger.error("Message processing failed!")
 
-                            logger.info(f"Message for resource_id={message['id']}, operation_id={message['operationId']} processed as {result} and marked complete.")
-                            await receiver.complete_message(msg)
+                                    try:
+                                        await receiver.complete_message(msg)
+                                    except SessionLockLostError:
+                                        # Another worker has the session now. It reads the execution record
+                                        # and sends the recorded status again.
+                                        logger.warning(
+                                            f"The session lock expired before the message was completed for {step['text']}"
+                                        )
+                                        break
+                                    logger.info(
+                                        f"Message for resource_id={message['id']}, operation_id={message['operationId']} processed as {result} and marked complete."
+                                    )
+                            except HttpResponseError as error:
+                                # The lease and the record are in the management storage account. Without access, a
+                                # retry does not help. Fail the step, as the Terraform backend of the bundle did before.
+                                if error.status_code not in (401, 403):
+                                    logger.error(
+                                        f"The execution record store failed for {step['text']} with HTTP {error.status_code}. "
+                                        "Service Bus delivers the message again."
+                                    )
+                                    raise
+                                await send_execution_store_failure(message, error, service_bus_client, config)
+                                await receiver.complete_message(msg)
 
-                    logger.info(f"Closing session: {receiver.session.session_id}")
+                    logger.info(f"Closing session: {session.session_id}")
+                finally:
+                    await stop(renewal)
 
         except OperationTimeoutError:
             # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
@@ -112,7 +256,71 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
             await asyncio.sleep(10)
 
 
-async def run_porter(command_parts_list: list, config: dict):
+async def check_legacy_parameter_overrides(installation_id: str, config: dict) -> Optional[str]:
+    """Reject actions whose current parameters could be replaced by stored CLI overrides."""
+    inspection_error = (
+        f"Cannot verify stored parameters for resource '{installation_id}'. Check Porter storage access and retry."
+    )
+    upgrade_error = (
+        f"Cannot run this action for resource '{installation_id}': legacy Porter parameter overrides can replace current values. "
+        "Upgrade this resource with its current template version before retrying."
+    )
+    try:
+        # List first so a missing installation retains Porter's normal action behaviour.
+        code, output, _ = await run_command_helper(
+            ["porter", "installations", "list", "--name", installation_id, "--output", "json", "--verbosity", "error"],
+            config,
+            "Check installation exists",
+            log_output=False,
+        )
+        if code != 0:
+            return inspection_error
+        installations = json.loads(output)
+        if not isinstance(installations, list):
+            return inspection_error
+        if not installations:
+            return None
+        if (
+            len(installations) != 1
+            or not isinstance(installations[0], dict)
+            or installations[0].get("name") != installation_id
+        ):
+            return inspection_error
+
+        # The show document can contain resolved secrets. Never log its output.
+        code, output, _ = await run_command_helper(
+            ["porter", "installations", "show", installation_id, "--output", "json", "--verbosity", "error"],
+            config,
+            "Check stored parameter overrides",
+            log_output=False,
+        )
+        if code != 0:
+            return inspection_error
+        installation = json.loads(output)
+        if not isinstance(installation, dict) or installation.get("name") != installation_id:
+            return inspection_error
+        parameters = installation.get("parameters", {})
+        if not isinstance(parameters, dict):
+            return inspection_error
+        status = installation.get("status", {})
+        # Porter show omits stored parameters when no recorded run is available.
+        if not isinstance(status, dict) or not status.get("runId"):
+            return f"Cannot verify stored parameters for resource '{installation_id}' without a recorded run. Upgrade this resource before retrying."
+        if parameters:
+            return upgrade_error
+    except Exception:
+        # Parser, subprocess and storage errors must not allow an unchecked action.
+        return inspection_error
+    return None
+
+
+async def run_porter(
+    command_parts_list: list,
+    config: dict,
+    *,
+    parameter_check_installation: Optional[str] = None,
+    required_installation: Optional[str] = None,
+):
     """
     Run a Porter command
     """
@@ -134,6 +342,30 @@ async def run_porter(command_parts_list: list, config: dict):
         if returncode != 0:
             return (returncode, None, stderr_text)
 
+    if parameter_check_installation is not None:
+        error = await check_legacy_parameter_overrides(parameter_check_installation, config)
+        if error:
+            return (1, None, error)
+
+    # `porter installations apply` installs an uninstalled installation. An upgrade must not create a deleted
+    # resource again.
+    if required_installation is not None:
+        removed = await _confirm_porter_installation_removed(required_installation, config)
+        if removed is None:
+            return (
+                1,
+                None,
+                f"Cannot verify the Porter installation of resource '{required_installation}'. "
+                "Check Porter storage access and retry.",
+            )
+        if removed:
+            return (
+                1,
+                None,
+                f"Cannot upgrade resource '{required_installation}': the last successful action of its Porter "
+                "installation was an uninstall. An upgrade does not install a deleted resource.",
+            )
+
     last_returncode = None
     last_stdout = None
     last_stderr = None
@@ -146,7 +378,9 @@ async def run_porter(command_parts_list: list, config: dict):
     return (last_returncode, last_stdout, last_stderr)
 
 
-def service_bus_message_generator(sb_message: dict, status: str, deployment_message: str, outputs=None):
+def service_bus_message_generator(
+    sb_message: dict, status: str, deployment_message: str, outputs=None, execution_id: Optional[str] = None
+):
     """
     Generate a resource request message
     """
@@ -156,17 +390,221 @@ def service_bus_message_generator(sb_message: dict, status: str, deployment_mess
         "stepId": sb_message["stepId"],
         "id": sb_message["id"],
         "status": status,
-        "message": f"{installation_id}: {deployment_message}"}
+        "message": f"{installation_id}: {deployment_message}",
+    }
 
     if outputs is not None:
         message_dict["outputs"] = outputs
+    if execution_id is not None:
+        # The API uses this ID to ignore a status from another run of the same step.
+        message_dict["executionId"] = execution_id
 
     resource_request_message = json.dumps(message_dict)
     logger.debug(f"Deployment Status Message: {resource_request_message}")
     return resource_request_message
 
 
-async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, config: dict) -> bool:
+async def _cleanup_param_set(param_set_name: str, param_set_file: str, installation_file: str, config: dict):
+    """Remove a Porter parameter set from its local store and delete the temp files.
+
+    The parameter set may never have been applied (e.g. run_porter returned early on an
+    Azure/ACR/credential failure), so the delete is best-effort and does not log at error level.
+    """
+    try:
+        if param_set_file:
+            await run_command_helper(
+                ["porter", "parameters", "delete", param_set_name], config, "Delete parameter set", log_error=False
+            )
+    except Exception as e:
+        logger.debug(f"Best-effort cleanup: could not delete parameter set '{param_set_name}': {e}")
+    finally:
+        cleanup_parameter_value_files(param_set_file)
+        for path in (param_set_file, installation_file):
+            if path:
+                try:
+                    os.unlink(path)
+                except OSError as e:
+                    logger.debug(f"Best-effort cleanup: could not delete temp file '{path}': {e}")
+
+
+async def _list_porter_installations(installation_id: str, config: dict) -> Optional[list]:
+    """Read the installations with this name from a fresh storage query, without logging installation data."""
+    try:
+        code, output, _ = await asyncio.wait_for(
+            run_command_helper(
+                [
+                    "porter",
+                    "installations",
+                    "list",
+                    "--name",
+                    installation_id,
+                    "--output",
+                    "json",
+                    "--verbosity",
+                    "error",
+                ],
+                config,
+                "Confirm missing installation",
+                log_output=False,
+            ),
+            timeout=30,
+        )
+        installations = json.loads(output) if code == 0 else None
+    except Exception:
+        # An unreadable store, invalid response or timeout proves nothing.
+        return None
+    return installations if isinstance(installations, list) else None
+
+
+async def _confirm_porter_installation_absent(installation_id: str, config: dict) -> bool:
+    """Confirm absence with a fresh storage query, without logging installation data."""
+    return await _list_porter_installations(installation_id, config) == []
+
+
+def _porter_time(value) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        # Porter writes nanoseconds, and Python reads up to microseconds.
+        return datetime.fromisoformat(re.sub(r"(\.\d{6})\d+", r"\1", value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+async def _confirm_porter_installation_removed(installation_id: str, config: dict) -> Optional[bool]:
+    """
+    Confirm that the last successful action of the Porter installation was an uninstall. Return None if the lookup fails.
+    Porter keeps the record of an uninstalled installation. A failed install has neither time, so an upgrade can repair it.
+    An install can also fail before Porter writes a record, for example at the sign-in or in an earlier pipeline step.
+    So no record proves nothing, and an upgrade can repair that install too.
+    """
+    installations = await _list_porter_installations(installation_id, config)
+    if installations is None:
+        # An unreadable store does not show that the last successful action was not an uninstall.
+        return None
+    matches = [item for item in installations if item.get("name") == installation_id]
+    if not matches:
+        # No record, or a list with other installations only, proves nothing.
+        return False
+    status = matches[0].get("status") or {}
+    uninstalled = _porter_time(status.get("uninstalled"))
+    installed = _porter_time(status.get("installed"))
+    return uninstalled is not None and (installed is None or installed <= uninstalled)
+
+
+# A copy of a message can arrive after a later step for the same resource, for example when the API sends a step again.
+# So the execution record also keeps the results of the earlier steps. A status message can be up to 2 MB, so each
+# earlier result keeps the start of its message only.
+EARLIER_STEPS = 20
+EARLIER_MESSAGE_LENGTH = 4000
+RESULT_FIELDS = ("operationId", "stepId", "action", "executionId", "status", "message", "outputs")
+
+
+def recorded_results(record: dict) -> list:
+    """Return the results of the finished steps in the execution record, oldest first."""
+    earlier = record.get("earlierSteps")
+    results = [result for result in earlier if isinstance(result, dict)] if isinstance(earlier, list) else []
+    if record.get("state") == "finished":
+        results.append(record)
+    return [{field: result[field] for field in RESULT_FIELDS if field in result} for result in results]
+
+
+async def run_step(msg_body: dict, execution, sb_client: ServiceBusClient, config: dict) -> bool:
+    """
+    Run the step. If the execution record shows that a worker already finished this step, send its status again.
+    """
+
+    def same_step(entry: dict) -> bool:
+        return entry.get("operationId") == msg_body["operationId"] and entry.get("stepId") == msg_body["stepId"]
+
+    record = await execution.read()
+    results = recorded_results(record)
+    finished = next((result for result in reversed(results) if same_step(result)), None)
+    if finished is not None:
+        logger.info(f"Step {msg_body['stepId']} for {msg_body['id']} is already finished. Sending its status again.")
+        return await send_recorded_status(msg_body, finished, sb_client, config)
+    if same_step(record):
+        # Porter did not finish. Run it again, as a Service Bus redelivery does.
+        logger.warning(f"An earlier worker stopped during step {msg_body['stepId']} for {msg_body['id']}.")
+
+    earlier = [
+        {**result, "message": str(result.get("message", ""))[:EARLIER_MESSAGE_LENGTH]}
+        for result in results[-EARLIER_STEPS:]
+    ]
+    execution_id = str(uuid4())
+    record = {
+        "operationId": msg_body["operationId"],
+        "stepId": msg_body["stepId"],
+        "action": msg_body["action"],
+        "executionId": execution_id,
+    }
+    await execution.write({**record, "state": "running", "earlierSteps": earlier})
+
+    async def finish(status: str, message: str, with_outputs: bool):
+        await execution.write(
+            {
+                **record,
+                "state": "finished",
+                "status": status,
+                "message": message,
+                "outputs": with_outputs,
+                "earlierSteps": earlier,
+            }
+        )
+
+    return await invoke_porter_action(msg_body, sb_client, config, execution_id=execution_id, finish=finish)
+
+
+async def send_execution_store_failure(
+    msg_body: dict, error: HttpResponseError, sb_client: ServiceBusClient, config: dict
+):
+    """The resource processor cannot use the execution record, and a retry does not change that. Fail the step."""
+    status = statuses.failed_status_string_for[msg_body["action"]]
+    message = (
+        f"Cannot use the execution record in the management storage account: HTTP {error.status_code} {error.reason}"
+    )
+    sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
+    await sb_sender.send_messages(
+        ServiceBusMessage(
+            body=service_bus_message_generator(msg_body, status, message),
+            correlation_id=msg_body["id"],
+            session_id=msg_body["operationId"],
+        )
+    )
+    logger.error(f"Sent {status} for {msg_body['id']}, because the execution record store returned {error.status_code}")
+
+
+async def send_recorded_status(msg_body: dict, record: dict, sb_client: ServiceBusClient, config: dict) -> bool:
+    action = msg_body["action"]
+    status = record.get("status", statuses.failed_status_string_for[action])
+    message = record.get("message", "")
+    outputs = None
+    if record.get("outputs"):
+        # The record does not keep outputs, because they can contain secrets. Read them again.
+        got_outputs, outputs = await get_porter_outputs(msg_body, config)
+        if not got_outputs:
+            status = statuses.failed_status_string_for[action]
+            message = f"{action} action completed successfully, but failed to get outputs."
+    sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
+    await sb_sender.send_messages(
+        ServiceBusMessage(
+            body=service_bus_message_generator(msg_body, status, message, outputs, record.get("executionId")),
+            correlation_id=msg_body["id"],
+            session_id=msg_body["operationId"],
+        )
+    )
+    logger.info(f"Sent the recorded status message for {msg_body['id']}: {status}")
+    return status == statuses.pass_status_string_for[action]
+
+
+async def invoke_porter_action(
+    msg_body: dict,
+    sb_client: ServiceBusClient,
+    config: dict,
+    *,
+    execution_id: Optional[str] = None,
+    finish: Optional[Callable[[str, str, bool], Awaitable[None]]] = None,
+) -> bool:
     """
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
     """
@@ -176,57 +614,87 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     logger.info(f"{action} action starting for {installation_id}...")
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
+    async def send_status(status: str, deployment_message: str, outputs=None, final: bool = True):
+        if final and finish is not None:
+            # Save the result before the API can see it, so that another worker can send it again.
+            try:
+                await finish(status, deployment_message, outputs is not None)
+            except Exception as error:
+                # The lease can expire during a long Porter run. The API must still get the result.
+                logger.error(f"Could not save the execution record for {installation_id}: {error!r}")
+        resource_request_message = service_bus_message_generator(
+            msg_body, status, deployment_message, outputs, execution_id
+        )
+        await sb_sender.send_messages(
+            ServiceBusMessage(
+                body=resource_request_message, correlation_id=installation_id, session_id=msg_body["operationId"]
+            )
+        )
+
     # post an update message to set the status to an 'in progress' one
-    resource_request_message = service_bus_message_generator(msg_body, statuses.in_progress_status_string_for[action], "Job starting")
-    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
-    logger.info(f'Sent status message for {installation_id} - {statuses.in_progress_status_string_for[action]} - Job starting')
+    await send_status(statuses.in_progress_status_string_for[action], "Job starting", final=False)
+    logger.info(
+        f"Sent status message for {installation_id} - {statuses.in_progress_status_string_for[action]} - Job starting"
+    )
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
-    porter_command = await build_porter_command(config, msg_body, is_custom_action)
+    try:
+        porter_command, param_set_file, param_set_name, installation_file = await build_porter_command(
+            config, msg_body, is_custom_action
+        )
+    except PorterParameterDiscoveryError as error:
+        await send_status(statuses.failed_status_string_for[action], str(error))
+        return False
 
     logger.debug("Starting to run porter execution command...")
-    returncode, _, err = await run_porter(porter_command, config)
+    try:
+        check_installation = installation_id if action not in ("install", "upgrade") else None
+        returncode, _, err = await run_porter(
+            porter_command,
+            config,
+            parameter_check_installation=check_installation,
+            required_installation=installation_id if action == "upgrade" else None,
+        )
+    finally:
+        if param_set_file or installation_file:
+            try:
+                await _cleanup_param_set(param_set_name, param_set_file, installation_file, config)
+            except Exception as e:
+                logger.debug(f"Best-effort cleanup failed for '{installation_id}': {e}")
     logger.debug("Finished running porter execution command.")
 
-    action_completed_without_error = False
-
-    if returncode == 0:
-        action_completed_without_error = True
+    action_completed_without_error = returncode == 0
+    outputs = None
 
     # Handle command output
-    if returncode != 0 and err is not None:
+    if (
+        returncode != 0
+        and action == "uninstall"
+        and "could not find installation" in (err or "")
+        and await _confirm_porter_installation_absent(installation_id, config)
+    ):
+        # The error text only triggers the check. A successful empty query is
+        # required before completing deletion without installation outputs.
+        action_completed_without_error = True
+        status_for_sb_message = statuses.pass_status_string_for[action]
+        status_message = "Uninstall completed: Porter confirmed that the installation is absent."
+    elif returncode != 0:
         # Construct a readable representation of the command(s)
         command_representation = ""
         for cmd in porter_command:
             command_representation += " ".join(cmd) + "; "
         command_representation = command_representation.rstrip("; ")
 
-        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + command_representation
-        action_completed_without_error = False
-
-        if "upgrade" == action and ("could not find installation" in err or "The installation cannot be upgraded, because it is not installed." in err):
-            logger.warning("Upgrade failed, attempting install...")
-            msg_body['action'] = "install"
-            porter_command = await build_porter_command(config, msg_body, False)
-            returncode, _, err = await run_porter(porter_command, config)
-            if returncode == 0:
-                action_completed_without_error = True
-
-        if "uninstall" == action and "could not find installation" in err:
-            logger.warning("The installation doesn't exist. Treating as a successful action to allow the flow to proceed.")
-            action_completed_without_error = True
-            error_message = f"A success despite of underlying error. {error_message}"
-
-        if action_completed_without_error:
-            status_for_sb_message = statuses.pass_status_string_for[action]
-        else:
-            status_for_sb_message = statuses.failed_status_string_for[action]
-
-        resource_request_message = service_bus_message_generator(msg_body, status_for_sb_message, error_message)
+        error_output = err or f"Porter exited with code {returncode} and no error output."
+        status_message = (
+            "Error message: " + " ".join(error_output.split("\n")) + "; Porter command: " + command_representation
+        )
+        # Installation lookup errors can wrap storage failures. They do not prove that resources were deleted.
+        status_for_sb_message = statuses.failed_status_string_for[action]
 
         # Post message on sb queue to notify receivers of action failure
-        logger.info(f"{installation_id}: Porter action failed with error = {error_message}")
+        logger.info(f"{installation_id}: Porter action failed with error = {status_message}")
 
     else:
         # Get the outputs
@@ -240,9 +708,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
             status_for_sb_message = statuses.failed_status_string_for[action]
             status_message = f"{action} action completed successfully, but failed to get outputs."
 
-        resource_request_message = service_bus_message_generator(msg_body, status_for_sb_message, status_message, outputs)
-
-    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
+    await send_status(status_for_sb_message, status_message, outputs)
     logger.info(f"Sent status message for {installation_id}: {status_for_sb_message}")
 
     # return true as want to continue processing the message
@@ -259,19 +725,26 @@ async def get_porter_outputs(msg_body: dict, config: dict):
     logger.debug("Finished running porter output command.")
 
     if returncode != 0:
-        error_message = "Error context message = " + " ".join(err.split('\n'))
+        error_message = "Error context message = " + " ".join(err.split("\n"))
         installation_id = msg_body["id"]
         logger.info(f"{installation_id}: Failed to get outputs with error = {error_message}")
-        return False, {}
+        # The API reads outputs as a list. It rejects a dict, so the operation never gets the failed status.
+        return False, []
     else:
-        outputs_json = {}
         try:
             outputs_json = json.loads(stdout)
+        except (TypeError, ValueError):
+            outputs_json = None
+        if not isinstance(outputs_json, list):
+            # A success without outputs lets the API continue, and the next pipeline step gets empty values.
+            logger.error(f"{msg_body['id']}: Failed to get outputs, because the Porter output is not a JSON list")
+            return False, []
 
+        try:
             # loop props individually to try to deserialise to dict/list, as all TF outputs are strings, but we want the pure value
             for i in range(0, len(outputs_json)):
-                if "{" in outputs_json[i]['value'] or "[" in outputs_json[i]['value']:
-                    outputs_json[i]['value'] = json.loads(outputs_json[i]['value'].replace("\\", ""))
+                if "{" in outputs_json[i]["value"] or "[" in outputs_json[i]["value"]:
+                    outputs_json[i]["value"] = json.loads(outputs_json[i]["value"].replace("\\", ""))
 
             logger.info(f"Got outputs as json: {outputs_json}")
         except ValueError:
@@ -280,11 +753,23 @@ async def get_porter_outputs(msg_body: dict, config: dict):
         return True, outputs_json
 
 
+def worker_config(process_number: int, config: dict) -> dict:
+    # Each worker signs in with the Azure CLI before each Porter action. Workers that share one CLI folder
+    # read and write the same profile file at the same time, so each worker gets its own folder.
+    porter_env = config["porter_env"]
+    folder = os.path.join(porter_env["HOME"], f".azure-worker-{process_number}")
+    return {**config, "porter_env": {**porter_env, "AZURE_CONFIG_DIR": folder}}
+
+
 async def runner(process_number: int, config: dict):
+    config = worker_config(process_number, config)
     with tracer.start_as_current_span(process_number):
         async with default_credentials(config["vmss_msi_id"]) as credential:
-            async with ServiceBusClient(config["service_bus_namespace"], credential) as service_bus_client:
-                await receive_message(service_bus_client, config)
+            async with (
+                ServiceBusClient(config["service_bus_namespace"], credential) as service_bus_client,
+                ContainerClient(config["mgmt_blob_url"], CONTAINER_NAME, credential) as executions,
+            ):
+                await receive_message(service_bus_client, config, executions)
 
 
 async def check_runners(processes: list, httpserver: Process, keep_running=lambda: True):
@@ -296,7 +781,7 @@ async def check_runners(processes: list, httpserver: Process, keep_running=lambd
             logger.error("All runner processes have failed!")
             # Support both sync and async kill methods for tests
             kill_method = httpserver.kill
-            if asyncio.iscoroutinefunction(kill_method) or hasattr(kill_method, '__await__'):
+            if asyncio.iscoroutinefunction(kill_method) or hasattr(kill_method, "__await__"):
                 await kill_method()
             else:
                 kill_method()
@@ -309,10 +794,7 @@ if __name__ == "__main__":
         config = set_up_config()
 
         logger.info("Verifying Azure CLI and Porter functionality...")
-        asyncio.run(run_porter([[
-            "az", "account", "show",
-            "-o", "table"
-        ]], config))
+        asyncio.run(run_porter([["az", "account", "show", "-o", "table"]], config))
 
         httpserver = Process(target=start_server)
         httpserver.start()

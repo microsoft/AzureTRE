@@ -12,9 +12,9 @@ To find logs in Application Insights, go to your resource group, then to Applica
 A manual query can also be created such as:
 
 ```kusto
-traces 
+traces
 | where cloud_RoleName == "resource_processor"
-| order by timestamp desc 
+| order by timestamp desc
 ```
 
 ## Check the logs for a specific deployment

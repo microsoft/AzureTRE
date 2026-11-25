@@ -37,7 +37,7 @@
     "openai_model": {
       "type": "string",
       "title": "OpenAI Model",
-      "description": "Which OpenAI Model should be used? (be mindful of subscription limits)",
+      "description": "Select a model available with the Standard deployment type in the workspace region. Check subscription quota before deployment.",
       "enum": [
         "gpt-35-turbo | 0301",
         "gpt-35-turbo | 1106",
@@ -45,9 +45,10 @@
         "gpt-35-turbo | 0125",
         "gpt-4 | 0613",
         "gpt-4 | turbo-2024-04-09",
-        "gpt-4o | 2024-05-13"
+        "gpt-4o | 2024-05-13",
+        "gpt-5.1 | 2025-11-13"
       ],
-      "default": "gpt-35-turbo | 0301",
+      "default": "gpt-5.1 | 2025-11-13",
       "updateable": true
     }
   }

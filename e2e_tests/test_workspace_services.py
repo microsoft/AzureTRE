@@ -10,11 +10,9 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 workspace_services = [
     strings.AZUREML_SERVICE,
     strings.GITEA_SERVICE,
-    strings.MLFLOW_SERVICE,
     strings.MYSQL_SERVICE,
     strings.HEALTH_SERVICE,
     strings.AZURESQL_SERVICE,
-    strings.OPENAI_SERVICE
 ]
 
 
@@ -38,11 +36,17 @@ async def test_create_guacamole_service_into_base_workspace(setup_test_workspace
             "install_storage_explorer": False,
             "install_git": False,
             "install_python_tools": False,
-            "install_r_tools": False
-        }
+            "install_r_tools": False,
+        },
     }
 
-    _, _ = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
+    _, _ = await post_resource(
+        user_resource_payload,
+        f"/api{workspace_service_path}/{strings.API_USER_RESOURCES}",
+        workspace_owner_token,
+        verify,
+        method="POST",
+    )
 
 
 @pytest.mark.extended_aad
@@ -54,13 +58,15 @@ async def test_create_guacamole_service_into_aad_workspace(setup_test_aad_worksp
 
     workspace_service_payload = {
         "templateName": strings.GUACAMOLE_SERVICE,
-        "properties": {
-            "display_name": "Workspace service test",
-            "description": "Workspace service for E2E test"
-        }
+        "properties": {"display_name": "Workspace service test", "description": "Workspace service for E2E test"},
     }
 
-    workspace_service_path, _ = await post_resource(workspace_service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
+    workspace_service_path, _ = await post_resource(
+        workspace_service_payload,
+        f"/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}",
+        workspace_owner_token,
+        verify,
+    )
 
     await ping_guacamole_workspace_service(workspace_service_path, workspace_owner_token, verify)
 
@@ -80,12 +86,11 @@ async def test_install_workspace_service(template_name, verify, setup_test_works
 
     service_payload = {
         "templateName": template_name,
-        "properties": {
-            "display_name": f"{template_name} test",
-            "description": "Workspace service for E2E test"
-        }
+        "properties": {"display_name": f"{template_name} test", "description": "Workspace service for E2E test"},
     }
 
-    workspace_service_path, _ = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
+    workspace_service_path, _ = await post_resource(
+        service_payload, f"/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}", workspace_owner_token, verify
+    )
 
     await disable_and_delete_ws_resource(workspace_service_path, workspace_id, verify)

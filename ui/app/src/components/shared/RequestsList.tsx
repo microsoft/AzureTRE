@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ColumnActionsMode,
   CommandBar,
@@ -24,9 +24,11 @@ import { AirlockRequest, AirlockRequestStatus, AirlockRequestType } from "../../
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "../../models/loadingState";
-import { APIError } from "../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../models/exceptions";
 import { ExceptionLayout } from "./ExceptionLayout";
 import { getFileTypeIconProps } from "@fluentui/react-file-type-icons";
+import { useRefresh } from "../../hooks/useRefresh";
+import { RefreshButton } from "./RefreshButton";
 
 interface Workspace {
   id: string;
@@ -46,6 +48,7 @@ export const RequestsList: React.FunctionComponent = () => {
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [contextMenuProps, setContextMenuProps] = useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
+  const lastLoadedQuery = useRef<string>();
   const [activeFilter, setActiveFilter] = useState<string>("myRequests");
   const [searchText, setSearchText] = useState("");
   const apiCall = useAuthApiCall();
@@ -85,11 +88,14 @@ export const RequestsList: React.FunctionComponent = () => {
     }
   }, [activeFilter, airlockManagerRequests, myAirlockRequests]);
 
+  // Each request gets a generation so a slower response for an older filter or sort can't overwrite a newer one.
+  const requestGeneration = useRef(0);
+
   const getAirlockRequests = useCallback(async () => {
+    const generation = ++requestGeneration.current;
     setApiError(undefined);
-    setLoadingState(LoadingState.Loading);
+    const query = buildQuery();
     try {
-      const query = buildQuery();
       const workspacePromise = apiCall(ApiEndpoint.Workspaces, HttpMethod.Get);
       const myRequestsPromise = apiCall(`${ApiEndpoint.Requests}${query}`, HttpMethod.Get);
       const managerRequestsPromise = apiCall(
@@ -103,21 +109,31 @@ export const RequestsList: React.FunctionComponent = () => {
         managerRequestsPromise,
       ]);
 
+      if (generation !== requestGeneration.current) return;
       const mappedMyRequests = mapRequestsToWorkspace(myRequests, fetchedWorkspaces || []);
       const mappedManagerRequests = mapRequestsToWorkspace(managerRequests, fetchedWorkspaces || []);
 
       setMyAirlockRequests(mappedMyRequests);
       setAirlockManagerRequests(mappedManagerRequests);
+      lastLoadedQuery.current = query;
       setLoadingState(LoadingState.Ok);
     } catch (err: any) {
+      if (generation !== requestGeneration.current) return;
+      // Keep rows only when refreshing the same query; a failed new filter or sort shows the error instead.
+      if (lastLoadedQuery.current === query && isRetryableApiError(err)) {
+        return;
+      }
       err.userMessage = "Error fetching airlock requests";
+      setMyAirlockRequests([]);
+      setAirlockManagerRequests([]);
       setApiError(err);
       setLoadingState(LoadingState.Error);
     }
   }, [apiCall, buildQuery]);
+  const refresh = useRefresh(getAirlockRequests);
 
   useEffect(() => {
-    getAirlockRequests();
+    refresh();
   }, [getAirlockRequests]);
 
   useEffect(() => {
@@ -312,7 +328,7 @@ export const RequestsList: React.FunctionComponent = () => {
         onColumnContextMenu: (column, ev) =>
           column && ev && openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
         isFiltered: filters.has("status"),
-        onRender: (request: AirlockRequest) => request.status.replace("_", " "),
+        onRender: (request: AirlockRequest) => request.status.replace(/_/g, " "),
       },
       {
         key: "createdTime",
@@ -476,14 +492,7 @@ export const RequestsList: React.FunctionComponent = () => {
           <Stack tokens={{ childrenGap: 12 }}>
             <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
               <h1 style={{ marginBottom: 0 }}>Airlock Requests</h1>
-              <CommandBarButton
-                iconProps={{ iconName: "refresh" }}
-                text="Refresh"
-                style={{ background: "none", color: theme.palette.themePrimary }}
-                onClick={() => {
-                  getAirlockRequests();
-                }}
-              />
+              <RefreshButton onClick={refresh} />
             </Stack>
             <CommandBar items={quickFilterCommandBarItems} ariaLabel="Quick filters" />
             <CommandBar

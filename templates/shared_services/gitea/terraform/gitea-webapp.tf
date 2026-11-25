@@ -98,7 +98,7 @@ resource "azurerm_linux_web_app" "gitea" {
   }
 
   depends_on = [
-    azurerm_key_vault_secret.gitea_password
+    azurerm_role_assignment.keyvault_gitea_secret_role
   ]
 }
 
@@ -172,8 +172,14 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   }
 }
 
-resource "azurerm_role_assignment" "keyvault_gitea_role" {
-  scope                = data.azurerm_key_vault.keyvault.id
+# The web app reads only the secrets of its Key Vault references, so its identity gets a role on each of them.
+resource "azurerm_role_assignment" "keyvault_gitea_secret_role" {
+  for_each = {
+    admin_password = azurerm_key_vault_secret.gitea_password.resource_versionless_id
+    db_password    = azurerm_key_vault_secret.db_password.resource_versionless_id
+  }
+
+  scope                = each.value
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.gitea_id.principal_id
 }
@@ -183,10 +189,6 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   value        = random_password.gitea_passwd.result
   key_vault_id = data.azurerm_key_vault.keyvault.id
   tags         = local.tre_shared_service_tags
-
-  depends_on = [
-    azurerm_role_assignment.keyvault_gitea_role
-  ]
 
   lifecycle { ignore_changes = [tags] }
 }

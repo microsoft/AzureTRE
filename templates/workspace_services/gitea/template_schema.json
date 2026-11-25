@@ -27,7 +27,7 @@
       "description": "Long form description of the workspace service, in markdown syntax",
       "default": "Gitea is a lightweight DevOps platform. Features include code hosting, code review, CI/CD, project management and package management. Documentation can be found here: [https://docs.gitea.com/](https://docs.gitea.com/).",
       "updateable": true
-    },    
+    },
     "sql_sku": {
       "type": "string",
       "title": "MySQL server SKU",

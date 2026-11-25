@@ -25,6 +25,9 @@ gh workflow run clean_validation_envs.yml --repo microsoft/AzureTRE \
   --ref YOUR_BRANCH -f mode=validate -f validation_location=westeurope
 ```
 
+In a fork, replace `microsoft/AzureTRE` with the fork's name. The fork must set the
+`CI_ENV_PREFIX` repository variable to a prefix other than `tre`.
+
 The branch must exist in the target repository. Before merge, a maintainer can
 create a temporary branch at the reviewed PR commit, then remove it after testing.
 The workflow uses the existing `CICD` environment and its Azure OIDC credentials.

@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 set -e
 
 get_latest_release() {
@@ -15,8 +15,8 @@ echo -e "\e[34m»»» 📦 \e[32mInstalling \e[33m$NAME v$VERSION\e[0m ..."
 
 curl -sSL "https://releases.hashicorp.com/terraform/${VERSION}/terraform_${VERSION}_linux_amd64.zip" -o /tmp/tf.zip
 unzip /tmp/tf.zip -d /tmp > /dev/null
-mkdir -p $INSTALL_DIR
-mv /tmp/terraform $INSTALL_DIR
+mkdir -p "$INSTALL_DIR"
+mv /tmp/terraform "$INSTALL_DIR"
 rm -f /tmp/tf.zip
 
 echo -e "\n\e[34m»»» 💾 \e[32mInstalled to: \e[33m$(which $CMD)"

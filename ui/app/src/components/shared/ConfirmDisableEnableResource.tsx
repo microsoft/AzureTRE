@@ -26,11 +26,16 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisabl
   const workspaceCtx = useContext(WorkspaceContext);
   const dispatch = useAppDispatch();
 
+  const isVirtualMachine =
+    props.resource.resourceType === ResourceType.UserResource && !!props.resource.azureStatus?.powerState;
+
   const disableProps = {
     type: DialogType.normal,
     title: "Disable Resource?",
     closeButtonAriaLabel: "Close",
-    subText: `Are you sure you want to disable ${props.resource.properties.display_name}?`,
+    subText: `Disable ${props.resource.properties.display_name} in TRE? This resource must be disabled before it can be deleted.${
+      isVirtualMachine ? " Disabling it does not power off the VM; use Stop to do that." : ""
+    }`,
   };
 
   const enableProps = {

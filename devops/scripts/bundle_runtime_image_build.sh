@@ -58,4 +58,3 @@ fi
 ${DOCKER_BUILD_COMMAND} --build-arg BUILDKIT_INLINE_CACHE=1 \
   -t "${FULL_IMAGE_NAME_PREFIX}/${image_name}:${version}" \
   "${docker_cache[@]}" -f "${docker_file}" "${docker_context}"
-

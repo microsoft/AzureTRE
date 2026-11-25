@@ -5,4 +5,6 @@ FROM gitea/gitea:${GITEA_TAG}
 # need to pass args to stage
 ARG CERTIFICATE_URL
 RUN wget -nv -O /usr/local/share/ca-certificates/mysql.crt.pem ${CERTIFICATE_URL} && update-ca-certificates
-ENTRYPOINT ["/bin/bash", "-c", "sleep 120 && gitea admin user create --admin --access-token --username=${GITEA_USERNAME} --password=${GITEA_PASSWD} --email=${GITEA_EMAIL} --must-change-password=false & /usr/bin/entrypoint"]
+COPY configure_gitea_admin.sh /
+# The script hides the secrets in the Gitea output, which goes to the console log.
+ENTRYPOINT ["/bin/bash", "-c", "bash /configure_gitea_admin.sh & /usr/bin/entrypoint"]

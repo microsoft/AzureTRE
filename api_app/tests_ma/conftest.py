@@ -88,9 +88,7 @@ def input_workspace_template():
                 }
             ],
         },
-        customActions=[
-            {"name": "my-custom-action", "description": "This is a test custom action"}
-        ],
+        customActions=[{"name": "my-custom-action", "description": "This is a test custom action"}],
     )
 
 
@@ -109,9 +107,7 @@ def input_workspace_service_template():
             "required": [],
             "properties": {},
         },
-        customActions=[
-            {"name": "my-custom-action", "description": "This is a test custom action"}
-        ],
+        customActions=[{"name": "my-custom-action", "description": "This is a test custom action"}],
     )
 
 
@@ -130,9 +126,7 @@ def input_user_resource_template():
             "required": [],
             "properties": {},
         },
-        customActions=[
-            {"name": "my-custom-action", "description": "This is a test custom action"}
-        ],
+        customActions=[{"name": "my-custom-action", "description": "This is a test custom action"}],
     )
 
 
@@ -268,11 +262,7 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
                     resourceTemplateName=basic_shared_service_template.name,
                     resourceType=basic_shared_service_template.resourceType,
                     resourceAction="upgrade",
-                    properties=[
-                        PipelineStepProperty(
-                            name="display_name", type="string", value="new name"
-                        )
-                    ],
+                    properties=[PipelineStepProperty(name="display_name", type="string", value="new name")],
                 ),
                 PipelineStep(stepId="main"),
                 PipelineStep(
@@ -281,11 +271,7 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
                     resourceTemplateName=basic_shared_service_template.name,
                     resourceType=basic_shared_service_template.resourceType,
                     resourceAction="upgrade",
-                    properties=[
-                        PipelineStepProperty(
-                            name="display_name", type="string", value="old name"
-                        )
-                    ],
+                    properties=[PipelineStepProperty(name="display_name", type="string", value="old name")],
                 ),
             ],
             uninstall=[
@@ -295,11 +281,7 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
                     resourceTemplateName=basic_shared_service_template.name,
                     resourceType=basic_shared_service_template.resourceType,
                     resourceAction="upgrade",
-                    properties=[
-                        PipelineStepProperty(
-                            name="display_name", type="string", value="new name"
-                        )
-                    ],
+                    properties=[PipelineStepProperty(name="display_name", type="string", value="new name")],
                 ),
                 PipelineStep(stepId="main"),
                 PipelineStep(
@@ -308,11 +290,7 @@ def multi_step_resource_template(basic_shared_service_template) -> ResourceTempl
                     resourceTemplateName=basic_shared_service_template.name,
                     resourceType=basic_shared_service_template.resourceType,
                     resourceAction="upgrade",
-                    properties=[
-                        PipelineStepProperty(
-                            name="display_name", type="string", value="old name"
-                        )
-                    ],
+                    properties=[PipelineStepProperty(name="display_name", type="string", value="old name")],
                 ),
             ],
         ),
@@ -357,9 +335,7 @@ def user_resource_multi(test_user, multi_step_resource_template):
 
 
 @pytest.fixture
-def multi_step_operation(
-    test_user, basic_shared_service_template, basic_shared_service
-):
+def multi_step_operation(test_user, basic_shared_service_template, basic_shared_service):
     return Operation(
         id="op-guid-here",
         resourceId="59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
@@ -555,7 +531,7 @@ def pipeline_step() -> PipelineStep:
                     ],
                 },
             )
-        ]
+        ],
     )
 
 
@@ -568,9 +544,7 @@ def simple_pipeline_step() -> PipelineStep:
         resourceType=ResourceType.Workspace,
         resourceAction="install",
         properties=[
-            PipelineStepProperty(
-                name="just_text", type="string", value="Updated by {{resource.id}}"
-            ),
+            PipelineStepProperty(name="just_text", type="string", value="Updated by {{resource.id}}"),
             PipelineStepProperty(
                 name="just_text_2",
                 type="string",
@@ -581,13 +555,17 @@ def simple_pipeline_step() -> PipelineStep:
                 type="string",
                 value="Multiple substitutions -> {{resource.id}} and {{resource.templateName}}",
             ),
-        ]
+        ],
     )
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def no_database():
-    with patch('api.dependencies.database.get_credential_async', return_value=AsyncMock()), \
-            patch('api.dependencies.database.CosmosClient', return_value=AsyncMock(spec=CosmosClient)) as cosmos_client_mock:
+    with (
+        patch("api.dependencies.database.get_credential_async", return_value=AsyncMock()),
+        patch(
+            "api.dependencies.database.CosmosClient", return_value=AsyncMock(spec=CosmosClient)
+        ) as cosmos_client_mock,
+    ):
         cosmos_client_mock.return_value.get_database_client.return_value = AsyncMock(spec=DatabaseProxy)
         yield Database()

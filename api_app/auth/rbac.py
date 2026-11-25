@@ -91,9 +91,7 @@ def require_workspace_roles(
             except TokenInvalid:
                 # Wrong audience — only a TREAdmin core token may proceed, and
                 # only when this endpoint opts in via allow_tre_admin.
-                logger.debug(
-                    "Workspace token invalid (likely wrong audience), trying core validator"
-                )
+                logger.debug("Workspace token invalid (likely wrong audience), trying core validator")
 
         # Endpoints that do not permit TREAdmin get no cross-audience fallback:
         # a token that is not valid for the workspace audience is rejected.
@@ -151,9 +149,7 @@ require_workspace_owner_or_researcher_or_airlock_manager = require_workspace_rol
 
 # Workspace-scoped checks that ALSO permit TREAdmin (mirror the old
 # ``..._or_tre_admin`` dependencies).
-require_workspace_owner_or_tre_admin = require_workspace_roles(
-    WorkspaceAccessRole.Owner, allow_tre_admin=True
-)
+require_workspace_owner_or_tre_admin = require_workspace_roles(WorkspaceAccessRole.Owner, allow_tre_admin=True)
 require_workspace_owner_or_researcher_or_tre_admin = require_workspace_roles(
     WorkspaceAccessRole.Owner, WorkspaceAccessRole.Researcher, allow_tre_admin=True
 )

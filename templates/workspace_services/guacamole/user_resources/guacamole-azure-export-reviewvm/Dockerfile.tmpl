@@ -29,6 +29,11 @@ COPY --from=import-reviewvm ./terraform/download_review_data.ps1 ${BUNDLE_DIR}/t
 
 # PORTER_MIXINS
 
+# Fail the build if the bundled CLI cannot select a user-assigned identity.
+RUN az login --help > /tmp/azure-login-help && \
+    grep -q -- '--client-id' /tmp/azure-login-help && \
+    rm /tmp/azure-login-help
+
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY --link . ${BUNDLE_DIR}/
 
@@ -42,4 +47,3 @@ COPY --link . ${BUNDLE_DIR}/
 COPY --from=windowsvm --link ./reset_password.sh ${BUNDLE_DIR}/reset_password.sh
 # hadolint ignore=DL3022
 COPY --from=windowsvm --link ./delete_vm_extensions.sh ${BUNDLE_DIR}/delete_vm_extensions.sh
-

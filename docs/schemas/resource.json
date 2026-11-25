@@ -39,10 +39,10 @@
             "type": "string",
             "description": "Resource status.",
             "enum": [
-                "NotDeployed", 
-                "Deploying", 
-                "Deployed", 
-                "Deleting", 
+                "NotDeployed",
+                "Deploying",
+                "Deployed",
+                "Deleting",
                 "Deleted"
             ]
         },

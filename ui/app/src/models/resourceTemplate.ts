@@ -61,6 +61,12 @@ export interface TemplateAction {
   description: string;
 }
 
+// "reset_password" -> "Reset password"
+export const getActionDisplayName = (actionName: string) => {
+  const words = actionName.replace(/[_-]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
 // make a sensible guess at an icon
 export const getActionIcon = (actionName: string) => {
   switch (actionName.toLowerCase()) {

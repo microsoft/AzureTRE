@@ -116,4 +116,3 @@ output "airlock_processor_ip_group_id" {
 output "web_app_ip_group_id" {
   value = azurerm_ip_group.webapp.id
 }
-

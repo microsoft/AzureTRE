@@ -167,7 +167,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       });
@@ -347,7 +347,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       })
@@ -390,7 +390,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       })
@@ -426,7 +426,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       });
@@ -452,7 +452,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
 
@@ -476,16 +476,17 @@ describe('getCommandFromComment', () => {
         test(`should set command to 'run-tests-shared-services'`, async () => {
           const context = createCommentContext({
             username: 'admin',
-            body: '/test-shared-services',
+            body: '/test-shared-services accept_nexus_eula',
           });
           await getCommandFromComment({ core, context, github });
           expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-shared-services');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('true');
         });
 
         test(`should add comment with run link`, async () => {
           const context = createCommentContext({
             username: 'admin',
-            body: '/test-shared-services',
+            body: '/test-shared-services accept_nexus_eula',
             pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
           });
           await getCommandFromComment({ core, context, github });
@@ -493,14 +494,115 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
+        });
+
+        test.each([
+          '/test-shared-services 2345678 accept_nexus_eula',
+          '/test-shared-services accept_nexus_eula 2345678',
+          '/test-shared-services ' + 'a'.repeat(40) + ' accept_nexus_eula',
+        ])('accepts one optional SHA on an internal PR: %s', async body => {
+          const context = createCommentContext({ body });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-shared-services');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('true');
+        });
+
+        describe.each([
+          { description: 'internal', pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES, authorUsername: 'admin' },
+          { description: 'external', pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES, authorUsername: 'non-contributor' },
+        ])('argument validation for $description PRs', ({ pullRequestNumber, authorUsername }) => {
+          test.each([
+            '/test-shared-services typo accept_nexus_eula',
+            '/test-shared-services accept_nexus_eula typo',
+            '/test-shared-services 234567 accept_nexus_eula',
+            '/test-shared-services ' + 'a'.repeat(41) + ' accept_nexus_eula',
+            '/test-shared-services 2345678 2345678 accept_nexus_eula',
+            '/test-shared-services 2345678 accept_nexus_eula unexpected',
+          ])('does not dispatch malformed arguments: %s', async body => {
+            const context = createCommentContext({ body, pullRequestNumber, authorUsername });
+            await getCommandFromComment({ core, context, github });
+            expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+            expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+            expect(mockGithubRestIssuesCreateComment).toHaveComment({
+              owner: 'someOwner', repo: 'someRepo', issue_number: pullRequestNumber,
+              bodyMatcher: /Invalid shared-service arguments.*No deployment or tests were started/,
+            });
+          });
+        });
+
+        test.each([
+          '/test-shared-services',
+          '/test-shared-services accept_nexus_eula=false',
+          '/test-shared-services accept_nexus_eula=true',
+          '/test-shared-services accept_nexus_eula accept_nexus_eula=false',
+          '/test-shared-services accept_nexus_eula accept_nexus_eula',
+          '/test-shared-services\naccept_nexus_eula',
+        ])('does not dispatch without the explicit flag: %s', async body => {
+          const context = createCommentContext({ body });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner', repo: 'someRepo', issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Nexus CE EULA acceptance is required.*No deployment or tests were started/,
+          });
+        });
+
+        test.each([
+          '/test-shared-services 2345678 accept_nexus_eula',
+          '/test-shared-services accept_nexus_eula 2345678',
+        ])('keeps external-PR SHA validation with the consent flag: %s', async body => {
+          const context = createCommentContext({
+            body, pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES, authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-shared-services');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('true');
+        });
+
+        test.each([
+          '/test-shared-services accept_nexus_eula',
+          '/test-shared-services outdated123 accept_nexus_eula',
+          '/test-shared-services 234567 accept_nexus_eula',
+        ])('does not accept consent when external-PR SHA validation fails: %s', async body => {
+          const context = createCommentContext({
+            body, pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES, authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+        });
+
+        test('does not allow the consent flag to bypass collaborator permissions', async () => {
+          const context = createCommentContext({
+            body: '/test-shared-services accept_nexus_eula', username: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).not.toBe('true');
+        });
+
+        test('does not accept consent for an unmergeable PR', async () => {
+          const context = createCommentContext({
+            body: '/test-shared-services accept_nexus_eula', pullRequestNumber: PR_NUMBER.UPSTREAM_NON_MERGEABLE,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+        });
+
+        test('does not grant consent to another command', async () => {
+          const context = createCommentContext({ body: '/test-extended accept_nexus_eula' });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
         });
 
         test(`should warn and not run if skip_deployment is supplied`, async () => {
           const context = createCommentContext({
             username: 'admin',
-            body: '/test-shared-services skip_deployment',
+            body: '/test-shared-services skip_deployment accept_nexus_eula',
           });
           await getCommandFromComment({ core, context, github });
           expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
@@ -514,13 +616,103 @@ describe('getCommandFromComment', () => {
       });
 
       describe(`for '/test-airlock'`, () => {
-        test(`should set command to 'run-tests-airlock'`, async () => {
+        test.each([
+          '/test-airlock',
+          '/test-airlock 2345678',
+          '/test-airlock\naccept_nexus_eula',
+        ])('preserves the existing route without granting consent: %s', async body => {
+          const context = createCommentContext({ body });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-airlock');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('false');
+        });
+
+        test.each([
+          '/test-airlock accept_nexus_eula',
+          '/test-airlock 2345678 accept_nexus_eula',
+          '/test-airlock accept_nexus_eula 2345678',
+        ])('forwards explicit consent: %s', async body => {
+          const context = createCommentContext({ body });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-airlock');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('true');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('false');
+        });
+
+        test.each([
+          '/test-airlock accept_nexus_eula=true',
+          '/test-airlock accept_nexus_eula=false',
+          '/test-airlock accept_nexus_eula accept_nexus_eula=false',
+          '/test-airlock accept_nexus_eula accept_nexus_eula',
+          '/test-airlock accept_nexus_eula unexpected',
+          '/test-airlock accept_nexus_eula 2345678 2345678',
+          '/test-airlock ACCEPT_NEXUS_EULA',
+          '/test-airlock accept_nexus_eula 234567',
+          '/test-airlock accept_nexus_eula ' + 'a'.repeat(41),
+        ])('rejects invalid arguments without dispatching: %s', async body => {
+          const context = createCommentContext({ body });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner', repo: 'someRepo', issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Invalid Airlock arguments.*No deployment or tests were started/,
+          });
+        });
+
+        test.each([
+          '/test-airlock 2345678 accept_nexus_eula',
+          '/test-airlock accept_nexus_eula 2345678',
+        ])('keeps reviewed SHA validation for external PRs: %s', async body => {
           const context = createCommentContext({
-            username: 'admin',
-            body: '/test-airlock',
+            body, pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES, authorUsername: 'non-contributor',
           });
           await getCommandFromComment({ core, context, github });
           expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-airlock');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('true');
+        });
+
+        test.each([
+          '/test-airlock accept_nexus_eula',
+          '/test-airlock 1234567 accept_nexus_eula',
+        ])('does not dispatch an external PR without its reviewed SHA: %s', async body => {
+          const context = createCommentContext({
+            body, pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES, authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+        });
+
+        test('does not let consent bypass collaborator permissions', async () => {
+          const context = createCommentContext({ body: '/test-airlock accept_nexus_eula', username: 'non-contributor' });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).not.toBe('true');
+        });
+
+        test('does not accept consent for an unmergeable PR', async () => {
+          const context = createCommentContext({
+            body: '/test-airlock accept_nexus_eula', pullRequestNumber: PR_NUMBER.UPSTREAM_NON_MERGEABLE,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+        });
+
+        test.each([
+          '/test-airlock skip_deployment',
+          '/test-airlock accept_nexus_eula skip_deployment',
+        ])('rejects unsupported deployment reuse: %s', async body => {
+          const context = createCommentContext({ body });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner', repo: 'someRepo', issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /`skip_deployment` is only supported/,
+          });
         });
       });
 
@@ -545,7 +737,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running backup tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running backup tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
 
@@ -676,7 +868,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       })
@@ -752,7 +944,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Hello!\n\nYou can use the following commands:[\s\S]*\/test-airlock/,
+            bodyMatcher: /Hello!\n\nYou can use the following commands:[\s\S]*\/test-airlock \[<sha>\] \[accept_nexus_eula\]/,
           });
         });
       });
@@ -838,6 +1030,7 @@ goes here`,
         });
         await getCommandFromComment({ core, context, github });
         expect(outputFor(mockCoreSetOutput, 'branchRefId')).toBe(null);
+        expect(outputFor(mockCoreSetOutput, 'branchCiGitRef')).toBe(null);
       });
 
       test('should set branchRefId for PR from upstream repo', async () => {
@@ -849,6 +1042,7 @@ goes here`,
         });
         await getCommandFromComment({ core, context, github });
         expect(outputFor(mockCoreSetOutput, 'branchRefId')).toBe('6b751c8f');
+        expect(outputFor(mockCoreSetOutput, 'branchCiGitRef')).toBe('refs/heads/pr-head-ref');
       });
 
       test('should set prHeadSha output', async () => {

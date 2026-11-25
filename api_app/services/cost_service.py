@@ -5,8 +5,18 @@ from typing import Dict, Optional, Union
 import pandas as pd
 
 from azure.mgmt.costmanagement import CostManagementClient
-from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
-    TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
+from azure.mgmt.costmanagement.models import (
+    QueryGrouping,
+    QueryAggregation,
+    QueryDataset,
+    QueryDefinition,
+    TimeframeType,
+    ExportType,
+    QueryTimePeriod,
+    QueryFilter,
+    QueryComparisonExpression,
+    QueryResult,
+)
 from azure.core.exceptions import ResourceNotFoundError, HttpResponseError
 
 from azure.mgmt.resource import ResourceManagementClient
@@ -17,8 +27,14 @@ from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.workspaces import WorkspaceRepository
-from models.domain.costs import GranularityEnum, CostReport, WorkspaceCostReport, CostItem, WorkspaceServiceCostItem, \
-    CostRow
+from models.domain.costs import (
+    GranularityEnum,
+    CostReport,
+    WorkspaceCostReport,
+    CostItem,
+    WorkspaceServiceCostItem,
+    CostRow,
+)
 from models.domain.resource import Resource
 from services.logging import logger
 
@@ -48,6 +64,7 @@ class SubscriptionNotSupported(Exception):
 
 class TooManyRequests(Exception):
     """Raised when cost management api is being throttled, retry after given number of seconds"""
+
     retry_after: int
 
     def __init__(self, retry_after: int, *args: object) -> None:
@@ -57,6 +74,7 @@ class TooManyRequests(Exception):
 
 class ServiceUnavailable(Exception):
     """Raised when cost management is unavaiable, retry after given number of seconds"""
+
     retry_after: int
 
     def __init__(self, retry_after: int, *args: object) -> None:
@@ -64,8 +82,9 @@ class ServiceUnavailable(Exception):
         self.retry_after = retry_after
 
 
-class CostCacheItem():
+class CostCacheItem:
     """Holds cost qery result and time to leave for storing in cache"""
+
     result: QueryResult
     ttl: datetime
 
@@ -107,7 +126,7 @@ class CostService:
                 credentials.get_credential(),
                 subscription_id,
                 base_url=config.RESOURCE_MANAGER_ENDPOINT,
-                credential_scopes=config.CREDENTIAL_SCOPES
+                credential_scopes=config.CREDENTIAL_SCOPES,
             )
         return self.__resource_clients[subscription_id]
 
@@ -126,7 +145,7 @@ class CostService:
             return None
 
         # return None if key expired
-        if (datetime.now() > cached_item.ttl):
+        if datetime.now() > cached_item.ttl:
             # remove expired cache item
             self.cache.pop(key)
             return None
@@ -149,9 +168,15 @@ class CostService:
         self.cache[key] = CostCacheItem(result, datetime.now() + timedelta)
         self.clear_expired_cache_items()
 
-    async def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: datetime, to_date: datetime,
-                              workspace_repo: WorkspaceRepository,
-                              shared_services_repo: SharedServiceRepository) -> CostReport:
+    async def query_tre_costs(
+        self,
+        tre_id,
+        granularity: GranularityEnum,
+        from_date: datetime,
+        to_date: datetime,
+        workspace_repo: WorkspaceRepository,
+        shared_services_repo: SharedServiceRepository,
+    ) -> CostReport:
 
         subscription_ids = {config.SUBSCRIPTION_ID}
 
@@ -162,27 +187,41 @@ class CostService:
         resource_groups_dict = {}
         summarized_result = []
         for subscription_id in subscription_ids:
-            resource_groups_dict[subscription_id] = self.get_resource_groups_by_tag(self.TRE_ID_TAG, tre_id, subscription_id)
+            resource_groups_dict[subscription_id] = self.get_resource_groups_by_tag(
+                self.TRE_ID_TAG, tre_id, subscription_id
+            )
 
             cache_key = f"{CostService.TRE_ID_TAG}_{tre_id}_granularity{granularity}_from_date{from_date}_to_date{to_date}_subscription{subscription_id}_rgs{'_'.join(list(resource_groups_dict[subscription_id].keys()))}"
             query_result = self.get_cached_result(cache_key)
 
             if query_result is None:
-                query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date, list(resource_groups_dict[subscription_id].keys()), subscription_id)
+                query_result = self.query_costs(
+                    CostService.TRE_ID_TAG,
+                    tre_id,
+                    granularity,
+                    from_date,
+                    to_date,
+                    list(resource_groups_dict[subscription_id].keys()),
+                    subscription_id,
+                )
                 self.cache_result(cache_key, query_result, timedelta(hours=2))
 
             #  append the result to the summarized result
-            summarized_result.extend(self.summarize_untagged(query_result, granularity, resource_groups_dict[subscription_id]))
+            summarized_result.extend(
+                self.summarize_untagged(query_result, granularity, resource_groups_dict[subscription_id])
+            )
 
         query_result_dict = self.__query_result_to_dict(summarized_result, granularity)
 
         cost_report = CostReport(core_services=[], shared_services=[], workspaces=[])
 
         cost_report.core_services = self.__extract_cost_rows_by_tag(
-            granularity, query_result_dict, CostService.TRE_CORE_SERVICE_ID_TAG, tre_id)
+            granularity, query_result_dict, CostService.TRE_CORE_SERVICE_ID_TAG, tre_id
+        )
 
         cost_report.shared_services = await self.__get_shared_services_costs(
-            granularity, query_result_dict, shared_services_repo)
+            granularity, query_result_dict, shared_services_repo
+        )
 
         cost_report.workspaces = await self.__get_workspaces_costs(granularity, query_result_dict, workspace_repo)
 
@@ -203,11 +242,16 @@ class CostService:
                 subscription_ids.append(subscription_id)
         return subscription_ids
 
-    async def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: Optional[datetime],
-                                        to_date: Optional[datetime],
-                                        workspace_repo: WorkspaceRepository,
-                                        workspace_services_repo: WorkspaceServiceRepository,
-                                        user_resource_repo) -> WorkspaceCostReport:
+    async def query_tre_workspace_costs(
+        self,
+        workspace_id: str,
+        granularity: GranularityEnum,
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
+        workspace_repo: WorkspaceRepository,
+        workspace_services_repo: WorkspaceServiceRepository,
+        user_resource_repo,
+    ) -> WorkspaceCostReport:
 
         resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_WORKSPACE_ID_TAG, workspace_id)
 
@@ -219,7 +263,9 @@ class CostService:
             try:
                 workspace = await workspace_repo.get_workspace_by_id(workspace_id)
                 subscription_id = workspace.properties["workspace_subscription_id"]
-                resource_groups_dict = self.get_resource_groups_by_tag(self.TRE_WORKSPACE_ID_TAG, workspace_id, subscription_id)
+                resource_groups_dict = self.get_resource_groups_by_tag(
+                    self.TRE_WORKSPACE_ID_TAG, workspace_id, subscription_id
+                )
 
             except EntityDoesNotExist:
                 raise WorkspaceDoesNotExist(f"workspace_id [{workspace_id}] does not exist")
@@ -228,7 +274,15 @@ class CostService:
         query_result = self.get_cached_result(cache_key)
 
         if query_result is None:
-            query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date, list(resource_groups_dict.keys()), subscription_id)
+            query_result = self.query_costs(
+                CostService.TRE_WORKSPACE_ID_TAG,
+                workspace_id,
+                granularity,
+                from_date,
+                to_date,
+                list(resource_groups_dict.keys()),
+                subscription_id,
+            )
             self.cache_result(cache_key, query_result, timedelta(hours=2))
 
         summarized_result = self.summarize_untagged(query_result, granularity, resource_groups_dict)
@@ -236,17 +290,18 @@ class CostService:
 
         try:
             #  check if workspace is already loaded
-            if 'workspace' not in locals() or workspace is None:
+            if "workspace" not in locals() or workspace is None:
                 workspace = await workspace_repo.get_workspace_by_id(workspace_id)
             workspace_cost_report: WorkspaceCostReport = WorkspaceCostReport(
                 id=workspace_id,
                 name=self.__get_resource_name(workspace),
-                costs=self.__extract_cost_rows_by_tag(granularity, query_result_dict, CostService.TRE_WORKSPACE_ID_TAG,
-                                                      workspace_id),
-                workspace_services=await self.__get_workspace_services_costs(granularity, query_result_dict,
-                                                                             workspace_services_repo,
-                                                                             user_resource_repo,
-                                                                             workspace_id))
+                costs=self.__extract_cost_rows_by_tag(
+                    granularity, query_result_dict, CostService.TRE_WORKSPACE_ID_TAG, workspace_id
+                ),
+                workspace_services=await self.__get_workspace_services_costs(
+                    granularity, query_result_dict, workspace_services_repo, user_resource_repo, workspace_id
+                ),
+            )
 
             return workspace_cost_report
         except EntityDoesNotExist:
@@ -261,11 +316,17 @@ class CostService:
     def get_resource_groups_by_tag(self, tag_name, tag_value, subscription_id: Optional[str] = None) -> dict:
 
         resource_client = self.get_resource_management_client(subscription_id)
-        resource_groups = resource_client.resource_groups.list(filter=f"tagName eq '{tag_name}' and tagValue eq '{tag_value}'")
+        resource_groups = resource_client.resource_groups.list(
+            filter=f"tagName eq '{tag_name}' and tagValue eq '{tag_value}'"
+        )
 
-        return {resouce_group.name: self.extract_resource_group_tag(resouce_group.tags) for resouce_group in resource_groups}
+        return {
+            resouce_group.name: self.extract_resource_group_tag(resouce_group.tags) for resouce_group in resource_groups
+        }
 
-    def summarize_untagged(self, query_result: QueryResult, granularity: GranularityEnum, resource_groups_dict: dict) -> list:
+    def summarize_untagged(
+        self, query_result: QueryResult, granularity: GranularityEnum, resource_groups_dict: dict
+    ) -> list:
         if len(query_result.rows) == 0:
             return []
 
@@ -287,7 +348,7 @@ class CostService:
         else:
             c = ["UsageDate", "ResourceGroup", "Tag", "Currency"]
 
-        df = df.groupby(c).agg({'PreTaxCost': 'sum'})
+        df = df.groupby(c).agg({"PreTaxCost": "sum"})
 
         # reset index and reorder columns
         df.reset_index(inplace=True)
@@ -308,41 +369,53 @@ class CostService:
         return CostItem(
             id=resource.id,
             name=self.__get_resource_name(resource),
-            costs=self.__extract_cost_rows_by_tag(granularity, query_result_dict, tag, resource.id)
+            costs=self.__extract_cost_rows_by_tag(granularity, query_result_dict, tag, resource.id),
         )
 
     async def __get_workspaces_costs(self, granularity, query_result_dict, workspace_repo):
-        return [self.__extract_cost_item(workspace, granularity, query_result_dict, CostService.TRE_WORKSPACE_ID_TAG)
-                for workspace in await workspace_repo.get_active_workspaces()]
+        return [
+            self.__extract_cost_item(workspace, granularity, query_result_dict, CostService.TRE_WORKSPACE_ID_TAG)
+            for workspace in await workspace_repo.get_active_workspaces()
+        ]
 
     async def __get_shared_services_costs(self, granularity, query_result_dict, shared_services_repo):
-        return [self.__extract_cost_item(shared_service, granularity, query_result_dict,
-                                         CostService.TRE_SHARED_SERVICE_ID_TAG)
-                for shared_service in await shared_services_repo.get_active_shared_services()]
+        return [
+            self.__extract_cost_item(
+                shared_service, granularity, query_result_dict, CostService.TRE_SHARED_SERVICE_ID_TAG
+            )
+            for shared_service in await shared_services_repo.get_active_shared_services()
+        ]
 
-    async def __get_workspace_services_costs(self, granularity, query_result_dict,
-                                             workspace_services_repo: WorkspaceServiceRepository,
-                                             user_resource_repo: UserResourceRepository, workspace_id: str):
+    async def __get_workspace_services_costs(
+        self,
+        granularity,
+        query_result_dict,
+        workspace_services_repo: WorkspaceServiceRepository,
+        user_resource_repo: UserResourceRepository,
+        workspace_id: str,
+    ):
         workspace_services_costs = []
-        workspace_services_list = await workspace_services_repo.get_active_workspace_services_for_workspace(workspace_id)
+        workspace_services_list = await workspace_services_repo.get_active_workspace_services_for_workspace(
+            workspace_id
+        )
         for workspace_service in workspace_services_list:
             workspace_service_cost_item = WorkspaceServiceCostItem(
                 id=workspace_service.id,
                 name=self.__get_resource_name(workspace_service),
-                costs=self.__extract_cost_rows_by_tag(granularity, query_result_dict,
-                                                      CostService.TRE_WORKSPACE_SERVICE_ID_TAG,
-                                                      workspace_service.id),
-                user_resources=[]
+                costs=self.__extract_cost_rows_by_tag(
+                    granularity, query_result_dict, CostService.TRE_WORKSPACE_SERVICE_ID_TAG, workspace_service.id
+                ),
+                user_resources=[],
             )
 
-            workspace_service_cost_item.user_resources = [self.__extract_cost_item(user_resource,
-                                                                                   granularity,
-                                                                                   query_result_dict,
-                                                                                   CostService.TRE_USER_RESOURCE_ID_TAG)
-                                                          for user_resource in
-                                                          await user_resource_repo.get_user_resources_for_workspace_service(
-                                                              workspace_id,
-                                                              workspace_service.id)]
+            workspace_service_cost_item.user_resources = [
+                self.__extract_cost_item(
+                    user_resource, granularity, query_result_dict, CostService.TRE_USER_RESOURCE_ID_TAG
+                )
+                for user_resource in await user_resource_repo.get_user_resources_for_workspace_service(
+                    workspace_id, workspace_service.id
+                )
+            ]
 
             workspace_services_costs.append(workspace_service_cost_item)
         return workspace_services_costs
@@ -357,24 +430,35 @@ class CostService:
             costs = query_result_dict[cost_key]
             if granularity == GranularityEnum.none:
                 cost_rows = [
-                    self.__create_cost_row(cost[ResultColumn.Cost.value],
-                                           cost[ResultColumn.Currency.value], None) for cost in costs]
+                    self.__create_cost_row(cost[ResultColumn.Cost.value], cost[ResultColumn.Currency.value], None)
+                    for cost in costs
+                ]
             else:
                 cost_rows = [
-                    self.__create_cost_row(cost[ResultColumnDaily.Cost.value],
-                                           cost[ResultColumnDaily.Currency.value],
-                                           self.__parse_cost_management_date_value(
-                                               cost[ResultColumnDaily.Date.value])) for cost in costs]
+                    self.__create_cost_row(
+                        cost[ResultColumnDaily.Cost.value],
+                        cost[ResultColumnDaily.Currency.value],
+                        self.__parse_cost_management_date_value(cost[ResultColumnDaily.Date.value]),
+                    )
+                    for cost in costs
+                ]
 
         return cost_rows
 
-    def query_costs(self, tag_name: str, tag_value: str,
-                    granularity: GranularityEnum, from_date: Optional[datetime],
-                    to_date: Optional[datetime],
-                    resource_groups: list,
-                    subscription_id: Optional[str] = None) -> QueryResult:
+    def query_costs(
+        self,
+        tag_name: str,
+        tag_value: str,
+        granularity: GranularityEnum,
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
+        resource_groups: list,
+        subscription_id: Optional[str] = None,
+    ) -> QueryResult:
 
-        query_definition = self.build_query_definition(granularity, from_date, to_date, tag_name, tag_value, resource_groups)
+        query_definition = self.build_query_definition(
+            granularity, from_date, to_date, tag_name, tag_value, resource_groups
+        )
 
         scope = "/subscriptions/{}".format(subscription_id) if subscription_id else self.scope
         logger.debug(f"Querying cost management API with scope: {scope} and query definition: {query_definition}")
@@ -399,7 +483,9 @@ class CostService:
                 if self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise TooManyRequests(int(e.response.headers[self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logger.warning(f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in response. Using default retry time of 60 seconds.")
+                    logger.warning(
+                        f"{self.RATE_LIMIT_RETRY_AFTER_HEADER_KEY} header was not found in response. Using default retry time of 60 seconds."
+                    )
                     raise TooManyRequests(60)  # Default retry after 60 seconds if header is not found
             elif e.status_code == 503:
                 # Service unavailable - Service is temporarily unavailable.
@@ -407,13 +493,22 @@ class CostService:
                 if self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY in e.response.headers:
                     raise ServiceUnavailable(int(e.response.headers[self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY]))
                 else:
-                    logger.exception(f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in response")
+                    logger.exception(
+                        f"{self.SERVICE_UNAVAILABLE_RETRY_AFTER_HEADER_KEY} header was not found in response"
+                    )
                     raise e
             else:
                 raise e
 
-    def build_query_definition(self, granularity: GranularityEnum, from_date: Optional[datetime],
-                               to_date: Optional[datetime], tag_name: str, tag_value: str, resource_groups: list):
+    def build_query_definition(
+        self,
+        granularity: GranularityEnum,
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
+        tag_name: str,
+        tag_value: str,
+        resource_groups: list,
+    ):
         tag_query_grouping: QueryGrouping = QueryGrouping(name=None, type="Tag")
         rg_query_grouping: QueryGrouping = QueryGrouping(name="ResourceGroup", type="Dimension")
 
@@ -421,7 +516,8 @@ class CostService:
         query_aggregation_dict: Dict[str, QueryAggregation] = dict()
         query_aggregation_dict["totalCost"] = query_aggregation
         tag_query_filter: QueryFilter = QueryFilter(
-            tags=QueryComparisonExpression(name=tag_name, operator="In", values=[tag_value]))
+            tags=QueryComparisonExpression(name=tag_name, operator="In", values=[tag_value])
+        )
         rg_query_filter: QueryFilter = QueryFilter(
             dimensions=QueryComparisonExpression(name="ResourceGroup", operator="In", values=resource_groups)
         )
@@ -430,17 +526,23 @@ class CostService:
         query_grouping_list.append(rg_query_grouping)
         query_grouping_list.append(tag_query_grouping)
         query_dataset: QueryDataset = QueryDataset(
-            granularity=granularity, aggregation=query_aggregation_dict,
-            grouping=query_grouping_list, filter=query_filter)
+            granularity=granularity,
+            aggregation=query_aggregation_dict,
+            grouping=query_grouping_list,
+            filter=query_filter,
+        )
         if from_date is None or to_date is None:
             query_definition: QueryDefinition = QueryDefinition(
-                type=ExportType.actual_cost, timeframe=TimeframeType.MONTH_TO_DATE, dataset=query_dataset)
+                type=ExportType.actual_cost, timeframe=TimeframeType.MONTH_TO_DATE, dataset=query_dataset
+            )
         else:
-            query_time_period: QueryTimePeriod = QueryTimePeriod(
-                from_property=from_date, to=to_date)
+            query_time_period: QueryTimePeriod = QueryTimePeriod(from_property=from_date, to=to_date)
             query_definition: QueryDefinition = QueryDefinition(
-                type=ExportType.actual_cost, timeframe=TimeframeType.CUSTOM,
-                time_period=query_time_period, dataset=query_dataset)
+                type=ExportType.actual_cost,
+                timeframe=TimeframeType.CUSTOM,
+                time_period=query_time_period,
+                dataset=query_dataset,
+            )
         return query_definition
 
     def __query_result_to_dict(self, query_result: list, granularity: GranularityEnum):

@@ -8,7 +8,10 @@ from db.errors import EntityVersionExist, InvalidInput
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
-from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, WorkspaceServiceTemplateInResponse
+from models.schemas.workspace_service_template import (
+    WorkspaceServiceTemplateInCreate,
+    WorkspaceServiceTemplateInResponse,
+)
 from resources import strings
 from auth.rbac import require_tre_admin, require_tre_user_or_admin
 
@@ -16,20 +19,49 @@ from auth.rbac import require_tre_admin, require_tre_user_or_admin
 workspace_service_templates_core_router = APIRouter(dependencies=[Depends(require_tre_user_or_admin)])
 
 
-@workspace_service_templates_core_router.get("/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(require_tre_user_or_admin)])
-async def get_workspace_service_templates(template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
+@workspace_service_templates_core_router.get(
+    "/workspace-service-templates",
+    response_model=ResourceTemplateInformationInList,
+    name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES,
+    dependencies=[Depends(require_tre_user_or_admin)],
+)
+async def get_workspace_service_templates(
+    template_repo=Depends(get_repository(ResourceTemplateRepository)),
+) -> ResourceTemplateInformationInList:
     templates_infos = await template_repo.get_templates_information(ResourceType.WorkspaceService)
     return ResourceTemplateInformationInList(templates=templates_infos)
 
 
-@workspace_service_templates_core_router.get("/workspace-service-templates/{service_template_name}", response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, dependencies=[Depends(require_tre_user_or_admin)])
-async def get_workspace_service_template(service_template_name: str, is_update: bool = False, version: Optional[str] = None, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
-    template = await get_template(service_template_name, template_repo, ResourceType.WorkspaceService, is_update=is_update, version=version)
+@workspace_service_templates_core_router.get(
+    "/workspace-service-templates/{service_template_name}",
+    response_model=WorkspaceServiceTemplateInResponse,
+    response_model_exclude_none=True,
+    name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME,
+    dependencies=[Depends(require_tre_user_or_admin)],
+)
+async def get_workspace_service_template(
+    service_template_name: str,
+    is_update: bool = False,
+    version: Optional[str] = None,
+    template_repo=Depends(get_repository(ResourceTemplateRepository)),
+) -> WorkspaceServiceTemplateInResponse:
+    template = await get_template(
+        service_template_name, template_repo, ResourceType.WorkspaceService, is_update=is_update, version=version
+    )
     return TypeAdapter(WorkspaceServiceTemplateInResponse).validate_python(template)
 
 
-@workspace_service_templates_core_router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(require_tre_admin)])
-async def register_workspace_service_template(template_input: WorkspaceServiceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInResponse:
+@workspace_service_templates_core_router.post(
+    "/workspace-service-templates",
+    status_code=status.HTTP_201_CREATED,
+    response_model=WorkspaceServiceTemplateInResponse,
+    response_model_exclude_none=True,
+    name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES,
+    dependencies=[Depends(require_tre_admin)],
+)
+async def register_workspace_service_template(
+    template_input: WorkspaceServiceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository))
+) -> ResourceTemplateInResponse:
     try:
         return await template_repo.create_and_validate_template(template_input, ResourceType.WorkspaceService)
     except EntityVersionExist:

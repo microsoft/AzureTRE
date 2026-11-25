@@ -22,20 +22,23 @@ def get_credential():
     managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
     if managed_identity:
         logging.info("using the Airlock processor's managed identity to get credentials.")
-        return DefaultAzureCredential(managed_identity_client_id=managed_identity,
-                                      exclude_shared_token_cache_credential=True)
+        return DefaultAzureCredential(
+            managed_identity_client_id=managed_identity, exclude_shared_token_cache_credential=True
+        )
     return DefaultAzureCredential()
 
 
-def create_container_with_metadata(account_name: str, request_id: str, stage: str,
-                                   workspace_id: str = None, request_type: str = None,
-                                   created_by: str = None) -> None:
+def create_container_with_metadata(
+    account_name: str,
+    request_id: str,
+    stage: str,
+    workspace_id: str = None,
+    request_type: str = None,
+    created_by: str = None,
+) -> None:
     try:
         container_name = request_id
-        blob_service_client = BlobServiceClient(
-            account_url=get_account_url(account_name),
-            credential=get_credential()
-        )
+        blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
 
         metadata = {
             "stage": stage,
@@ -54,21 +57,23 @@ def create_container_with_metadata(account_name: str, request_id: str, stage: st
         container_client = blob_service_client.get_container_client(container_name)
         container_client.create_container(metadata=metadata)
 
-        logging.info(f'Container created for request id: {request_id} with stage: {stage}')
+        logging.info(f"Container created for request id: {request_id} with stage: {stage}")
 
     except ResourceExistsError:
-        logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
+        logging.info(f"Did not create a new container. Container already exists for request id: {request_id}.")
 
 
-def update_container_stage(account_name: str, request_id: str, new_stage: str,
-                           changed_by: str = None, additional_metadata: Dict[str, str] = None,
-                           max_attempts: int = 5) -> bool:
+def update_container_stage(
+    account_name: str,
+    request_id: str,
+    new_stage: str,
+    changed_by: str = None,
+    additional_metadata: Dict[str, str] = None,
+    max_attempts: int = 5,
+) -> bool:
     """Update stage metadata with optimistic concurrency."""
     container_name = request_id
-    blob_service_client = BlobServiceClient(
-        account_url=get_account_url(account_name),
-        credential=get_credential()
-    )
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
     container_client = blob_service_client.get_container_client(container_name)
 
     for attempt in range(1, max_attempts + 1):
@@ -79,22 +84,20 @@ def update_container_stage(account_name: str, request_id: str, new_stage: str,
             raise
 
         metadata = properties.metadata.copy()
-        old_stage = metadata.get('stage', 'unknown')
+        old_stage = metadata.get("stage", "unknown")
 
-        metadata['stage'] = new_stage
-        stage_history = metadata.get('stage_history', old_stage)
-        metadata['stage_history'] = f"{stage_history},{new_stage}"
-        metadata['last_stage_change'] = datetime.now(UTC).isoformat()
+        metadata["stage"] = new_stage
+        stage_history = metadata.get("stage_history", old_stage)
+        metadata["stage_history"] = f"{stage_history},{new_stage}"
+        metadata["last_stage_change"] = datetime.now(UTC).isoformat()
         if changed_by:
-            metadata['last_changed_by'] = changed_by
+            metadata["last_changed_by"] = changed_by
         if additional_metadata:
             metadata.update(additional_metadata)
 
         try:
             container_client.set_container_metadata(
-                metadata,
-                etag=properties.etag,
-                match_condition=MatchConditions.IfNotModified
+                metadata, etag=properties.etag, match_condition=MatchConditions.IfNotModified
             )
         except ResourceModifiedError:
             logging.warning(
@@ -117,10 +120,7 @@ def update_container_stage(account_name: str, request_id: str, new_stage: str,
 
 def get_container_metadata(account_name: str, request_id: str) -> Dict[str, str]:
     container_name = request_id
-    blob_service_client = BlobServiceClient(
-        account_url=get_account_url(account_name),
-        credential=get_credential()
-    )
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
     container_client = blob_service_client.get_container_client(container_name)
 
     try:

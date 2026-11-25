@@ -3,32 +3,12 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-retry_with_backoff() {
-  local func="$1"
-  local sleep_time=10
-  local max_sleep=180
+# shellcheck disable=SC1091
+source ../scripts/terraform_init.sh
 
-  while [ "$sleep_time" -lt "$max_sleep" ]; do
-    if "$func"; then
-      return 0
-    fi
-    sleep "$sleep_time"
-    sleep_time=$((sleep_time * 2))
-  done
-  return 1
-}
-
-init_terraform() {
-  terraform_output=$(terraform init -input=false -backend=true -reconfigure 2>&1)
-  if echo "$terraform_output" | grep -q "AuthorizationPermissionMismatch\|403\|Failed to get existing workspaces"; then
-    return 1
-  elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
-    return 0
-  fi
-
-  echo "Apply Retry mechanism on: ERROR- Unexpected output from terraform init: $terraform_output"
-  return 1
-}
+if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
+  python3 ../scripts/recover_bootstrap_lease.py context
+fi
 
 check_role_assignments() {
   local roles
@@ -46,21 +26,53 @@ check_role_assignments() {
 
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
+# The repository tag names the CI owner. Cleanup refuses groups that another repository tagged.
+ci_tags=()
+if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
+  ci_tags=("ci_git_ref=$TF_VAR_ci_git_ref")
+  if [[ -n "${TF_VAR_ci_repository:-}" ]]; then
+    ci_tags+=("ci_repository=$TF_VAR_ci_repository")
+  fi
+fi
+
 # shellcheck disable=SC2154
 group_exists=$(az group exists --name "$TF_VAR_mgmt_resource_group_name" --output json)
 case "$group_exists" in
   true)
+    # Verify existing ownership before bootstrap can update the CI tag.
+    if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
+      python3 ../scripts/recover_bootstrap_lease.py verify-owner
+    fi
+    # Never take over a group that another repository's CI tagged, also outside lease recovery.
+    if [[ -n "${TF_VAR_ci_repository:-}" ]] && (( ${#ci_tags[@]} )); then
+      # Azure tag names are not case-sensitive, so read the owner tag with any case. Read the whole
+      # group, because az prints nothing for a query result of null, for example a group without tags.
+      current_owner=$(az group show --name "$TF_VAR_mgmt_resource_group_name" --output json \
+        | python3 -c 'import json, sys; sys.path.insert(0, "../scripts"); from ci_environment_id import ci_tags; print(ci_tags(json.load(sys.stdin).get("tags")).get("ci_repository") or "")')
+      if [[ -n "${current_owner}" && "${current_owner,,}" != "${TF_VAR_ci_repository,,}" ]]; then
+        echo "ERROR: The management resource group belongs to the CI of ${current_owner}." >&2
+        exit 1
+      fi
+      # Keep this rule identical to repository_owns() in ci_environment_id.py. Main groups use
+      # configured names, so the rule applies to PR and branch environments only.
+      if [[ -z "${current_owner}" && "${TF_VAR_ci_git_ref}" != refs/heads/main && "${CI_ENV_PREFIX:-tre}" == tre \
+        && "${TF_VAR_ci_repository,,}" != "microsoft/azuretre" ]]; then
+        echo "ERROR: The untagged management resource group can belong to the upstream CI." >&2
+        echo "If this repository created it, tag the core and management groups with ci_repository=${TF_VAR_ci_repository}." >&2
+        exit 1
+      fi
+    fi
     # Creating an existing group without tags clears its tags. Preserve them on reruns.
-    if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
+    if (( ${#ci_tags[@]} )); then
       az group update --name "$TF_VAR_mgmt_resource_group_name" \
-        --set "tags.ci_git_ref=$TF_VAR_ci_git_ref" -o table
+        --set "${ci_tags[@]/#/tags.}" -o table
     fi
     ;;
   false)
     # Tag new CI groups before any later bootstrap step can fail.
-    if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
+    if (( ${#ci_tags[@]} )); then
       az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" \
-        --tags "ci_git_ref=$TF_VAR_ci_git_ref" -o table
+        --tags "${ci_tags[@]}" -o table
     else
       az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" -o table
     fi
@@ -135,6 +147,18 @@ for container in "${containers[@]}"; do
   done
 done
 
+echo "Checking blob read, write and lease access before initialising Terraform..."
+if ! retry_with_backoff check_blob_access; then
+  echo "ERROR: Bootstrap blob access check failed. Terraform has not been started." >&2
+  exit 1
+fi
+
+if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
+  if ! python3 ../scripts/recover_bootstrap_lease.py recover; then
+    echo "ERROR: Bootstrap lease recovery failed. Terraform has not been started." >&2
+    exit 1
+  fi
+fi
 
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
 # shellcheck disable=SC2154
@@ -150,8 +174,8 @@ terraform {
 BOOTSTRAP_BACKEND
 
 # shellcheck disable=SC2154
-if ! retry_with_backoff init_terraform; then
-  echo "ERROR: Timeout waiting for Terraform backend role assignments."
+if ! retry_with_backoff init_terraform bootstrap.tfstate; then
+  echo "ERROR: Terraform backend initialisation failed. See the error above." >&2
   exit 1
 fi
 echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."

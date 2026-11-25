@@ -16,14 +16,25 @@ class RestrictedResource(AzureTREModel):
     """
     Resource request
     """
+
     id: str = Field(title="Id", description="GUID identifying the resource request")
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
-    templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
-    properties: RestrictedProperties = Field(default_factory=RestrictedProperties, title="Restricted Properties", description="Resource properties safe to share with non-admins")
-    availableUpgrades: Optional[List[AvailableUpgrade]] = Field(None, title="Available template upgrades", description="Versions of the template that are available for upgrade")
+    templateVersion: str = Field(
+        title="Resource template version", description="The version of the resource template (bundle) to deploy"
+    )
+    properties: RestrictedProperties = Field(
+        default_factory=RestrictedProperties,
+        title="Restricted Properties",
+        description="Resource properties safe to share with non-admins",
+    )
+    availableUpgrades: Optional[List[AvailableUpgrade]] = Field(
+        None, title="Available template upgrades", description="Versions of the template that are available for upgrade"
+    )
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
-    deploymentStatus: Optional[str] = Field(None, title="Deployment Status", description="Overall deployment status of the resource")
+    deploymentStatus: Optional[str] = Field(
+        None, title="Deployment Status", description="Overall deployment status of the resource"
+    )
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0

@@ -1,101 +1,71 @@
-import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
+import { Link, Text } from "@fluentui/react";
 import moment from "moment";
 import React from "react";
 import { Resource } from "../../models/resource";
 import { ComplexPropertyModal } from "./ComplexItemDisplay";
+import { PropertyGrid, PropertyGridItem, sectionHeaderClass, userDisplayName } from "./ResourceDetailsLayout";
 
 interface ResourcePropertyPanelProps {
   resource: Resource;
 }
 
-interface ResourcePropertyPanelItemProps {
-  header: string;
-  val: any;
-}
+const friendlyKey = (key: string) => {
+  const words = key.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
+};
 
-export const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelItemProps> = (
-  props: ResourcePropertyPanelItemProps,
-) => {
-  const stackItemStyles: IStackItemStyles = {
-    root: {
-      padding: 5,
-      width: 150,
-      color: DefaultPalette.neutralSecondary,
-      wordBreak: "break-all",
-    },
-  };
+const friendlyResourceType = (type: string) => friendlyKey(type.replace(/-/g, " "));
 
-  function renderValue(val: any, title: string) {
-    if (typeof val === "string") {
-      if (val && val.startsWith("https://")) {
-        return (
-          <a href={val.toString()} target="_blank" rel="noreferrer">
-            {val}
-          </a>
-        );
-      }
-      return val;
+export const renderPropertyValue = (val: any, title: string): React.ReactNode => {
+  if (val === null || val === undefined || val === "") return "—";
+  if (typeof val === "boolean") return val ? "Yes" : "No";
+  if (typeof val === "string") {
+    if (val.startsWith("https://")) {
+      return (
+        <Link href={val} target="_blank" rel="noreferrer">
+          {val}
+        </Link>
+      );
     }
-
-    if (typeof val === "object") return <ComplexPropertyModal val={val} title={title} />;
-
-    return val.toString();
+    return val;
   }
-
-  return (
-    <>
-      <Stack wrap horizontal>
-        <Stack.Item grow styles={stackItemStyles}>
-          {props.header}
-        </Stack.Item>
-        <Stack.Item grow={3} styles={stackItemStyles}>
-          : {renderValue(props.val, props.header)}
-        </Stack.Item>
-      </Stack>
-    </>
-  );
+  if (typeof val === "object") return <ComplexPropertyModal val={val} title={title} />;
+  return val.toString();
 };
 
 export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPanelProps> = (
   props: ResourcePropertyPanelProps,
 ) => {
-  const stackStyles: IStackStyles = {
-    root: {
-      padding: 0,
-      minWidth: 300,
+  if (!props.resource || !props.resource.id) return <></>;
+  const r = props.resource;
+
+  const resourceItems: Array<PropertyGridItem> = [
+    { label: "Resource ID", value: r.id, copyValue: r.id },
+    { label: "Resource type", value: friendlyResourceType(r.resourceType) },
+    { label: "Resource path", value: r.resourcePath, copyValue: r.resourcePath },
+    { label: "Template", value: `${r.templateName} (${r.templateVersion})` },
+    { label: "Enabled", value: r.isEnabled ? "Yes" : "No" },
+    {
+      label: "Last updated",
+      value: `${moment.unix(r.updatedWhen).format("LLL")} by ${userDisplayName(r.user)}`,
     },
-  };
+  ];
 
-  function userFriendlyKey(key: String) {
-    let friendlyKey = key.replaceAll("_", " ");
-    return friendlyKey.charAt(0).toUpperCase() + friendlyKey.slice(1).toLowerCase();
-  }
+  const propertyItems: Array<PropertyGridItem> = Object.keys(r.properties).map((key) => ({
+    label: friendlyKey(key),
+    value: renderPropertyValue((r.properties as any)[key], friendlyKey(key)),
+  }));
 
-  return props.resource && props.resource.id ? (
-    <>
-      <Stack wrap horizontal>
-        <Stack grow styles={stackStyles}>
-          <ResourcePropertyPanelItem header={"Resource ID"} val={props.resource.id} />
-          <ResourcePropertyPanelItem header={"Resource type"} val={props.resource.resourceType} />
-          <ResourcePropertyPanelItem header={"Resource path"} val={props.resource.resourcePath} />
-          <ResourcePropertyPanelItem header={"Template name"} val={props.resource.templateName} />
-          <ResourcePropertyPanelItem header={"Template version"} val={props.resource.templateVersion} />
-          <ResourcePropertyPanelItem header={"Is enabled"} val={props.resource.isEnabled.toString()} />
-          <ResourcePropertyPanelItem header={"User"} val={props.resource.user.name} />
-          <ResourcePropertyPanelItem
-            header={"Last updated"}
-            val={moment.unix(props.resource.updatedWhen).toDate().toDateString()}
-          />
-        </Stack>
-        <Stack grow styles={stackStyles}>
-          {Object.keys(props.resource.properties).map((key) => {
-            let val = (props.resource.properties as any)[key];
-            return <ResourcePropertyPanelItem header={userFriendlyKey(key)} val={val} key={key} />;
-          })}
-        </Stack>
-      </Stack>
-    </>
-  ) : (
-    <></>
+  return (
+    <div style={{ padding: "0 5px" }}>
+      <Text block variant="mediumPlus" className={sectionHeaderClass}>
+        Resource
+      </Text>
+      <PropertyGrid items={resourceItems} />
+      <Text block variant="mediumPlus" className={sectionHeaderClass}>
+        Properties
+      </Text>
+      <PropertyGrid items={propertyItems} />
+    </div>
   );
 };

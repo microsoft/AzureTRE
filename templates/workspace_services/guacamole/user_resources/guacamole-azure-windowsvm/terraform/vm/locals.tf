@@ -36,6 +36,7 @@ locals {
       nexus_proxy_url        = var.nexus_proxy_url
       SharedStorageAccess    = var.shared_storage_access ? 1 : 0
       InstallAzureCli        = var.install_azure_cli ? 1 : 0
+      RequireAzureCli        = var.require_azure_cli ? 1 : 0
       InstallVsCode          = var.install_vscode ? 1 : 0
       InstallStorageExplorer = var.install_storage_explorer ? 1 : 0
       InstallGit             = var.install_git ? 1 : 0

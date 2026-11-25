@@ -14,11 +14,12 @@ from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/validate_ci_cleanup.py"
+sys.path.insert(0, str(SCRIPT.parent))
 SPEC = importlib.util.spec_from_file_location("validate_ci_cleanup", SCRIPT)
 validation = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(validation)
 
-FAKE_COMMAND = r'''
+FAKE_COMMAND = r"""
 import json
 import os
 from pathlib import Path
@@ -98,8 +99,8 @@ elif operation == ["group", "list"]:
     if query:
         prefix = re.search(r"starts_with\(name, '([^']+)'\)", query).group(1)
         result = [row for row in result if row["name"].startswith(prefix)]
-        if "ci_git_ref" in query:
-            result = [{"name": row["name"], "ci_git_ref": row["tags"].get("ci_git_ref")} for row in result]
+        if "tags:tags" in query:
+            result = [{"name": row["name"], "tags": row["tags"]} for row in result]
         else:
             print("\n".join(row["name"] for row in result))
             result = None
@@ -111,27 +112,76 @@ else:
 path.write_text(json.dumps(state))
 if result is not None:
     print(json.dumps(result))
-'''
+"""
+
+
+SCOPE_WRAPPER = r"""
+import os
+from pathlib import Path
+import sys
+
+if Path(sys.argv[1]).name != "ci_cleanup_scope.py":
+    os.execv(sys.executable, [sys.executable, *sys.argv[1:]])
+sys.path.insert(0, str(Path(sys.argv[1]).resolve().parent))
+import ci_cleanup_scope as scope
+import ci_cleanup_activity as activity
+import recover_bootstrap_lease as recovery
+
+def github(ctx, suffix):
+    if suffix == "/actions/runs/123":
+        return {"id": 123, "run_attempt": 1, "status": "in_progress", "path": ".github/workflows/clean_validation_envs.yml",
+                "repository": {"full_name": os.environ["GITHUB_REPOSITORY"]}}
+    if "/jobs?" in suffix:
+        return {"total_count": 1, "jobs": [{"id": 99, "name": "Validate cleanup with disposable groups", "status": "in_progress"}]}
+    if "/concurrency_groups/" in suffix:
+        return {"group_name": "deploy-" + ctx["ref"], "total_count": 1,
+                "group_members": [{"run_id": 123, "job_id": 99, "status": "in_progress"}]}
+    raise AssertionError("Unexpected GitHub request: " + suffix)
+
+scope.github = github
+activity.github = github
+recovery.github = github
+sys.argv = sys.argv[1:]
+sys.exit(scope.main())
+"""
 
 
 class ValidationTests(unittest.TestCase):
     def setUp(self):
+        # Keep the upstream defaults when a fork's CI runs these tests with its own values.
+        env = patch.dict(os.environ, {"GITHUB_REPOSITORY": "microsoft/AzureTRE", "CI_ENV_PREFIX": ""})
+        env.start()
+        self.addCleanup(env.stop)
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
         self.runner = validation.Validation(self.root / "validation")
         self.runner.state = {
-            "az": str(self.root / "az"), "subscription": "test-subscription", "tenant": "test-tenant",
-            "identity": ["test-subscription", "test-tenant", "test-user", "user"], "owner": "123-1-test",
-            "core": "rg-trevalidate-test", "groups": ["rg-trevalidate-test-mgmt", "rg-trevalidate-testother-mgmt"],
-            "location": "westeurope", "ref": "refs/heads/ci-cleanup-validation/test", "main_id": "excluded",
-            "commit": "a" * 40, "checks": [], "status": "running", "inventory": validation.inventory_digest([], []),
+            "az": str(self.root / "az"),
+            "subscription": "test-subscription",
+            "tenant": "test-tenant",
+            "identity": ["test-subscription", "test-tenant", "test-user", "user"],
+            "owner": "123-1-test",
+            "core": "rg-trevalidate-test",
+            "groups": ["rg-trevalidate-test-mgmt", "rg-trevalidate-testother-mgmt"],
+            "location": "westeurope",
+            "ref": "refs/heads/ci-cleanup-validation/test",
+            "main_id": "excluded",
+            "commit": "a" * 40,
+            "checks": [],
+            "status": "running",
+            "inventory": validation.inventory_digest([], []),
         }
         self.runner.save()
         self.target, self.neighbour = self.runner.state["groups"]
-        self.metadata = {"id": "/subscriptions/test-subscription/resourceGroups/" + self.target,
-                         "tags": {validation.OWNER_TAG: "123-1-test"}, "properties": {"provisioningState": "Succeeded"}}
-        self.environment = patch.dict(os.environ, CLEANUP_VALIDATION_PHASE="apply", GITHUB_STEP_SUMMARY=str(self.root / "summary.md"))
+        self.metadata = {
+            "id": "/subscriptions/test-subscription/resourceGroups/" + self.target,
+            "tags": {validation.OWNER_TAG: "123-1-test"},
+            "properties": {"provisioningState": "Succeeded"},
+        }
+        self.environment = patch.dict(
+            os.environ, CLEANUP_VALIDATION_PHASE="apply", GITHUB_STEP_SUMMARY=str(self.root / "summary.md")
+        )
         self.environment.start()
         self.addCleanup(self.environment.stop)
         self.output = redirect_stdout(io.StringIO())
@@ -145,7 +195,8 @@ class ValidationTests(unittest.TestCase):
             ["group", "delete", "--resource-group", self.target, "--yes", "--no-wait", "--subscription", "other"],
             ["resource", "delete", "--ids", "/subscriptions/other"],
             ["group", "show", "--name", self.runner.state["core"]],
-            ["account", "get-access-token"], ["group", "list"],
+            ["account", "get-access-token"],
+            ["group", "list"],
         ]
         with patch.object(self.runner, "azure") as azure:
             for args in commands:
@@ -154,9 +205,12 @@ class ValidationTests(unittest.TestCase):
             azure.assert_not_called()
 
     def test_delete_requires_unchanged_ci_reference(self):
-        with patch.object(self.runner, "owned_empty", return_value=self.metadata), patch.object(self.runner, "azure") as azure:
+        with (
+            patch.object(self.runner, "owned_empty", return_value=self.metadata),
+            patch.object(self.runner, "azure") as azure,
+        ):
             with self.assertRaisesRegex(validation.ValidationError, "ownership reference"):
-                self.runner.guard(["group", "delete", "--resource-group", self.target, "--yes", "--no-wait"])
+                self.runner.guard(["group", "delete", "--resource-group", self.target, "--yes"])
             azure.assert_not_called()
 
     def test_azure_failure_reports_operation_without_private_arguments_or_output(self):
@@ -176,23 +230,38 @@ class ValidationTests(unittest.TestCase):
         ]
         for metadata, resources, locks in cases:
             with self.subTest(metadata=metadata, resources=resources, locks=locks):
-                with patch.object(self.runner, "identity"), patch.object(self.runner, "azure_json", side_effect=[metadata, resources, locks]):
+                with (
+                    patch.object(self.runner, "identity"),
+                    patch.object(self.runner, "azure_json", side_effect=[metadata, resources, locks]),
+                ):
                     with self.assertRaises(validation.ValidationError):
                         self.runner.owned_empty(self.target)
         account = {"id": "other", "tenantId": "test-tenant", "user": {"name": "test-user", "type": "user"}}
-        with patch.object(self.runner, "azure_json", return_value=account), self.assertRaises(validation.ValidationError):
+        with (
+            patch.object(self.runner, "azure_json", return_value=account),
+            self.assertRaises(validation.ValidationError),
+        ):
             self.runner.owned_empty(self.target)
 
     def test_cleanup_skip_and_missing_delete_do_not_pass(self):
-        for output, error in [("Skipping environment cleanup while other workflow runs are queued:", validation.Incomplete),
-                              ("", validation.ValidationError)]:
-            with self.subTest(output=output), patch.object(self.runner, "script", return_value=subprocess.CompletedProcess([], 0, output, "")):
+        for output, error in [
+            ("Skipping environment cleanup while other workflow runs are queued:", validation.Incomplete),
+            ("", validation.ValidationError),
+        ]:
+            with (
+                self.subTest(output=output),
+                patch.object(self.runner, "script", return_value=subprocess.CompletedProcess([], 0, output, "")),
+            ):
                 with self.assertRaises(error):
                     self.runner.cleanup_script(preview=True)
 
     def test_cleanup_attempts_both_groups_after_one_fails(self):
-        with patch.object(self.runner, "azure_json", side_effect=[True, True, []]), \
-                patch.object(self.runner, "owned_group", side_effect=validation.ValidationError("Ownership changed")) as owned:
+        with (
+            patch.object(self.runner, "azure_json", side_effect=[True, True, []]),
+            patch.object(
+                self.runner, "owned_group", side_effect=validation.ValidationError("Ownership changed")
+            ) as owned,
+        ):
             with self.assertRaises(validation.ValidationError):
                 self.runner.cleanup_fixtures()
             self.assertEqual([call.args[0] for call in owned.call_args_list], [self.target, self.neighbour])
@@ -200,9 +269,12 @@ class ValidationTests(unittest.TestCase):
 
     def test_cleanup_waits_for_owned_group_already_deleting(self):
         metadata = {**self.metadata, "properties": {"provisioningState": "Deleting"}}
-        with patch.object(self.runner, "azure_json", side_effect=[True, False, []]), \
-                patch.object(self.runner, "owned_group", return_value=metadata), patch.object(self.runner, "azure") as azure, \
-                patch.object(self.runner, "wait_deleted") as wait:
+        with (
+            patch.object(self.runner, "azure_json", side_effect=[True, False, []]),
+            patch.object(self.runner, "owned_group", return_value=metadata),
+            patch.object(self.runner, "azure") as azure,
+            patch.object(self.runner, "wait_deleted") as wait,
+        ):
             self.runner.cleanup_fixtures()
             wait.assert_called_once_with(self.target)
             azure.assert_not_called()
@@ -217,8 +289,14 @@ class ValidationTests(unittest.TestCase):
         self.assertNotEqual(before, validation.inventory_digest(rows, [self.target]))
 
     def test_summary_requires_validation_cleanup_and_inventory_success(self):
-        cases = [("passed", True, True, 0), ("passed", False, True, 1), ("passed", True, False, 1),
-                 ("incomplete", True, True, 1), ("failed", True, True, 1), ("running", True, True, 1)]
+        cases = [
+            ("passed", True, True, 0),
+            ("passed", False, True, 1),
+            ("passed", True, False, 1),
+            ("incomplete", True, True, 1),
+            ("failed", True, True, 1),
+            ("running", True, True, 1),
+        ]
         for status, deleted, unchanged, expected in cases:
             with self.subTest(status=status, deleted=deleted, unchanged=unchanged):
                 self.runner.state.update(status=status, fixtures_deleted=deleted, inventory_unchanged=unchanged)
@@ -228,7 +306,7 @@ class ValidationTests(unittest.TestCase):
                 for private in ("test-subscription", "test-tenant", "test-user", str(self.root)):
                     self.assertNotIn(private, evidence)
 
-    def fake_services(self):
+    def fake_services(self, prefix="", repository="microsoft/AzureTRE"):
         path = self.root / "azure.json"
         account = {"id": "test-subscription", "tenantId": "test-tenant", "user": {"name": "test-user", "type": "user"}}
         path.write_text(json.dumps({"groups": {}, "account": account}))
@@ -236,18 +314,46 @@ class ValidationTests(unittest.TestCase):
             script = self.root / command
             script.write_text(f"#!{sys.executable}\n" + FAKE_COMMAND)
             script.chmod(0o755)
-        env = patch.dict(os.environ, FAKE_AZURE_STATE=str(path), PATH=str(self.root) + os.pathsep + os.environ["PATH"],
-                         GITHUB_REPOSITORY="example/test", GITHUB_RUN_ID="123")
+        # Run the real scope guard with an in-process fake GitHub transport.
+        # Every Azure call still passes through the real fixture allow-list.
+        python = self.root / "python3"
+        python.write_text(f"#!{sys.executable}\n" + SCOPE_WRAPPER)
+        python.chmod(0o755)
+        env = patch.dict(
+            os.environ,
+            FAKE_AZURE_STATE=str(path),
+            PATH=str(self.root) + os.pathsep + os.environ["PATH"],
+            GITHUB_REPOSITORY=repository,
+            CI_ENV_PREFIX=prefix,
+            GITHUB_RUN_ID="123",
+            GITHUB_RUN_ATTEMPT="1",
+            GITHUB_ACTIONS="true",
+            AZURE_SUBSCRIPTION_ID="test-subscription",
+            CI_CLEANUP_JOB_NAME="Validate cleanup with disposable groups",
+        )
         env.start()
         self.addCleanup(env.stop)
         return path
 
     def test_real_scripts_complete_guarded_lifecycle_without_creating_storage(self):
-        path = self.fake_services()
+        self.assert_guarded_lifecycle(self.fake_services())
+
+    def test_real_scripts_complete_guarded_lifecycle_with_a_fork_prefix(self):
+        # The fork's own groups must not count as foreign or out of scope.
+        self.runner.state.update(
+            core="rg-frkvalidate-test", groups=["rg-frkvalidate-test-mgmt", "rg-frkvalidate-testother-mgmt"]
+        )
+        self.runner.save()
+        self.target, self.neighbour = self.runner.state["groups"]
+        self.assert_guarded_lifecycle(self.fake_services("frk", "contoso/AzureTRE"))
+
+    def assert_guarded_lifecycle(self, path):
         self.runner.scenarios()
         self.assertEqual(len(self.runner.state["checks"]), 9)
-        self.assertEqual(json.loads(path.read_text())["groups"][self.neighbour]["tags"],
-                         {validation.OWNER_TAG: self.runner.state["owner"], "validation_keep": "preserved"})
+        self.assertEqual(
+            json.loads(path.read_text())["groups"][self.neighbour]["tags"],
+            {validation.OWNER_TAG: self.runner.state["owner"], "validation_keep": "preserved"},
+        )
         self.runner.cleanup_script(preview=True)
         self.assertEqual(len(json.loads(path.read_text())["groups"]), 2)
         self.runner.cleanup_script(preview=False)
@@ -261,11 +367,58 @@ class ValidationTests(unittest.TestCase):
 
     def test_partial_bootstrap_failure_still_removes_fixtures(self):
         path = self.fake_services()
-        self.runner.bootstrap("Created fixture", self.target, self.runner.state["ref"], {"ci_git_ref": self.runner.state["ref"]})
+        self.runner.bootstrap(
+            "Created fixture", self.target, self.runner.state["ref"], {"ci_git_ref": self.runner.state["ref"]}
+        )
         self.runner.state["status"] = "failed"
         self.runner.cleanup_fixtures()
         self.assertEqual(json.loads(path.read_text())["groups"], {})
         self.assertEqual(self.runner.summary(), 1)
+
+
+class InitialiseTests(unittest.TestCase):
+    def initialise(self, repository, prefix):
+        env = {
+            "GITHUB_ACTIONS": "true",
+            "GITHUB_RUN_ID": "1",
+            "GITHUB_RUN_ATTEMPT": "1",
+            "GITHUB_REPOSITORY": repository,
+            "CI_ENV_PREFIX": prefix,
+            "GITHUB_SHA": "a" * 40,
+        }
+        # Stop at the first command after the prefix check. No test reaches git or Azure.
+        command = subprocess.CalledProcessError(1, "blocked")
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.dict(os.environ, env),
+            patch.object(validation.subprocess, "check_output", side_effect=command) as check_output,
+            patch.object(validation.subprocess, "run", side_effect=command),
+        ):
+            try:
+                validation.Validation(Path(directory) / "validation").initialise("westeurope")
+            finally:
+                self.reached_commands = check_output.called
+
+    def test_fork_with_the_default_prefix_cannot_validate(self):
+        with self.assertRaisesRegex(validation.ValidationError, "other than tre"):
+            self.initialise("contoso/AzureTRE", "tre")
+        self.assertFalse(self.reached_commands)
+
+    def test_fork_without_a_prefix_cannot_validate(self):
+        with self.assertRaisesRegex(validation.ValidationError, "Set the CI_ENV_PREFIX"):
+            self.initialise("contoso/AzureTRE", "")
+        self.assertFalse(self.reached_commands)
+
+    def test_invalid_prefix_cannot_validate(self):
+        with self.assertRaisesRegex(validation.ValidationError, "3 lowercase letters or digits"):
+            self.initialise("contoso/AzureTRE", "FRK")
+        self.assertFalse(self.reached_commands)
+
+    def test_fork_prefix_and_upstream_pass_the_prefix_check(self):
+        for repository, prefix in (("contoso/AzureTRE", "frk"), ("microsoft/AzureTRE", "")):
+            with self.subTest(repository=repository), self.assertRaises(subprocess.CalledProcessError):
+                self.initialise(repository, prefix)
+            self.assertTrue(self.reached_commands)
 
 
 if __name__ == "__main__":

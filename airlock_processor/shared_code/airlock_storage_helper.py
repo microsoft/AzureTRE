@@ -10,7 +10,7 @@ def get_container_name_for_request(request_id: str, status: str) -> str:
 
 def get_request_id_from_container_name(container_name: str) -> str:
     if container_name.endswith(constants.DRAFT_CONTAINER_SUFFIX):
-        return container_name[:-len(constants.DRAFT_CONTAINER_SUFFIX)]
+        return container_name[: -len(constants.DRAFT_CONTAINER_SUFFIX)]
     return container_name
 
 
@@ -23,9 +23,15 @@ def get_storage_account_name_for_request(request_type: str, status: str) -> str:
         raise ValueError(f"Unknown airlock request type '{request_type}'")
 
     if request_type == constants.IMPORT_TYPE:
-        if status in [constants.STAGE_DRAFT, constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW,
-                      constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS,
-                      constants.STAGE_BLOCKED_BY_SCAN, constants.STAGE_BLOCKING_INPROGRESS]:
+        if status in [
+            constants.STAGE_DRAFT,
+            constants.STAGE_SUBMITTED,
+            constants.STAGE_IN_REVIEW,
+            constants.STAGE_REJECTED,
+            constants.STAGE_REJECTION_INPROGRESS,
+            constants.STAGE_BLOCKED_BY_SCAN,
+            constants.STAGE_BLOCKING_INPROGRESS,
+        ]:
             return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE + tre_id
         return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL + tre_id
 

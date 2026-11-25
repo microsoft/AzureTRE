@@ -33,21 +33,44 @@ class ContainersCopyMetadata:
         self.dest_account_name = dest_account_name
 
 
-def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOutputEvent], dataDeletionEvent: func.Out[func.EventGridOutputEvent]):
+def main(
+    msg: func.ServiceBusMessage,
+    stepResultEvent: func.Out[func.EventGridOutputEvent],
+    dataDeletionEvent: func.Out[func.EventGridOutputEvent],
+):
     request_properties = None
     request_files = None
 
     try:
         request_properties = extract_properties(msg)
-        request_files = get_request_files(request_properties) if request_properties.new_status == constants.STAGE_SUBMITTED else None
+        request_files = (
+            get_request_files(request_properties)
+            if request_properties.new_status == constants.STAGE_SUBMITTED
+            else None
+        )
         handle_status_changed(request_properties, stepResultEvent, dataDeletionEvent, request_files)
 
     except NoFilesInRequestException:
-        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
+        set_output_event_to_report_failure(
+            stepResultEvent,
+            request_properties,
+            failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE,
+            request_files=request_files,
+        )
     except TooManyFilesInRequestException:
-        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
+        set_output_event_to_report_failure(
+            stepResultEvent,
+            request_properties,
+            failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE,
+            request_files=request_files,
+        )
     except NoDataInRequestException:
-        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.NO_DATA_IN_REQUEST_MESSAGE, request_files=request_files)
+        set_output_event_to_report_failure(
+            stepResultEvent,
+            request_properties,
+            failure_reason=constants.NO_DATA_IN_REQUEST_MESSAGE,
+            request_files=request_files,
+        )
     except Exception:
         # Only the deterministic validation failures above should fail the request. Anything else may be
         # transient (throttling, identity propagation, DNS, copy polling), so let it escape to be retried
@@ -56,7 +79,12 @@ def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOu
         raise
 
 
-def handle_status_changed(request_properties: RequestProperties, stepResultEvent: func.Out[func.EventGridOutputEvent], dataDeletionEvent: func.Out[func.EventGridOutputEvent], request_files):
+def handle_status_changed(
+    request_properties: RequestProperties,
+    stepResultEvent: func.Out[func.EventGridOutputEvent],
+    dataDeletionEvent: func.Out[func.EventGridOutputEvent],
+    request_files,
+):
     new_status = request_properties.new_status
     previous_status = request_properties.previous_status
     req_id = request_properties.request_id
@@ -70,24 +98,35 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
     if new_status == constants.STAGE_DRAFT:
         if use_metadata:
             from shared_code.blob_operations_metadata import create_container_with_metadata
+
             account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status)
             stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
             draft_container = airlock_storage_helper.get_container_name_for_request(req_id, new_status)
-            create_container_with_metadata(account_name, draft_container, stage, workspace_id=ws_id, request_type=request_type)
+            create_container_with_metadata(
+                account_name, draft_container, stage, workspace_id=ws_id, request_type=request_type
+            )
         else:
-            account_name = get_storage_account(status=constants.STAGE_DRAFT, request_type=request_type, short_workspace_id=ws_id)
+            account_name = get_storage_account(
+                status=constants.STAGE_DRAFT, request_type=request_type, short_workspace_id=ws_id
+            )
             blob_operations.create_container(account_name, req_id)
         return
 
     if new_status == constants.STAGE_CANCELLED:
         if use_metadata:
-            storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status)
+            storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(
+                request_type, previous_status
+            )
             container_name = airlock_storage_helper.get_container_name_for_request(req_id, previous_status)
         else:
             storage_account_name = get_storage_account(previous_status, request_type, ws_id)
             container_name = req_id
-        container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=container_name)
-        set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_properties, container_url=container_to_delete_url)
+        container_to_delete_url = blob_operations.get_blob_url(
+            account_name=storage_account_name, container_name=container_name
+        )
+        set_output_event_to_trigger_container_deletion(
+            dataDeletionEvent, request_properties, container_url=container_to_delete_url
+        )
         return
 
     if new_status == constants.STAGE_SUBMITTED:
@@ -97,7 +136,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
         if len(request_files) > 1:
             raise TooManyFilesInRequestException(constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE)
 
-    if (is_require_data_copy(new_status)):
+    if is_require_data_copy(new_status):
         if use_metadata:
             from shared_code.blob_operations_metadata import update_container_stage, create_container_with_metadata
 
@@ -115,26 +154,45 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                         if sealed_container_exists and blob_operations.is_submission_sealed(dest_account, req_id):
                             # A prior delivery completed the copy but failed before deleting the draft.
                             # Never overwrite the scanned sealed blob with data from a still-writable draft.
-                            logging.info(f'Request {req_id}: sealed copy already complete, deleting the remaining draft')
+                            logging.info(
+                                f"Request {req_id}: sealed copy already complete, deleting the remaining draft"
+                            )
                         else:
-                            failed_copy_deleted = sealed_container_exists and blob_operations.delete_failed_submission_copy(
-                                dest_account, req_id)
-                            if sealed_container_exists and not failed_copy_deleted and blob_operations.get_request_files(dest_account, req_id):
+                            failed_copy_deleted = (
+                                sealed_container_exists
+                                and blob_operations.delete_failed_submission_copy(dest_account, req_id)
+                            )
+                            if (
+                                sealed_container_exists
+                                and not failed_copy_deleted
+                                and blob_operations.get_request_files(dest_account, req_id)
+                            ):
                                 raise RuntimeError(
-                                    f'Request {req_id}: refusing to overwrite an incomplete or unmarked sealed submission')
-                            logging.info(f'Request {req_id}: Sealing submission - copying {draft_container} to {req_id}')
-                            create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type)
+                                    f"Request {req_id}: refusing to overwrite an incomplete or unmarked sealed submission"
+                                )
+                            logging.info(
+                                f"Request {req_id}: Sealing submission - copying {draft_container} to {req_id}"
+                            )
+                            create_container_with_metadata(
+                                dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type
+                            )
                             blob_operations.copy_data(
-                                source_account, dest_account, req_id,
-                                source_container=draft_container, destination_container=req_id,
-                                additional_metadata={blob_operations.SUBMISSION_SEALED_METADATA_KEY: "true"})
+                                source_account,
+                                dest_account,
+                                req_id,
+                                source_container=draft_container,
+                                destination_container=req_id,
+                                additional_metadata={blob_operations.SUBMISSION_SEALED_METADATA_KEY: "true"},
+                            )
                         blob_operations.delete_container(source_account, draft_container)
                     elif blob_operations.container_exists(dest_account, req_id):
                         # A redelivery after the draft was deleted but before the result was published:
                         # the data is already sealed, so resume by re-emitting the completion event.
-                        logging.info(f'Request {req_id}: already sealed, re-emitting the submission result')
+                        logging.info(f"Request {req_id}: already sealed, re-emitting the submission result")
                     else:
-                        raise NoDataInRequestException(f'Request {req_id}: neither the draft nor the sealed container exists, cannot complete submission')
+                        raise NoDataInRequestException(
+                            f"Request {req_id}: neither the draft nor the sealed container exists, cannot complete submission"
+                        )
 
                     try:
                         enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
@@ -142,26 +200,41 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                         logging.error("environment variable 'ENABLE_MALWARE_SCANNING' does not exist. Cannot continue.")
                         raise
                     if not enable_malware_scanning:
-                        logging.info(f'Request {req_id}: Malware scanning disabled, skipping to in_review')
+                        logging.info(f"Request {req_id}: Malware scanning disabled, skipping to in_review")
                         stepResultEvent.set(
                             func.EventGridOutputEvent(
                                 id=str(uuid.uuid4()),
-                                data={"completed_step": constants.STAGE_SUBMITTED, "new_status": constants.STAGE_IN_REVIEW, "request_id": req_id, "request_files": request_files},
+                                data={
+                                    "completed_step": constants.STAGE_SUBMITTED,
+                                    "new_status": constants.STAGE_IN_REVIEW,
+                                    "request_id": req_id,
+                                    "request_files": request_files,
+                                },
                                 subject=req_id,
                                 event_type="Airlock.StepResult",
                                 event_time=datetime.datetime.now(datetime.UTC),
-                                data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+                                data_version=constants.STEP_RESULT_EVENT_DATA_VERSION,
+                            )
+                        )
                     else:
-                        logging.info(f'Request {req_id}: Malware scanning enabled, scan result gates the move to in_review')
+                        logging.info(
+                            f"Request {req_id}: Malware scanning enabled, scan result gates the move to in_review"
+                        )
                         set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
                     return
 
-                logging.info(f'Request {req_id}: Updating container stage to {new_stage} (no copy needed)')
-                update_container_stage(source_account, req_id, new_stage, changed_by='system')
+                logging.info(f"Request {req_id}: Updating container stage to {new_stage} (no copy needed)")
+                update_container_stage(source_account, req_id, new_stage, changed_by="system")
 
                 if new_status in [constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
-                    final_status = constants.STAGE_REJECTED if new_status == constants.STAGE_REJECTION_INPROGRESS else constants.STAGE_BLOCKED_BY_SCAN
-                    logging.info(f'Request {req_id}: Emitting StepResult for terminal transition {new_status} -> {final_status}')
+                    final_status = (
+                        constants.STAGE_REJECTED
+                        if new_status == constants.STAGE_REJECTION_INPROGRESS
+                        else constants.STAGE_BLOCKED_BY_SCAN
+                    )
+                    logging.info(
+                        f"Request {req_id}: Emitting StepResult for terminal transition {new_status} -> {final_status}"
+                    )
                     stepResultEvent.set(
                         func.EventGridOutputEvent(
                             id=str(uuid.uuid4()),
@@ -169,19 +242,30 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                             subject=req_id,
                             event_type="Airlock.StepResult",
                             event_time=datetime.datetime.now(datetime.UTC),
-                            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+                            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION,
+                        )
+                    )
             else:
                 # BlobCreatedTrigger reports cross-account copy completion.
-                logging.info(f'Request {req_id}: Copying from {source_account} to {dest_account}')
-                create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type)
+                logging.info(f"Request {req_id}: Copying from {source_account} to {dest_account}")
+                create_container_with_metadata(
+                    dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type
+                )
                 blob_operations.copy_data(source_account, dest_account, req_id)
         else:
-            logging.info('Request with id %s. requires data copy between storage accounts', req_id)
+            logging.info("Request with id %s. requires data copy between storage accounts", req_id)
             review_ws_id = request_properties.review_workspace_id
-            containers_metadata = get_source_dest_for_copy(new_status=new_status, previous_status=previous_status, request_type=request_type, short_workspace_id=ws_id, review_workspace_id=review_ws_id)
+            containers_metadata = get_source_dest_for_copy(
+                new_status=new_status,
+                previous_status=previous_status,
+                request_type=request_type,
+                short_workspace_id=ws_id,
+                review_workspace_id=review_ws_id,
+            )
             blob_operations.create_container(containers_metadata.dest_account_name, req_id)
-            blob_operations.copy_data(containers_metadata.source_account_name,
-                                      containers_metadata.dest_account_name, req_id)
+            blob_operations.copy_data(
+                containers_metadata.source_account_name, containers_metadata.dest_account_name, req_id
+            )
             if new_status == constants.STAGE_SUBMITTED:
                 set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
         return
@@ -191,42 +275,52 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
 
 def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
     try:
-        body = msg.get_body().decode('utf-8')
-        logging.debug('Python ServiceBus queue trigger processed message: %s', body)
+        body = msg.get_body().decode("utf-8")
+        logging.debug("Python ServiceBus queue trigger processed message: %s", body)
         json_body = json.loads(body)
         result = TypeAdapter(RequestProperties).validate_python(json_body["data"])
         if not result:
             raise Exception("Failed parsing request properties")
     except json.decoder.JSONDecodeError:
-        logging.error(f'Error decoding object: {body}')
+        logging.error(f"Error decoding object: {body}")
         raise
     except Exception as e:
-        logging.error(f'Error extracting properties: {e}')
+        logging.error(f"Error extracting properties: {e}")
         raise
 
     return result
 
 
 def is_require_data_copy(new_status: str):
-    if new_status.lower() in [constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
+    if new_status.lower() in [
+        constants.STAGE_SUBMITTED,
+        constants.STAGE_APPROVAL_INPROGRESS,
+        constants.STAGE_REJECTION_INPROGRESS,
+        constants.STAGE_BLOCKING_INPROGRESS,
+    ]:
         return True
     return False
 
 
-def get_source_dest_for_copy(new_status: str, previous_status: str, request_type: str, short_workspace_id: str, review_workspace_id: str = None) -> ContainersCopyMetadata:
+def get_source_dest_for_copy(
+    new_status: str, previous_status: str, request_type: str, short_workspace_id: str, review_workspace_id: str = None
+) -> ContainersCopyMetadata:
     # sanity
     if is_require_data_copy(new_status) is False:
         raise Exception("Given new status is not supported")
 
     request_type = request_type.lower()
     if request_type != constants.IMPORT_TYPE and request_type != constants.EXPORT_TYPE:
-        msg = "Airlock request type must be either '{}' or '{}".format(str(constants.IMPORT_TYPE),
-                                                                       str(constants.EXPORT_TYPE))
+        msg = "Airlock request type must be either '{}' or '{}".format(
+            str(constants.IMPORT_TYPE), str(constants.EXPORT_TYPE)
+        )
         logging.error(msg)
         raise Exception(msg)
 
     source_account_name = get_storage_account(previous_status, request_type, short_workspace_id)
-    dest_account_name = get_storage_account_destination_for_copy(new_status, request_type, short_workspace_id, review_workspace_id=review_workspace_id)
+    dest_account_name = get_storage_account_destination_for_copy(
+        new_status, request_type, short_workspace_id, review_workspace_id=review_workspace_id
+    )
     return ContainersCopyMetadata(source_account_name, dest_account_name)
 
 
@@ -242,7 +336,13 @@ def get_storage_account(status: str, request_type: str, short_workspace_id: str)
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
         elif status == constants.STAGE_BLOCKED_BY_SCAN:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED + tre_id
-        elif status in [constants.STAGE_IN_REVIEW, constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
+        elif status in [
+            constants.STAGE_IN_REVIEW,
+            constants.STAGE_SUBMITTED,
+            constants.STAGE_APPROVAL_INPROGRESS,
+            constants.STAGE_REJECTION_INPROGRESS,
+            constants.STAGE_BLOCKING_INPROGRESS,
+        ]:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
 
     if request_type == constants.EXPORT_TYPE:
@@ -254,15 +354,25 @@ def get_storage_account(status: str, request_type: str, short_workspace_id: str)
             return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + short_workspace_id
         elif status == constants.STAGE_BLOCKED_BY_SCAN:
             return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + short_workspace_id
-        elif status in [constants.STAGE_IN_REVIEW, constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
+        elif status in [
+            constants.STAGE_IN_REVIEW,
+            constants.STAGE_SUBMITTED,
+            constants.STAGE_APPROVAL_INPROGRESS,
+            constants.STAGE_REJECTION_INPROGRESS,
+            constants.STAGE_BLOCKING_INPROGRESS,
+        ]:
             return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
 
-    error_message = f"Missing current storage account definition for status '{status}' and request type '{request_type}'."
+    error_message = (
+        f"Missing current storage account definition for status '{status}' and request type '{request_type}'."
+    )
     logging.error(error_message)
     raise Exception(error_message)
 
 
-def get_storage_account_destination_for_copy(new_status: str, request_type: str, short_workspace_id: str, review_workspace_id: str = None) -> str:
+def get_storage_account_destination_for_copy(
+    new_status: str, request_type: str, short_workspace_id: str, review_workspace_id: str = None
+) -> str:
     tre_id = _get_tre_id()
 
     if request_type == constants.IMPORT_TYPE:
@@ -299,31 +409,51 @@ def set_output_event_to_report_failure(stepResultEvent, request_properties, fail
         )
         raise
 
-    logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
+    logging.exception(
+        f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'."
+    )
     stepResultEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": request_properties.new_status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "status_message": failure_reason},
+            data={
+                "completed_step": request_properties.new_status,
+                "new_status": constants.STAGE_FAILED,
+                "request_id": request_properties.request_id,
+                "request_files": request_files,
+                "status_message": failure_reason,
+            },
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.now(datetime.UTC),
-            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION,
+        )
+    )
 
 
 def set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files):
-    logging.info(f'Sending file enumeration result for request with ID: {request_properties.request_id} result: {request_files}')
+    logging.info(
+        f"Sending file enumeration result for request with ID: {request_properties.request_id} result: {request_files}"
+    )
     stepResultEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": request_properties.new_status, "request_id": request_properties.request_id, "request_files": request_files},
+            data={
+                "completed_step": request_properties.new_status,
+                "request_id": request_properties.request_id,
+                "request_files": request_files,
+            },
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.now(datetime.UTC),
-            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION,
+        )
+    )
 
 
 def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_properties, container_url):
-    logging.info(f'Sending container deletion event for request ID: {request_properties.request_id}. container URL: {container_url}')
+    logging.info(
+        f"Sending container deletion event for request ID: {request_properties.request_id}. container URL: {container_url}"
+    )
     dataDeletionEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
@@ -331,7 +461,7 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
             subject=request_properties.request_id,
             event_type="Airlock.DataDeletion",
             event_time=datetime.datetime.now(datetime.UTC),
-            data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
+            data_version=constants.DATA_DELETION_EVENT_DATA_VERSION,
         )
     )
 
@@ -339,26 +469,37 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
 def get_request_files(request_properties: RequestProperties):
     use_metadata = request_properties.airlock_version >= 2
     if use_metadata:
-        storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(request_properties.type, request_properties.previous_status)
-        draft_container = airlock_storage_helper.get_container_name_for_request(request_properties.request_id, request_properties.previous_status)
+        storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(
+            request_properties.type, request_properties.previous_status
+        )
+        draft_container = airlock_storage_helper.get_container_name_for_request(
+            request_properties.request_id, request_properties.previous_status
+        )
         sealed_container = request_properties.request_id
-        if (blob_operations.container_exists(storage_account_name, sealed_container)
-                and blob_operations.is_submission_sealed(storage_account_name, sealed_container)):
+        if blob_operations.container_exists(
+            storage_account_name, sealed_container
+        ) and blob_operations.is_submission_sealed(storage_account_name, sealed_container):
             container_name = sealed_container
         elif blob_operations.container_exists(storage_account_name, draft_container):
             container_name = draft_container
         else:
-            raise NoDataInRequestException(f'Request {request_properties.request_id}: neither the draft nor a valid sealed container exists, cannot enumerate request files')
+            raise NoDataInRequestException(
+                f"Request {request_properties.request_id}: neither the draft nor a valid sealed container exists, cannot enumerate request files"
+            )
     else:
-        storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
+        storage_account_name = get_storage_account(
+            request_properties.previous_status, request_properties.type, request_properties.workspace_id
+        )
         container_name = None
-    return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id, container_name=container_name)
+    return blob_operations.get_request_files(
+        account_name=storage_account_name, request_id=request_properties.request_id, container_name=container_name
+    )
 
 
 def _get_tre_id():
     try:
         tre_id = os.environ["TRE_ID"]
     except KeyError as e:
-        logging.error(f'Missing environment variable: {e}')
+        logging.error(f"Missing environment variable: {e}")
         raise
     return tre_id

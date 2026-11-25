@@ -13,5 +13,5 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 def start_server():
-    server = ThreadedHTTPServer(('0.0.0.0', 8080), RequestHandler)
+    server = ThreadedHTTPServer(("0.0.0.0", 8080), RequestHandler)  # nosec B104 - required for container access
     server.serve_forever()

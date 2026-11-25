@@ -18,6 +18,7 @@ class StepResultStatusUpdateMessage(AzureTREModel):
     """
     Model for service bus message flowing back to API to update status in DB
     """
+
     id: UUID4 = Field(title="", description="")
     subject: str = Field(title="", description="")
     data: EventGridMessageData = Field(title="", description="")

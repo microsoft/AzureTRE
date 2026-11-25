@@ -10,30 +10,35 @@ from httpx import Response
 
 
 class OutputFormat(Enum):
-    Suppress = 'none'
-    Json = 'json'
-    JsonC = 'jsonc'
-    Table = 'table'
-    Raw = 'raw'
+    Suppress = "none"
+    Json = "json"
+    JsonC = "jsonc"
+    Table = "table"
+    Raw = "raw"
 
 
 def output_option(*param_decls: str, **kwargs: t.Any):
-    param_decls = ('--output', '-o', 'output_format')
-    kwargs.setdefault("default", 'table')
-    kwargs.setdefault("type", click.Choice(['table', 'json', 'jsonc', 'raw', 'none']))
+    param_decls = ("--output", "-o", "output_format")
+    kwargs.setdefault("default", "table")
+    kwargs.setdefault("type", click.Choice(["table", "json", "jsonc", "raw", "none"]))
     kwargs.setdefault("envvar", "TRECLI_OUTPUT")
     kwargs.setdefault("help", "Output format")
     return click.option(*param_decls, **kwargs)
 
 
 def query_option(*param_decls: str, **kwargs: t.Any):
-    param_decls = ('--query', '-q')
+    param_decls = ("--query", "-q")
     kwargs.setdefault("default", None)
     kwargs.setdefault("help", "JMESPath query to apply to the result")
     return click.option(*param_decls, **kwargs)
 
 
-def output_result(result_json: str, output_format: OutputFormat = OutputFormat.Json, query: str = None, default_table_query: str = None) -> None:
+def output_result(
+    result_json: str,
+    output_format: OutputFormat = OutputFormat.Json,
+    query: str = None,
+    default_table_query: str = None,
+) -> None:
 
     if query is None and output_format == OutputFormat.Table.value:
         query = default_table_query
@@ -86,7 +91,12 @@ def output_result(result_json: str, output_format: OutputFormat = OutputFormat.J
         raise click.ClickException(f"Unhandled output format: '{output_format}'")
 
 
-def output(response: Response, output_format: OutputFormat = OutputFormat.Json, query: str = None, default_table_query: str = None) -> None:
+def output(
+    response: Response,
+    output_format: OutputFormat = OutputFormat.Json,
+    query: str = None,
+    default_table_query: str = None,
+) -> None:
 
     if output_format == OutputFormat.Suppress.value:
         if not response.is_success:

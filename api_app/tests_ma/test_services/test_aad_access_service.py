@@ -4,7 +4,13 @@ from mock import call, patch
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace_users import AssignmentType, Role
 from models.domain.workspace import Workspace, WorkspaceRole
-from services.aad_authentication import AzureADAuthorization, AuthConfigValidationError, UserRoleAssignmentError, compare_versions, GRAPH_REQUEST_TIMEOUT
+from services.aad_authentication import (
+    AzureADAuthorization,
+    AuthConfigValidationError,
+    UserRoleAssignmentError,
+    compare_versions,
+    GRAPH_REQUEST_TIMEOUT,
+)
 
 MOCK_MICROSOFT_GRAPH_URL = "https://graph.microsoft.com"
 
@@ -44,30 +50,24 @@ def roles_response():
     return get_mock_role_response(
         [
             PrincipalRole(user_principal_1.principal_id, workspace_owner_role_id, "User"),
-            PrincipalRole(group_principal.principal_id, workspace_owner_role_id, "Group")
+            PrincipalRole(group_principal.principal_id, workspace_owner_role_id, "Group"),
         ]
     )
 
 
 @pytest.fixture
 def user_response():
-    return get_mock_batch_response(
-        [user_principal_1], []
-    )
+    return get_mock_batch_response([user_principal_1], [])
 
 
 @pytest.fixture
 def group_response():
-    return get_mock_batch_response(
-        [], [group_principal]
-    )
+    return get_mock_batch_response([], [group_principal])
 
 
 @pytest.fixture
 def users_and_group_response():
-    return get_mock_batch_response(
-        [user_principal_1, user_principal_2], [group_principal]
-    )
+    return get_mock_batch_response([user_principal_1, user_principal_2], [group_principal])
 
 
 @pytest.fixture
@@ -104,7 +104,7 @@ def workspace_with_groups():
             "app_role_id_workspace_owner": "owner-role-id",
             "app_role_id_workspace_researcher": "researcher-role-id",
             "app_role_id_workspace_airlock_manager": "airlock-role-id",
-        }
+        },
     )
 
 
@@ -125,7 +125,7 @@ def workspace_without_groups():
             "app_role_id_workspace_owner": "owner-role-id",
             "app_role_id_workspace_researcher": "researcher-role-id",
             "app_role_id_workspace_airlock_manager": "airlock-role-id",
-        }
+        },
     )
 
 
@@ -273,7 +273,13 @@ def test_get_workspace_user_emails_by_role_assignment_with_only_groups_assigned_
     return_value="token",
 )
 def test_get_workspace_user_emails_by_role_assignment_with_groups_and_users_assigned_returned_as_expected(
-    _, users_and_groups, roles, app_sp_graph_data_mock, roles_response, get_app_sp_graph_data_mock, users_and_group_response
+    _,
+    users_and_groups,
+    roles,
+    app_sp_graph_data_mock,
+    roles_response,
+    get_app_sp_graph_data_mock,
+    users_and_group_response,
 ):
 
     access_service = AzureADAuthorization()
@@ -424,9 +430,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
         # user has owner role in workspace
         (
             User(
-                roleAssignments=[
-                    RoleAssignment(resource_id="abc127", role_id="abc128")
-                ],
+                roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc128")],
                 id="123",
                 name="test",
                 email="t@t.com",
@@ -450,9 +454,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
         # user has researcher role in workspace
         (
             User(
-                roleAssignments=[
-                    RoleAssignment(resource_id="abc127", role_id="abc129")
-                ],
+                roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc129")],
                 id="123",
                 name="test",
                 email="t@t.com",
@@ -476,9 +478,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
         # user has airlock manager role in workspace
         (
             User(
-                roleAssignments=[
-                    RoleAssignment(resource_id="abc127", role_id="abc130")
-                ],
+                roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc130")],
                 id="123",
                 name="test",
                 email="t@t.com",
@@ -570,7 +570,9 @@ def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_):
 @patch("services.aad_authentication.AzureADAuthorization._get_auth_header")
 @patch("services.aad_authentication.AzureADAuthorization._get_batch_users_by_role_assignments_body")
 @patch("requests.post")
-def test_get_user_details_with_batch_of_more_than_20_requests(mock_graph_post, mock_get_batch_users_by_role_assignments_body, mock_headers):
+def test_get_user_details_with_batch_of_more_than_20_requests(
+    mock_graph_post, mock_get_batch_users_by_role_assignments_body, mock_headers
+):
     # Arrange
     access_service = AzureADAuthorization()
     roles_graph_data = [{"id": "role1"}, {"id": "role2"}]
@@ -584,27 +586,21 @@ def test_get_user_details_with_batch_of_more_than_20_requests(mock_graph_post, m
 
     # mock the response of the get batch request for 30 users
     batch_request_body_first_20 = {
-        "requests": [
-            {"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(20)
-        ]
+        "requests": [{"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(20)]
     }
 
     batch_request_body_last_10 = {
-        "requests": [
-            {"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(20, 30)
-        ]
+        "requests": [{"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(20, 30)]
     }
 
-    batch_request_body = {
-        "requests": [
-            {"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(30)
-        ]
-    }
+    batch_request_body = {"requests": [{"id": f"{i}", "method": "GET", "url": f"/users/{i}"} for i in range(30)]}
 
     mock_get_batch_users_by_role_assignments_body.return_value = batch_request_body
 
     # Mock the response of the post request
-    mock_graph_post_response = {"responses": [{"id": "user1", "request": {"id": "user1"}}, {"id": "user2", "request": {"id": "user2"}}]}
+    mock_graph_post_response = {
+        "responses": [{"id": "user1", "request": {"id": "user1"}}, {"id": "user2", "request": {"id": "user2"}}]
+    }
     mock_graph_post.return_value.json.return_value = mock_graph_post_response
 
     # Act
@@ -613,18 +609,8 @@ def test_get_user_details_with_batch_of_more_than_20_requests(mock_graph_post, m
     # Assert
     assert len(users_graph_data["responses"]) == 4
     calls = [
-        call(
-            f"{batch_endpoint}",
-            json=batch_request_body_first_20,
-            headers=headers,
-            timeout=GRAPH_REQUEST_TIMEOUT
-        ),
-        call(
-            f"{batch_endpoint}",
-            json=batch_request_body_last_10,
-            headers=headers,
-            timeout=GRAPH_REQUEST_TIMEOUT
-        )
+        call(f"{batch_endpoint}", json=batch_request_body_first_20, headers=headers, timeout=GRAPH_REQUEST_TIMEOUT),
+        call(f"{batch_endpoint}", json=batch_request_body_last_10, headers=headers, timeout=GRAPH_REQUEST_TIMEOUT),
     ]
     mock_graph_post.assert_has_calls(calls, any_order=True)
 
@@ -650,7 +636,12 @@ def get_mock_batch_response(user_principals, group_principals):
     response_body = {"responses": []}
     for user_principal in user_principals:
         response_body["responses"].append(
-            get_mock_user_response(user_principal.principal_id, user_principal.userPrincipalName, user_principal.display_name, user_principal.mail)
+            get_mock_user_response(
+                user_principal.principal_id,
+                user_principal.userPrincipalName,
+                user_principal.display_name,
+                user_principal.mail,
+            )
         )
     for group_principal in group_principals:
         response_body["responses"].append(get_mock_group_response(group_principal))
@@ -664,7 +655,13 @@ def get_mock_user_response(principal_id, mail, name, userPrincipalName):
         "id": "1",
         "status": 200,
         "headers": headers,
-        "body": {"@odata.context": user_odata, "userPrincipalName": userPrincipalName, "id": principal_id, "displayName": name, "mail": mail},
+        "body": {
+            "@odata.context": user_odata,
+            "userPrincipalName": userPrincipalName,
+            "id": principal_id,
+            "displayName": name,
+            "mail": mail,
+        },
     }
     return user_response_body
 
@@ -688,7 +685,7 @@ def get_mock_group_response(group):
         "status": 200,
         "headers": headers,
         "body": {"@odata.context": group_odata, "value": group_members_body},
-        "request": {"id": "group_principal_id"}
+        "request": {"id": "group_principal_id"},
     }
     return group_response_body
 
@@ -710,10 +707,9 @@ def get_mock_role_response(principal_roles):
 @patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=True)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use")
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-def test_assign_workspace_user_already_has_role(workspace_role_in_use_mock,
-                                                assign_user_to_group_mock,
-                                                workspace_without_groups, role_owner,
-                                                user_with_role):
+def test_assign_workspace_user_already_has_role(
+    workspace_role_in_use_mock, assign_user_to_group_mock, workspace_without_groups, role_owner, user_with_role
+):
     access_service = AzureADAuthorization()
     access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
 
@@ -724,8 +720,9 @@ def test_assign_workspace_user_already_has_role(workspace_role_in_use_mock,
 @patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-def test_assign_workspace_user_if_no_groups_raises_error(_, __, ___, workspace_without_groups, role_owner,
-                                                         user_with_role):
+def test_assign_workspace_user_if_no_groups_raises_error(
+    _, __, ___, workspace_without_groups, role_owner, user_with_role
+):
 
     access_service = AzureADAuthorization()
 
@@ -736,9 +733,9 @@ def test_assign_workspace_user_if_no_groups_raises_error(_, __, ___, workspace_w
 @patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-def test_assign_workspace_user_if_groups(_, __, assign_user_to_group_mock,
-                                         workspace_without_groups, role_owner,
-                                         user_with_role):
+def test_assign_workspace_user_if_groups(
+    _, __, assign_user_to_group_mock, workspace_without_groups, role_owner, user_with_role
+):
 
     access_service = AzureADAuthorization()
 
@@ -749,10 +746,9 @@ def test_assign_workspace_user_if_groups(_, __, assign_user_to_group_mock,
 
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
-def test_remove_workspace_user_if_no_groups_raises_error(_, get_role_assignment_mock,
-                                                         workspace_without_groups,
-                                                         role_owner,
-                                                         user_with_role):
+def test_remove_workspace_user_if_no_groups_raises_error(
+    _, get_role_assignment_mock, workspace_without_groups, role_owner, user_with_role
+):
 
     access_service = AzureADAuthorization()
     get_role_assignment_mock.return_value = []
@@ -764,11 +760,9 @@ def test_remove_workspace_user_if_no_groups_raises_error(_, get_role_assignment_
 @patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group")
 @patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
-def test_remove_workspace_user_if_groups(_, get_role_assignment_mock,
-                                         remove_user_to_group_mock,
-                                         workspace_without_groups,
-                                         role_owner,
-                                         user_with_role):
+def test_remove_workspace_user_if_groups(
+    _, get_role_assignment_mock, remove_user_to_group_mock, workspace_without_groups, role_owner, user_with_role
+):
 
     access_service = AzureADAuthorization()
     get_role_assignment_mock.return_value = []
@@ -785,12 +779,7 @@ def test_get_assignable_users_returns_users(ms_graph_query_mock):
     # Mock the response of the get request
     request_get_mock_response = {
         "value": [
-            {
-                "id": "123",
-                "displayName": "User 1",
-                "userPrincipalName": "User1@test.com",
-                "mail": "User1@test.com"
-            }
+            {"id": "123", "displayName": "User 1", "userPrincipalName": "User1@test.com", "mail": "User1@test.com"}
         ]
     }
     ms_graph_query_mock.return_value = request_get_mock_response

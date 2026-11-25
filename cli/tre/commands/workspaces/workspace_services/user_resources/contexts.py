@@ -13,9 +13,8 @@ class UserResourceContext(object):
     def add_user_resource_id_to_context_obj(ctx: click.Context, user_resource_id: str) -> "UserResourceContext":
         workspace_service_context = ctx.find_object(WorkspaceServiceContext)
         return UserResourceContext(
-            workspace_service_context.workspace_id,
-            workspace_service_context.workspace_service_id,
-            user_resource_id)
+            workspace_service_context.workspace_id, workspace_service_context.workspace_service_id, user_resource_id
+        )
 
 
 pass_user_resource_context = click.make_pass_decorator(UserResourceContext)
@@ -35,7 +34,8 @@ class UserResourceOperationContext(object):
             workspace_service_context.workspace_id,
             workspace_service_context.workspace_service_id,
             workspace_service_context.user_resource_id,
-            operation_id)
+            operation_id,
+        )
 
 
 pass_user_resource_operation_context = click.make_pass_decorator(UserResourceOperationContext)

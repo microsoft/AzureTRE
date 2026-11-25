@@ -4,6 +4,28 @@ skip = "*.json,*.js,*.ts,*.tsx,*.map,package-lock.json,node_modules,.venv,.git,.
 # Words to ignore
 ignore-words-list = "tre,aci,requestor,api,AspNet,az,AzureTRE,Codespaces,Conda,dataset,datasets,dev,Dev,DevOps,DotNet,exfiltration,Endpoints,GitHub,lifecycle,maintainer,maintainers,PowerShell,PyPi,QuickStart,quickstart,repo,repos,screenshots,terraform,Terraform,tfvars,tmpl,TREs,Xamarin,devcontainer,DevContainer,endpoints,pytest,tre,VNet,resourceType,isCurrent,msfttreacr,azurecr,io,azuretre,cnab,aci,westeurope,idempotent,Versioning,mixins,yml,microsoft,pre-emptively "
 
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# Preview enables Ruff's pycodestyle E1/E2/E3 rules, matching the previous Flake8 E/W/F coverage
+preview = true
+select = ["E", "W", "F"]
+ignore = ["E231", "E501"]
+
+[tool.bandit]
+exclude_dirs = [
+  ".venv",
+  "venv",
+  "e2e_tests",
+  "api_app/tests_ma",
+  "resource_processor/tests_rp",
+  "resource_processor/tests_porter",
+  "airlock_processor/tests",
+  "devops/tests",
+  "docs",
+]
+
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"

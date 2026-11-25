@@ -12,4 +12,3 @@ COPY . .
 
 # Run tests
 CMD ["npx", "playwright", "test"]
-

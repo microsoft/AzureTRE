@@ -61,8 +61,10 @@ resource "azurerm_private_endpoint" "stgfilepe" {
 }
 
 
+# Resource Manager manages the share, so Terraform does not use the file endpoint of the account.
+# The TRE firewall blocks that endpoint before the private endpoint exists and after Terraform deletes it.
 resource "azurerm_storage_share" "gitea" {
-  name                 = "gitea-data"
-  storage_account_name = azurerm_storage_account.gitea.name
-  quota                = var.gitea_storage_limit
+  name               = "gitea-data"
+  storage_account_id = azurerm_storage_account.gitea.id
+  quota              = var.gitea_storage_limit
 }
