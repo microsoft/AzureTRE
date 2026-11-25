@@ -73,7 +73,7 @@ resource "azurerm_network_security_rule" "allow_outbound_within_workspace_vnet" 
   destination_address_prefixes = azurerm_virtual_network.ws.address_space
   source_address_prefixes      = azurerm_virtual_network.ws.address_space
   direction                    = "Outbound"
-  name                         = "outbound-within-services-subnet"
+  name                         = "outbound-within-workspace-vnet"
   network_security_group_name  = azurerm_network_security_group.ws.name
   priority                     = 100
   protocol                     = "*"
@@ -237,7 +237,7 @@ resource "azurerm_network_security_rule" "allow_inbound_from_webapp_to_services"
 
 moved {
   from = azurerm_network_security_rule.deny-outbound-overrid
-  to   = azurerm_network_security_rule.deny_outbound_overrid
+  to   = azurerm_network_security_rule.deny_outbound_override
 }
 moved {
   from = azurerm_network_security_rule.deny-all-inbound-override
@@ -245,11 +245,11 @@ moved {
 }
 moved {
   from = azurerm_network_security_rule.allow-inbound-within-services-subnet
-  to   = azurerm_network_security_rule.allow_inbound_within_services_subnet
+  to   = azurerm_network_security_rule.allow_inbound_within_workspace_vnet
 }
 moved {
   from = azurerm_network_security_rule.allow-outbound-within-services-subnet
-  to   = azurerm_network_security_rule.allow_outbound_within_services_subnet
+  to   = azurerm_network_security_rule.allow_outbound_within_workspace_vnet
 }
 moved {
   from = azurerm_network_security_rule.allow-outbound-to-shared-services
