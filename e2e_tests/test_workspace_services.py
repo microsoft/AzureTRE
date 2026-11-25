@@ -11,7 +11,6 @@ workspace_services = [
     strings.AZUREML_SERVICE,
     strings.GITEA_SERVICE,
     strings.MYSQL_SERVICE,
-    strings.HEALTH_SERVICE,
     strings.AZURESQL_SERVICE,
 ]
 
