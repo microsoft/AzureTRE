@@ -154,6 +154,8 @@ BUG FIXES:
 * Fix Guacamole login failures in large workspaces: raise the user-resources API timeout from 5s to 30s, batch template version lookups into one Cosmos query, and query VM power states concurrently. (`tre-service-guacamole` 0.14.6, `API` 0.27.31) ([#5099](https://github.com/microsoft/AzureTRE/issues/5099))
 * Fix API resource update retries so a successful retry returns the patched resource to the original caller. (`API` 0.27.32) ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
 * Fix the health check falsely returning OK when Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
+* Reject a template registration with HTTP 422 when its `resourceType` does not match the endpoint, for example a workspace service template posted to `/workspace-templates`. Before this fix, the API ignored `resourceType` and registered the template as the endpoint's type.
+  `resourceType` stays optional, and both `workspace_service` and `workspace-service` spellings are accepted. (`api` 0.29.1) ([#1123](https://github.com/microsoft/AzureTRE/issues/1123))
 
 ## (0.29.1)
 **BREAKING CHANGES**

@@ -52,6 +52,9 @@ Porter bundles can also be registered interactively using the Swagger UI. For th
     ![Post Workspace Template](../assets/post-template.png)
 
 1. Paste the payload json generated earlier into the `Request body` field, then click `Execute`. Review the server response.
+
+    The payload includes a `resourceType` field, set from the `-t` option of the script. If it does not match the operation, for example a `workspace_service` payload posted to `/api/workspace-templates`, the API rejects the request with HTTP 422.
+
 1. Verify the template registration using the `GET` operation on `/api/workspace-templates`. The name of the template should now be listed.
 
 ## Registration using script

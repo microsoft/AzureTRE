@@ -11,6 +11,12 @@ class ResourceTemplateInCreate(BaseModel):
     current: bool = Field(title="Mark this version as current")
     json_schema: Dict = Field(title="JSON Schema compliant template")
     customActions: List[CustomAction] = Field(default_factory=list, title="Custom actions")
+    resourceType: Optional[str] = Field(
+        default=None,
+        title="Type of resource this template is for",
+        description="Optional. If provided, it must match the endpoint the template is registered with, "
+        "for example 'workspace' or 'workspace-service' ('workspace_service' is also accepted).",
+    )
 
 
 class ResourceTemplateInResponse(ResourceTemplate):
