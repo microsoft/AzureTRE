@@ -55,6 +55,8 @@ class ProbeTests(unittest.TestCase):
             "MYSQL_VALIDATION_DEADLINE",
             "GITEA_VALIDATION_DEADLINE",
             "HEALTH_VALIDATION_DEADLINE",
+            "CYCLECLOUD_VALIDATION_DEADLINE",
+            "OHDSI_VALIDATION_DEADLINE",
         ):
             self.assertIn(f"{variable}=${{{{ env.LIFECYCLE_VALIDATION_DEADLINE }}}}", run["with"]["COMMAND"])
 
