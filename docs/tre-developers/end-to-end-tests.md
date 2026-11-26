@@ -262,6 +262,8 @@ This step runs after the workspace delete, also when the case fails after the wo
 The case owns this step from the time that the API accepts the workspace create. So the step also runs after a failed workspace install, whose clean-up deletes the workspace and keeps its backup resources.
 The step runs only if the API deleted the workspace, so a failed delete stays for diagnosis.
 If the read of the workspace gets a status other than HTTP 200 or HTTP 404, the step fails. The test report then shows the failure.
+The names of the resource group, the vault and the storage account have only the last four characters of the workspace ID. So the step first reads the `tre_workspace_id` tag of these three resources.
+If a resource does not have the tag with the workspace ID of the case, the step fails before its first change.
 If the deadline expires during the workspace delete, the delete continues in the time for clean-up, and this step runs after the delete ends.
 
 ### Airlock v1 to v2 move

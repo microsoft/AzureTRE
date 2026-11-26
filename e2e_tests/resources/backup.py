@@ -141,12 +141,21 @@ async def delete_if_azure_allows(arm, resource_id, minutes):
     return True
 
 
-async def remove_retained_backup(arm, group_id, vault_id, account_id):
+async def remove_retained_backup(arm, workspace_id, group_id, vault_id, account_id):
     """Delete the vault and the resource group that a retained-backup uninstall keeps on purpose."""
-    if await arm.request("GET", group_id, GROUP_API, missing_ok=True) is None:
+    group = await arm.request("GET", group_id, GROUP_API, missing_ok=True)
+    if group is None:
         return
+    vault = await arm.request("GET", vault_id, BACKUP_API, missing_ok=True)
+    account = await arm.request("GET", account_id, STORAGE_API, missing_ok=True)
+    # The names have only the last four characters of the workspace ID, so another workspace can have them.
+    # Terraform gives the tre_workspace_id tag to each of these resources when it creates them. So stop before
+    # the first change if a resource does not have the tag of this workspace.
+    for resource_id, resource in ((group_id, group), (vault_id, vault), (account_id, account)):
+        if resource is not None and (resource.get("tags") or {}).get("tre_workspace_id") != workspace_id:
+            raise AssertionError(f"{resource_id} does not have the tag tre_workspace_id={workspace_id}")
     vault_kept = False
-    if await arm.request("GET", vault_id, BACKUP_API, missing_ok=True) is not None:
+    if vault is not None:
         # With soft delete on, Azure keeps the deleted data for 14 days and can refuse the vault delete.
         soft_delete = not await soft_delete_turned_off(arm, vault_id)
         for item in await file_share_items(arm, vault_id):

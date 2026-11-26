@@ -22,6 +22,9 @@ VAULT = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd/providers/Microsoft.Re
 ACCOUNT = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd/providers/Microsoft.Storage/storageAccounts/stgwsabcd"
 ITEM = f"{VAULT}/backupFabrics/Azure/protectionContainers/StorageContainer;storage;rg;stgwsabcd/protectedItems/AzureFileShare;x"
 PROBE_ID = "0123456789abcdef0123456789abcdef"
+WORKSPACE = "00000000-0000-0000-0000-00000000abcd"
+# The names of the group, the vault and the account have only the last four characters of the workspace ID.
+OTHER_WORKSPACE = "11111111-1111-1111-1111-11111111abcd"
 
 
 def result(evidence, state="Succeeded", code=0, output=None):
@@ -189,8 +192,10 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(body["properties"]["restoreFilePaths"], [{"path": "e2e.txt", "fileSpecType": "File"}])
         wait.assert_awaited_once_with(unittest.mock.ANY, VAULT, "job-2")
 
-    def retained_backup_requests(self, group, soft_delete, refused=()):
+    def retained_backup_requests(self, group, soft_delete, refused=(), owners=None):
+        """Give the requests of the removal. owners gives the tre_workspace_id tag of a resource, or None for no tag."""
         calls = []
+        owners = owners or {}
 
         async def request(method, resource_id, api_version, **kwargs):
             calls.append((method, resource_id))
@@ -206,9 +211,11 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
                 return {"value": [{"id": f"{group}/providers/Microsoft.Authorization/locks/backup"}]}
             if resource_id.endswith("/backupProtectedItems"):
                 return {"value": [{"id": "/Subscriptions/" + ITEM.removeprefix("/subscriptions/"), "properties": {}}]}
-            # The group and the vault exist before their delete. Each wait sees the resource gone.
-            deleted = {resource for verb, resource in calls if verb == "DELETE"}
-            return None if resource_id in deleted else {}
+            # The group, the vault and the account exist before their delete. Each wait sees the resource gone.
+            if resource_id in {resource for verb, resource in calls if verb == "DELETE"}:
+                return None
+            owner = owners.get(resource_id, WORKSPACE)
+            return {"tags": {"tre_workspace_id": owner}} if owner else {}
 
         return calls, request
 
@@ -216,9 +223,11 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
         group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
         calls, request = self.retained_backup_requests(group, "Disabled")
 
-        await backup.remove_retained_backup(fake_arm(request=request), group, VAULT, ACCOUNT)
+        await backup.remove_retained_backup(fake_arm(request=request), WORKSPACE, group, VAULT, ACCOUNT)
         deletes = [resource for method, resource in calls if method == "DELETE"]
-        self.assertEqual(calls[2], ("PATCH", f"{VAULT}/backupconfig/vaultconfig"))
+        # The removal reads the group, the vault and the account before its first change.
+        soft_delete_off = ("PATCH", f"{VAULT}/backupconfig/vaultconfig")
+        self.assertEqual(calls[:4], [("GET", group), ("GET", VAULT), ("GET", ACCOUNT), soft_delete_off])
         self.assertEqual(
             deletes,
             [
@@ -235,7 +244,7 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
         group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
         calls, request = self.retained_backup_requests(group, "Enabled")
 
-        await backup.remove_retained_backup(fake_arm(request=request), group, VAULT, ACCOUNT)
+        await backup.remove_retained_backup(fake_arm(request=request), WORKSPACE, group, VAULT, ACCOUNT)
         deletes = [resource for method, resource in calls if method == "DELETE"]
         self.assertEqual(
             deletes,
@@ -255,7 +264,7 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
         calls, request = self.retained_backup_requests(group, "Enabled", refused=(container, VAULT))
         arm = fake_arm(request=request)
 
-        await backup.remove_retained_backup(arm, group, VAULT, ACCOUNT)
+        await backup.remove_retained_backup(arm, WORKSPACE, group, VAULT, ACCOUNT)
         deletes = [resource for method, resource in calls if method == "DELETE"]
         self.assertEqual(
             deletes, [ITEM, container, VAULT, f"{group}/providers/Microsoft.Authorization/locks/backup", ACCOUNT]
@@ -266,8 +275,21 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_nothing_is_removed_when_the_resource_group_is_gone(self):
         arm = fake_arm(request=[None])
-        await backup.remove_retained_backup(arm, "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd", VAULT, ACCOUNT)
+        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+        await backup.remove_retained_backup(arm, WORKSPACE, group, VAULT, ACCOUNT)
         self.assertEqual(arm.request.await_count, 1)
+
+    async def test_a_resource_of_another_workspace_stops_the_removal_before_the_first_change(self):
+        # A failed install can leave these names with the group of another workspace. Terraform gives the tag
+        # to each resource that it creates, so a resource without the tag is not from the workspace of the case.
+        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+        for resource in (group, VAULT, ACCOUNT):
+            for owner in (OTHER_WORKSPACE, None):
+                with self.subTest(resource=resource, owner=owner):
+                    calls, request = self.retained_backup_requests(group, "Disabled", owners={resource: owner})
+                    with self.assertRaisesRegex(AssertionError, "tre_workspace_id"):
+                        await backup.remove_retained_backup(fake_arm(request=request), WORKSPACE, group, VAULT, ACCOUNT)
+                    self.assertEqual({method for method, _ in calls}, {"GET"})
 
 
 class KeptBackupCleanupTests(unittest.IsolatedAsyncioTestCase):
@@ -292,9 +314,9 @@ class KeptBackupCleanupTests(unittest.IsolatedAsyncioTestCase):
         for code, removed in ((404, True), (200, False)):
             with self.subTest(code=code):
                 async with self.workspace_status(code) as remove:
-                    await case.remove_kept_backup("/workspaces/w", "/group", VAULT, ACCOUNT, True)
+                    await case.remove_kept_backup("/workspaces/w", WORKSPACE, "/group", VAULT, ACCOUNT, True)
                 if removed:
-                    remove.assert_awaited_once_with("arm", "/group", VAULT, ACCOUNT)
+                    remove.assert_awaited_once_with("arm", WORKSPACE, "/group", VAULT, ACCOUNT)
                 else:
                     remove.assert_not_awaited()
 
@@ -304,7 +326,7 @@ class KeptBackupCleanupTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(code=code):
                 async with self.workspace_status(code) as remove:
                     with self.assertRaisesRegex(AssertionError, f"Actual: {code}"):
-                        await case.remove_kept_backup("/workspaces/w", "/group", VAULT, ACCOUNT, True)
+                        await case.remove_kept_backup("/workspaces/w", WORKSPACE, "/group", VAULT, ACCOUNT, True)
                 remove.assert_not_awaited()
 
 
@@ -376,7 +398,7 @@ class BackupSetupTests(unittest.IsolatedAsyncioTestCase):
         finalisers = await self.run_case_with_a_failed_setup(create, failed_install)
         self.assertEqual([name for name, _ in finalisers], ["retained backup"])
         group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
-        self.assertEqual(finalisers[0][1].args[:4], ("/workspaces/w", group, VAULT, ACCOUNT))
+        self.assertEqual(finalisers[0][1].args[:5], ("/workspaces/w", "w-abcd", group, VAULT, ACCOUNT))
 
     async def test_the_kept_backup_is_owned_before_the_owner_token_lookup(self):
         # A failed lookup after the workspace install must not leave the kept backup without its clean-up.
@@ -388,7 +410,7 @@ class BackupSetupTests(unittest.IsolatedAsyncioTestCase):
         finalisers = await self.run_case_with_a_failed_setup(create, no_token, token_error=no_token)
         self.assertEqual([name for name, _ in finalisers], ["retained backup", "/workspaces/w"])
         group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
-        self.assertEqual(finalisers[0][1].args[:2], ("/workspaces/w", group))
+        self.assertEqual(finalisers[0][1].args[:3], ("/workspaces/w", "w-abcd", group))
 
     async def test_a_last_cleanup_runs_after_the_cleanups_owned_before_it(self):
         resources = sql_lifecycle.SQLResources(False, sql_lifecycle.asyncio.get_running_loop().time() + 60)

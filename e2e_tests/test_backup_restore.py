@@ -83,6 +83,7 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
                 "retained backup",
                 remove_kept_backup,
                 workspace_path,
+                workspace_id,
                 group,
                 found["vault_id"],
                 found["account_id"],
@@ -149,7 +150,7 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
             LOGGER.info("The retained recovery point restored after the workspace delete")
 
 
-async def remove_kept_backup(workspace_path, group_id, vault_id, account_id, verify):
+async def remove_kept_backup(workspace_path, workspace_id, group_id, vault_id, account_id, verify):
     """Remove the vault and the resource group that a delete with retained backups keeps."""
     # A workspace that the API did not delete stays as it is, so that its failure can be examined.
     async with AsyncClient(verify=verify, timeout=60) as client:
@@ -162,4 +163,4 @@ async def remove_kept_backup(workspace_path, group_id, vault_id, account_id, ver
     # Another status does not show that the workspace exists. The clean-up fails, so that the report shows it.
     assert_status(response, [status.HTTP_404_NOT_FOUND], "Could not read the workspace before the kept backup removal")
     async with arm_client() as arm:
-        await remove_retained_backup(arm, group_id, vault_id, account_id)
+        await remove_retained_backup(arm, workspace_id, group_id, vault_id, account_id)
