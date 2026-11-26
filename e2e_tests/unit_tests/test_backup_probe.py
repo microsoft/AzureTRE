@@ -114,6 +114,7 @@ class FakeResponse:
         self.status_code = status_code
         self._body = body or {}
         self.headers = headers or {}
+        self.text = ""
 
     def json(self):
         return self._body
@@ -270,25 +271,40 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
 
 
 class KeptBackupCleanupTests(unittest.IsolatedAsyncioTestCase):
+    @asynccontextmanager
+    async def workspace_status(self, code):
+        """Give the status of the workspace read to the clean-up, and yield the mock of the backup removal."""
+        client = MagicMock()
+        client.__aenter__ = AsyncMock(return_value=SimpleNamespace(get=AsyncMock(return_value=FakeResponse(code))))
+        client.__aexit__ = AsyncMock(return_value=False)
+        arm = MagicMock()
+        arm.__aenter__ = AsyncMock(return_value="arm")
+        arm.__aexit__ = AsyncMock(return_value=False)
+        with (
+            patch.object(case, "AsyncClient", return_value=client),
+            patch.object(case, "get_admin_token", AsyncMock(return_value="token")),
+            patch.object(case, "arm_client", return_value=arm),
+            patch.object(case, "remove_retained_backup", AsyncMock()) as remove,
+        ):
+            yield remove
+
     async def test_the_kept_backup_is_removed_only_after_the_api_deleted_the_workspace(self):
         for code, removed in ((404, True), (200, False)):
-            client = MagicMock()
-            client.__aenter__ = AsyncMock(return_value=SimpleNamespace(get=AsyncMock(return_value=FakeResponse(code))))
-            client.__aexit__ = AsyncMock(return_value=False)
-            arm = MagicMock()
-            arm.__aenter__ = AsyncMock(return_value="arm")
-            arm.__aexit__ = AsyncMock(return_value=False)
-            with (
-                self.subTest(code=code),
-                patch.object(case, "AsyncClient", return_value=client),
-                patch.object(case, "get_admin_token", AsyncMock(return_value="token")),
-                patch.object(case, "arm_client", return_value=arm),
-                patch.object(case, "remove_retained_backup", AsyncMock()) as remove,
-            ):
-                await case.remove_kept_backup("/workspaces/w", "/group", VAULT, ACCOUNT, True)
-            if removed:
-                remove.assert_awaited_once_with("arm", "/group", VAULT, ACCOUNT)
-            else:
+            with self.subTest(code=code):
+                async with self.workspace_status(code) as remove:
+                    await case.remove_kept_backup("/workspaces/w", "/group", VAULT, ACCOUNT, True)
+                if removed:
+                    remove.assert_awaited_once_with("arm", "/group", VAULT, ACCOUNT)
+                else:
+                    remove.assert_not_awaited()
+
+    async def test_a_failed_workspace_read_fails_the_cleanup_of_the_kept_backup(self):
+        # Only HTTP 200 shows that the workspace exists. Another status must not hide a kept backup.
+        for code in (401, 403, 429, 500, 503):
+            with self.subTest(code=code):
+                async with self.workspace_status(code) as remove:
+                    with self.assertRaisesRegex(AssertionError, f"Actual: {code}"):
+                        await case.remove_kept_backup("/workspaces/w", "/group", VAULT, ACCOUNT, True)
                 remove.assert_not_awaited()
 
 

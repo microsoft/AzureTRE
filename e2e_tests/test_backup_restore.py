@@ -11,7 +11,7 @@ from starlette import status
 
 from e2e_tests import config
 from e2e_tests.conftest import get_workspace_owner_token
-from e2e_tests.helpers import get_admin_token, get_auth_header, get_full_endpoint
+from e2e_tests.helpers import assert_status, get_admin_token, get_auth_header, get_full_endpoint
 from e2e_tests.resources import strings
 from e2e_tests.resources.backup import (
     BACKUP_API,
@@ -157,8 +157,10 @@ async def remove_kept_backup(workspace_path, group_id, vault_id, account_id, ver
         response = await client.get(
             get_full_endpoint(f"/api{workspace_path}"), headers=get_auth_header(await get_admin_token(verify))
         )
-    if response.status_code != status.HTTP_404_NOT_FOUND:
-        LOGGER.warning("The workspace is not deleted (HTTP %s), so its backup resources stay", response.status_code)
+    if response.status_code == status.HTTP_200_OK:
+        LOGGER.warning("The workspace is not deleted, so its backup resources stay")
         return
+    # Another status does not show that the workspace exists. The clean-up fails, so that the report shows it.
+    assert_status(response, [status.HTTP_404_NOT_FOUND], "Could not read the workspace before the kept backup removal")
     async with arm_client() as arm:
         await remove_retained_backup(arm, group_id, vault_id, account_id)
