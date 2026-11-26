@@ -304,7 +304,14 @@ The two cases in `test_airlock_upgrade.py` follow the procedure in [Legacy Airlo
    Deploy this branch, and set `e2eTestsCustomSelector` to `airlock_upgrade_seed`. The case creates the workspace `E2E Airlock upgrade seed` with an approved legacy import, and keeps it.
 1. On the same branch, push a commit that changes all files to the current code. The branch workflow then uses the same environment.
    Deploy this commit with `enable_legacy_airlock` set to `true`. The deployment runs `POST /migrations`.
-1. Set `e2eTestsCustomSelector` to `airlock_upgrade_verify`. The case makes sure that the core legacy accounts still exist and that the workspace has `airlock_version` `1`.
+1. Set `e2eTestsCustomSelector` to `airlock_upgrade_verify`. The case finds the workspace by the name `E2E Airlock upgrade seed`. Before its first change, the case makes sure that the test identity created this workspace as a seed:
+   - The template is `tre-workspace-base`.
+   - The `client_id` is the ID of the manual test workspace application.
+   - The user ID of the workspace is the object ID (`oid` claim) of the test identity.
+
+   If one of these checks fails, the case stops and makes no change to the workspace.
+   The API records the caller of each create and update as the user of a workspace. So do not update the seed workspace with another identity.
+   The case then makes sure that the core legacy accounts still exist and that the workspace has `airlock_version` `1`.
 1. The case upgrades the workspace to the current `tre-workspace-base` version. The legacy workspace accounts must still exist with the default network action `Deny`, and a new legacy import must pass.
 1. The case changes `airlock_version` to `2`. The legacy workspace accounts must not exist, the legacy requests keep their records, and a new import draft must use the v2 core account.
 1. The case deletes the workspace.
@@ -319,6 +326,7 @@ Resource Processor versions before 0.13.10 keep the parameters of each resource 
 
 1. Make a branch from the tag of the earlier release, for example `v0.29.1`, with the same parts of the current code as for the Airlock upgrade cases. Deploy this branch, and set `e2eTestsCustomSelector` to `porter_upgrade_seed`. The case creates the workspace `E2E Porter upgrade seed` with a Guacamole service and two Windows VMs. It disables the second VM and keeps all the resources.
 1. On the same branch, push a commit that changes all files to the current code. Deploy this commit, and set `e2eTestsCustomSelector` to `porter_upgrade_verify`.
+   The case finds the workspace by the name `E2E Porter upgrade seed`. Before its first change, the case does the same three checks of this workspace as the Airlock verify case. If one of these checks fails, the case stops and makes no change to the workspace.
 1. The `stop` action on the first VM must fail with the upgrade-required message. The delete of the second VM must fail with the same message, and the VM must still exist in Azure.
 1. The case upgrades each VM with a `PATCH` of its current template version.
 1. The `stop` and `start` actions must pass. The delete of the second VM must pass, and the VM must not exist in Azure.

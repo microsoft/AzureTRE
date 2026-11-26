@@ -1,15 +1,45 @@
 """Check the order and the checks of the Airlock upgrade cases without Azure."""
 
+import base64
+import json
 import os
 import time
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from e2e_tests import test_airlock_upgrade as upgrade
+from e2e_tests.token_provider import TokenProvider
 from e2e_tests.unit_tests.test_airlock_migration import token
 
 WORKSPACE = "22222222-2222-4222-8222-222222222222"
 PATH = f"/workspaces/{WORKSPACE}"
+TEST_IDENTITY = "44444444-4444-4444-8444-444444444444"
+# A workspace that the test identity did not create as a seed. Each entry replaces fields of a seed.
+OTHER_WORKSPACES = {
+    "another creator": {"user": {"id": "55555555-5555-4555-8555-555555555555"}},
+    "no creator": {"user": {}},
+    "another template": {"templateName": "tre-workspace-unrestricted"},
+    "another client_id": {"client_id": "another-app"},
+}
+
+
+def admin_token(claims):
+    # get_admin_token returns a TokenProvider, not the token text.
+    payload = base64.urlsafe_b64encode(json.dumps(claims).encode()).decode().rstrip("=")
+    credential = Mock()
+    credential.get_token.return_value.token = "header." + payload + ".signature"
+    return TokenProvider(credential, "api://tre/.default")
+
+
+def seed_workspace(workspace_id, name, client_id="app", **fields):
+    """Give a workspace as a seed case creates it. The API records the test identity as its user."""
+    return {
+        "id": workspace_id,
+        "templateName": "tre-workspace-base",
+        "user": {"id": TEST_IDENTITY},
+        "properties": {"display_name": name, "client_id": client_id},
+        **fields,
+    }
 
 
 class UpgradeFlowTests(unittest.IsolatedAsyncioTestCase):
@@ -35,7 +65,7 @@ class UpgradeFlowTests(unittest.IsolatedAsyncioTestCase):
         self.create = self.enterContext(
             patch.object(upgrade, "create_or_get_test_workspace", AsyncMock(return_value=(PATH, WORKSPACE)))
         )
-        self.enterContext(
+        self.clean_up = self.enterContext(
             patch.object(
                 upgrade,
                 "clean_up_test_workspace",
@@ -43,8 +73,11 @@ class UpgradeFlowTests(unittest.IsolatedAsyncioTestCase):
             )
         )
         owner = token(["WorkspaceOwner", "AirlockManager"])
-        self.enterContext(patch.object(upgrade, "get_workspace_owner_token", AsyncMock(return_value=owner)))
-        self.enterContext(patch.object(upgrade, "get_admin_token", AsyncMock(return_value="admin")))
+        self.owner_token = self.enterContext(
+            patch.object(upgrade, "get_workspace_owner_token", AsyncMock(return_value=owner))
+        )
+        self.admin = admin_token({"oid": TEST_IDENTITY})
+        self.enterContext(patch.object(upgrade, "get_admin_token", AsyncMock(side_effect=lambda verify: self.admin)))
 
         async def resource(endpoint, *args):
             if endpoint == "/api/workspaces":
@@ -112,6 +145,9 @@ class UpgradeFlowTests(unittest.IsolatedAsyncioTestCase):
 
         self.enterContext(patch.object(upgrade, "patch_status", patch_status))
 
+    def seed(self, **fields):
+        self.seeds = [seed_workspace(WORKSPACE, upgrade.SEED_NAME, **fields)]
+
     async def test_seed_keeps_a_workspace_with_an_approved_legacy_import(self):
         await upgrade.test_seed_legacy_airlock_workspace(True)
         self.assertEqual(self.events, ["legacy-import", "review", "approved", "core-accounts", "accounts-v1"])
@@ -121,7 +157,7 @@ class UpgradeFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.create.await_args.kwargs["auth_type"], "Manual")
 
     async def test_seed_refuses_a_second_seed(self):
-        self.seeds = [{"id": WORKSPACE, "properties": {"display_name": upgrade.SEED_NAME}}]
+        self.seed()
         with self.assertRaisesRegex(ValueError, "already exists"):
             await upgrade.test_seed_legacy_airlock_workspace(True)
         self.create.assert_not_awaited()
@@ -144,7 +180,7 @@ class UpgradeFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.events[-1], "delete-workspace")
 
     async def test_verify_follows_the_documented_order(self):
-        self.seeds = [{"id": WORKSPACE, "properties": {"display_name": upgrade.SEED_NAME}}]
+        self.seed()
         await upgrade.test_upgraded_legacy_workspace_moves_to_v2(True)
         self.assertEqual(
             self.events,
@@ -168,8 +204,29 @@ class UpgradeFlowTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "airlock_upgrade_seed"):
             await upgrade.test_upgraded_legacy_workspace_moves_to_v2(True)
 
+    async def test_verify_makes_no_change_to_a_workspace_that_the_test_identity_did_not_create_as_a_seed(self):
+        # The display name of a workspace is not unique, and the clean-up of the verify case deletes its workspace.
+        for name, fields in OTHER_WORKSPACES.items():
+            with self.subTest(workspace=name):
+                self.seed(**fields)
+                with self.assertRaisesRegex(ValueError, f"made no change to workspace {WORKSPACE}"):
+                    await upgrade.test_upgraded_legacy_workspace_moves_to_v2(True)
+                self.owner_token.assert_not_awaited()
+                self.clean_up.assert_not_awaited()
+                self.assertEqual(self.events, [])
+
+    async def test_verify_makes_no_change_when_the_admin_token_does_not_show_the_test_identity(self):
+        # A token without the oid claim must not be equal to a workspace without a user.
+        self.admin = admin_token({"roles": ["TREAdmin"]})
+        self.seed(user={})
+        with self.assertRaisesRegex(ValueError, f"no oid claim.*made no change to workspace {WORKSPACE}"):
+            await upgrade.test_upgraded_legacy_workspace_moves_to_v2(True)
+        self.owner_token.assert_not_awaited()
+        self.clean_up.assert_not_awaited()
+        self.assertEqual(self.events, [])
+
     async def test_an_upgrade_that_deletes_legacy_storage_fails_the_case(self):
-        self.seeds = [{"id": WORKSPACE, "properties": {"display_name": upgrade.SEED_NAME}}]
+        self.seed()
 
         async def workspace_accounts(workspace_id):
             self.events.append("accounts")

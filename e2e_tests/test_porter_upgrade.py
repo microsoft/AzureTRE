@@ -31,6 +31,7 @@ from e2e_tests.resources.deployment import check_deployment
 from e2e_tests.resources.resource import TIMEOUT, get_resource, post_resource
 from e2e_tests.resources.sql_lifecycle import TERMINAL_STATES, sql_lifecycle
 from e2e_tests.resources.sql_probe import COMPUTE_API, arm_client
+from e2e_tests.resources.upgrade_seed import require_own_seed
 
 LOGGER = logging.getLogger(__name__)
 SEED_NAME = "E2E Porter upgrade seed"
@@ -68,7 +69,7 @@ def vm_payload(name):
 
 
 async def find_seed(admin_token, verify):
-    """Return the seed workspace, or None. More than one seed workspace is an error."""
+    """Return the workspace with the seed name, or None. More than one such workspace is an error."""
     workspaces = (await get_resource("/api/workspaces", admin_token, verify))["workspaces"]
     seeds = [w for w in workspaces if w["properties"].get("display_name") == SEED_NAME]
     if len(seeds) > 1:
@@ -184,6 +185,8 @@ async def test_upgrade_clears_legacy_overrides(verify):
     seed = await find_seed(admin_token, verify)
     if seed is None:
         raise ValueError("Run the porter_upgrade_seed case on the earlier release first")
+    # The clean-up of this case deletes the workspace, and another workspace can have the seed name.
+    require_own_seed(seed, admin_token)
     workspace_id = seed["id"]
     workspace_path = f"/workspaces/{workspace_id}"
     async with sql_lifecycle(verify, deadline_variable="PORTER_UPGRADE_VALIDATION_DEADLINE") as resources:

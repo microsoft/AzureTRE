@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from e2e_tests import test_porter_upgrade as upgrade
+from e2e_tests.unit_tests.test_airlock_upgrade import OTHER_WORKSPACES, TEST_IDENTITY, admin_token, seed_workspace
 
 WORKSPACE = "33333333-3333-4333-8333-333333333333"
 PATH = f"/workspaces/{WORKSPACE}"
@@ -37,15 +38,20 @@ class PorterUpgradeTests(unittest.IsolatedAsyncioTestCase):
                 AsyncMock(side_effect=lambda *a: self.events.append("service") or (SERVICE, "service")),
             )
         )
-        self.enterContext(
+        self.clean_up = self.enterContext(
             patch.object(
                 upgrade,
                 "clean_up_test_workspace",
                 AsyncMock(side_effect=lambda *a: self.events.append("delete-workspace")),
             )
         )
-        self.enterContext(patch.object(upgrade, "get_workspace_owner_token", AsyncMock(return_value="owner")))
-        self.admin_token = self.enterContext(patch.object(upgrade, "get_admin_token", AsyncMock(return_value="admin")))
+        self.owner_token = self.enterContext(
+            patch.object(upgrade, "get_workspace_owner_token", AsyncMock(return_value="owner"))
+        )
+        self.admin = admin_token({"oid": TEST_IDENTITY})
+        self.admin_token = self.enterContext(
+            patch.object(upgrade, "get_admin_token", AsyncMock(side_effect=lambda verify: self.admin))
+        )
 
         def vm(name, enabled):
             return {
@@ -117,8 +123,8 @@ class PorterUpgradeTests(unittest.IsolatedAsyncioTestCase):
 
         self.enterContext(patch.object(upgrade, "arm_client", arm_client))
 
-    def seed(self):
-        self.seeds = [{"id": WORKSPACE, "templateVersion": "2.10.1", "properties": {"display_name": upgrade.SEED_NAME}}]
+    def seed(self, **fields):
+        self.seeds = [seed_workspace(WORKSPACE, upgrade.SEED_NAME, templateVersion="2.10.1", **fields)]
 
     async def test_both_cases_stop_before_any_request_outside_azure_cloud(self):
         # The verify case reads the VM through the Resource Manager endpoint of AzureCloud.
@@ -186,6 +192,27 @@ class PorterUpgradeTests(unittest.IsolatedAsyncioTestCase):
     async def test_verify_needs_the_seed(self):
         with self.assertRaisesRegex(ValueError, "porter_upgrade_seed"):
             await upgrade.test_upgrade_clears_legacy_overrides(True)
+
+    async def test_verify_makes_no_change_to_a_workspace_that_the_test_identity_did_not_create_as_a_seed(self):
+        # The display name of a workspace is not unique, and the clean-up of the verify case deletes its workspace.
+        for name, fields in OTHER_WORKSPACES.items():
+            with self.subTest(workspace=name):
+                self.seed(**fields)
+                with self.assertRaisesRegex(ValueError, f"made no change to workspace {WORKSPACE}"):
+                    await upgrade.test_upgrade_clears_legacy_overrides(True)
+                self.owner_token.assert_not_awaited()
+                self.clean_up.assert_not_awaited()
+                self.assertEqual(self.events, [])
+
+    async def test_verify_makes_no_change_when_the_admin_token_does_not_show_the_test_identity(self):
+        # A token without the oid claim must not be equal to a workspace without a user.
+        self.admin = admin_token({"roles": ["TREAdmin"]})
+        self.seed(user={})
+        with self.assertRaisesRegex(ValueError, f"no oid claim.*made no change to workspace {WORKSPACE}"):
+            await upgrade.test_upgrade_clears_legacy_overrides(True)
+        self.owner_token.assert_not_awaited()
+        self.clean_up.assert_not_awaited()
+        self.assertEqual(self.events, [])
 
     async def test_an_action_without_the_upgrade_message_fails_the_case(self):
         self.seed()
