@@ -139,6 +139,15 @@ class RemoveBackupTests(unittest.TestCase):
         )
         self.assertGreater(share, vault)
 
+    def test_the_share_requests_have_no_resource_manager_host(self):
+        # A URL without a host uses the Resource Manager endpoint of the cloud that the Azure CLI uses.
+        result, _, calls = self.run_script("true")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        urls = [call[4] for call in calls if call[0] == "rest" and "/fileServices/default/shares" in call[4]]
+        self.assertEqual(len(urls), 2)
+        for url in urls:
+            self.assertTrue(url.startswith("/subscriptions/sub/resourceGroups/rg-tre-ws-1234/"), url)
+
     @staticmethod
     def disables(calls):
         return [

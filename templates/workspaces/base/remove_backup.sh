@@ -98,7 +98,8 @@ storage_account_exists() {
 # of the workspace storage account together with its leased snapshots.
 delete_leased_shares() {
   local shares_url share_names share
-  shares_url="https://management.azure.com${storage_account_id}/fileServices/default/shares"
+  # A URL without a host uses the Resource Manager endpoint of the current cloud.
+  shares_url="${storage_account_id}/fileServices/default/shares"
   if ! share_names=$(az rest --method get --url "${shares_url}?api-version=2023-05-01" --query "value[].name" --output tsv); then
     echo "Error: failed to list the file shares of the workspace storage account. Aborting so the uninstall can be retried." >&2
     exit 1

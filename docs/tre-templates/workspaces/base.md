@@ -45,7 +45,8 @@ The API keeps the new template version after a failed upgrade, so the next delet
 Before version 2.12.6 (`tre-workspace-unrestricted` 0.15.5, `tre-workspace-airlock-import-review` 0.18.5), the delete with `delete_backups_on_uninstall = true` failed with `DeleteShareWhenSnapshotLeased` after the vault delete, so the workspace stayed in `deleting_failed`.
 To delete such a workspace, do these steps:
 
-1. Delete the file share with its leased snapshots: `az rest --method delete --url "https://management.azure.com/subscriptions/<subscription ID>/resourceGroups/rg-<TRE ID>-ws-<short workspace ID>/providers/Microsoft.Storage/storageAccounts/stgws<short workspace ID>/fileServices/default/shares/vm-shared-storage?api-version=2023-05-01&\$include=leased-snapshots"`.
+1. Delete the file share with its leased snapshots: `az rest --method delete --url "/subscriptions/<subscription ID>/resourceGroups/rg-<TRE ID>-ws-<short workspace ID>/providers/Microsoft.Storage/storageAccounts/stgws<short workspace ID>/fileServices/default/shares/vm-shared-storage?api-version=2023-05-01&\$include=leased-snapshots"`.
+   The URL has no host, so the Azure CLI uses the Resource Manager endpoint of its current cloud.
 2. Delete the workspace again.
 
 > **Note:** If [vault immutability](https://learn.microsoft.com/azure/backup/backup-azure-immutable-vault-concept) is enabled on the Recovery Services Vault (for example, enforced by an Azure Policy in your environment), backups cannot be deleted before they expire. In this case `delete_backups_on_uninstall = true` will not be able to remove the backups or vault, and workspace deletion may fail.
