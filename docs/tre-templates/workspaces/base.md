@@ -37,7 +37,12 @@ A delete with `false` sets the default network action of the retained storage ac
 So the account does not stay open to all networks when `enable_local_debugging` set the default action to `Allow`.
 
 The names of the vault and the storage account have only the last four characters of the workspace ID. So the delete first reads the `tre_workspace_id` tag of the vault and of the storage account.
-If a tag names another workspace, the delete stops with an error before its first change to the vault or the storage account. A resource without this tag passes.
+If a tag names another workspace, the delete stops with an error before its first change to the vault or the storage account.
+A resource without this tag also stops the delete, because its owner is not known. Terraform sets the tag only when it creates a resource, so a storage account from an early version of the template can have no tag.
+If the resource belongs to the workspace, add the tag: `az tag update --resource-id <resource ID> --operation Merge --tags tre_workspace_id=<full workspace ID>`. Then delete the workspace again.
+
+A delete with `true` deletes the file shares only after Azure answers that it does not find the vault. If the read of the vault fails for another reason, the delete sends the vault delete again. It makes 20 tries at most.
+If Azure does not confirm the vault delete in these tries, the delete stops with an error, and the file shares and the Terraform state stay. Delete the workspace again.
 
 If the protection of an item is already stopped with its data kept, a delete with `true` also deletes that data. For example, an operator stopped the backups in the portal, or a delete with `false` failed.
 After a failed delete with `false`, the resource group and the storage account are not in the Terraform state, so a delete with `true` keeps them. Delete them by hand.

@@ -49,6 +49,9 @@ with open(os.environ['CALLS'],'a') as f:f.write(json.dumps(args)+'\\n')
 state=json.load(open(os.environ['AZ_STATE']))
 command=' '.join(args[:3])
 if command.startswith('backup vault show'):
+    if state['delete_sent'] and state['read_errors']>0:
+        state['read_errors']-=1;json.dump(state,open(os.environ['AZ_STATE'],'w'))
+        print('(ServiceUnavailable) The service is temporarily unavailable.',file=sys.stderr);sys.exit(1)
     if not state['vault']:print('(ResourceNotFound) The Resource was not found.',file=sys.stderr);sys.exit(1)
     if '--query' in args:print(state['vault_owner'])
     sys.exit(0)
@@ -70,7 +73,11 @@ if command.startswith('storage account update') and state['update_fails']:
     print('(AuthorizationFailed) The client has no authorization.',file=sys.stderr);sys.exit(1)
 if args[:3]==['rest','--method','get'] and '/fileServices/default/shares' in args[4]:print('vm-shared-storage');sys.exit(0)
 if args[:3]==['rest','--method','delete'] and 'Microsoft.RecoveryServices/vaults' in args[4]:
-    state['vault']=False;json.dump(state,open(os.environ['AZ_STATE'],'w'))
+    state['delete_sent']=True
+    if not state['vault_delete_fails']:state['vault']=False
+    json.dump(state,open(os.environ['AZ_STATE'],'w'))
+    if state['vault_delete_fails']:
+        print('(ServiceUnavailable) The service is temporarily unavailable.',file=sys.stderr);sys.exit(1)
 sys.exit(0)
 """
 
@@ -113,7 +120,11 @@ class RemoveBackupTests(unittest.TestCase):
         update_fails=False,
         vault_owner=WORKSPACE,
         account_owner=WORKSPACE,
+        vault_delete_fails=False,
+        vault_read_errors=0,
     ):
+        # After the first vault DELETE, the fake Azure CLI fails vault_read_errors reads of the vault with an
+        # error that is not "not found".
         state = {
             "vault": vault,
             "account": account,
@@ -122,6 +133,9 @@ class RemoveBackupTests(unittest.TestCase):
             "update_fails": update_fails,
             "vault_owner": vault_owner,
             "account_owner": account_owner,
+            "vault_delete_fails": vault_delete_fails,
+            "read_errors": vault_read_errors,
+            "delete_sent": False,
         }
         (self.folder / "az.json").write_text(json.dumps(state))
         (self.folder / "calls.jsonl").unlink(missing_ok=True)
@@ -281,15 +295,12 @@ class RemoveBackupTests(unittest.TestCase):
         # The vault passes its check. The script must read the owner of the account before the first change,
         # because the steps after the vault check delete the locks of the account.
         for delete_backups in ("false", "true"):
-            for vault_owner in (WORKSPACE, ""):
-                with self.subTest(delete_backups=delete_backups, vault_owner=vault_owner):
-                    result, state, calls = self.run_script(
-                        delete_backups, vault_owner=vault_owner, account_owner=OTHER_WORKSPACE
-                    )
-                    self.assertNotEqual(result.returncode, 0)
-                    self.assertIn(f"tre_workspace_id={OTHER_WORKSPACE}", result.stderr)
-                    self.assertEqual(self.changes(calls), [])
-                    self.assertEqual(state, set(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
+            with self.subTest(delete_backups=delete_backups):
+                result, state, calls = self.run_script(delete_backups, account_owner=OTHER_WORKSPACE)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(f"tre_workspace_id={OTHER_WORKSPACE}", result.stderr)
+                self.assertEqual(self.changes(calls), [])
+                self.assertEqual(state, set(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
 
     def test_the_backup_lock_of_the_workspace_storage_account_is_deleted(self):
         for delete_backups in ("false", "true"):
@@ -298,13 +309,72 @@ class RemoveBackupTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual([call[3] for call in calls if call[:2] == ["lock", "delete"]], [LOCK])
 
-    def test_resources_without_the_workspace_tag_pass(self):
-        # Terraform does not update the tags, so a resource from an earlier version can have no tag.
-        for owner in ("", WORKSPACE.upper()):
-            with self.subTest(owner=owner):
-                result, _, calls = self.run_script("true", vault_owner=owner, account_owner=owner)
-                self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(len(self.deletes(calls, "/fileServices/default/shares/")), 1)
+    def test_the_workspace_tag_match_ignores_the_case(self):
+        owner = WORKSPACE.upper()
+        result, _, calls = self.run_script("true", vault_owner=owner, account_owner=owner)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.deletes(calls, "/fileServices/default/shares/")), 1)
+
+    def assert_stopped_for_a_missing_tag(self, result, state, calls):
+        """Make sure that the script stopped before its first change and told the operator which tag to add."""
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("has no tre_workspace_id tag", result.stderr)
+        self.assertIn(f"add the tag tre_workspace_id={WORKSPACE}", result.stderr)
+        self.assertEqual(self.changes(calls), [])
+        self.assertNotIn(["lock", "list"], [call[:2] for call in calls])
+        self.assertEqual(state, set(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
+
+    def test_a_vault_without_the_workspace_tag_is_not_changed(self):
+        # Without the tag, the owner of the vault is not known. The name has only four characters of the workspace ID.
+        for delete_backups in ("false", "true"):
+            with self.subTest(delete_backups=delete_backups):
+                result, state, calls = self.run_script(delete_backups, vault_owner="")
+                self.assert_stopped_for_a_missing_tag(result, state, calls)
+                self.assertIn("Recovery Services Vault arsv-tre-ws-1234", result.stderr)
+
+    def test_a_storage_account_without_the_workspace_tag_is_not_changed_when_the_vault_exists(self):
+        # Terraform does not update the tags, so a storage account from an earlier version can have no tag.
+        for delete_backups in ("false", "true"):
+            with self.subTest(delete_backups=delete_backups):
+                result, state, calls = self.run_script(delete_backups, account_owner="")
+                self.assert_stopped_for_a_missing_tag(result, state, calls)
+                self.assertIn("Storage account stgws1234", result.stderr)
+
+    def test_a_storage_account_without_the_workspace_tag_keeps_its_locks_and_shares(self):
+        # There is no vault, so only the name connects the storage account to the workspace.
+        result, state, calls = self.run_script("true", vault=False, account_owner="")
+        self.assert_stopped_for_a_missing_tag(result, state, calls)
+        self.assertIn("Storage account stgws1234", result.stderr)
+
+    def test_retained_backups_without_a_vault_do_not_change_a_storage_account_without_the_workspace_tag(self):
+        # Without a vault, a delete with retained backups makes no change to the storage account.
+        # So it does not read the tag, and it does not fail.
+        result, state, calls = self.run_script("false", vault=False, account_owner="")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.changes(calls), [])
+        self.assertNotIn(["lock", "list"], [call[:2] for call in calls])
+        self.assertEqual(state, set(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
+
+    def test_a_vault_delete_that_azure_does_not_confirm_keeps_the_shares_and_the_state(self):
+        # The vault DELETE fails, and then each read of the vault fails with an error that is not "not found".
+        # Such a read does not show that the vault is gone.
+        result, state, calls = self.run_script("true", vault_delete_fails=True, vault_read_errors=99)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("could not be deleted", result.stderr)
+        self.assertIn("ServiceUnavailable", result.stderr)
+        self.assertEqual(len(self.deletes(calls, "Microsoft.RecoveryServices/vaults")), 20)
+        self.assertEqual(self.deletes(calls, "/fileServices/default/shares/"), [])
+        self.assertEqual(state, set(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
+
+    def test_one_failed_read_of_the_vault_does_not_stop_the_delete(self):
+        # The vault DELETE passes. The first read of the vault after it fails, and the next read gets "not found".
+        result, state, calls = self.run_script("true", vault_read_errors=1)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        vault = self.deletes(calls, "Microsoft.RecoveryServices/vaults")
+        self.assertEqual(len(vault), 2)
+        [share] = self.deletes(calls, "/fileServices/default/shares/")
+        self.assertGreater(share, vault[-1])
+        self.assertEqual(state, set(STORAGE + OTHER + ["azurerm_resource_group.ws"]))
 
     def test_a_repeated_delete_without_the_storage_account_does_nothing(self):
         result, _, calls = self.run_script("true", vault=False, account=False)

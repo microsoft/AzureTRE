@@ -74,7 +74,7 @@ BUG FIXES:
   The delete sets the default network action of the retained account to `Deny` with the Azure services bypass.
   (`tre-workspace-base` 2.12.6, `tre-workspace-unrestricted` 0.15.5, `tre-workspace-airlock-import-review` 0.18.5) ([#5054](https://github.com/microsoft/AzureTRE/issues/5054))
 * Delete the workspace file shares with their leased snapshots when a workspace with backups is deleted and `delete_backups_on_uninstall` is `true`. Azure Backup soft delete is on by default, so Azure Backup kept its lease on the share snapshots after the vault delete, and the share delete failed with `DeleteShareWhenSnapshotLeased`.
-  The script also deletes the shares when an earlier delete already removed the vault. It stops with an error before it changes a vault or a storage account whose `tre_workspace_id` tag names another workspace.
+  The script also deletes the shares when an earlier delete already removed the vault, but only after Azure answers that it does not find the vault. It stops with an error before it changes a vault or a storage account whose `tre_workspace_id` tag names another workspace or is missing.
   (`tre-workspace-base` 2.12.6, `tre-workspace-unrestricted` 0.15.5, `tre-workspace-airlock-import-review` 0.18.5) ([#5054](https://github.com/microsoft/AzureTRE/issues/5054))
 * Delete the kept data of a stopped backup item when a workspace with backups is deleted and `delete_backups_on_uninstall` is `true`. An operator or an earlier delete with `false` can stop an item and keep its data. The script skipped such an item, so the vault delete failed.
   (`tre-workspace-base` 2.12.6, `tre-workspace-unrestricted` 0.15.5, `tre-workspace-airlock-import-review` 0.18.5) ([#5054](https://github.com/microsoft/AzureTRE/issues/5054))

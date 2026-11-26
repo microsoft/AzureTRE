@@ -55,7 +55,8 @@ storage_account_id="/subscriptions/${subscription_id}/resourceGroups/${vault_res
 # The names of the vault and the storage account have only the last four characters of the
 # workspace ID. So the resources of another workspace can have these names. Stop without a
 # change if the tre_workspace_id tag of a resource names another workspace. A resource
-# without this tag passes, because Terraform does not update the tags.
+# without this tag also stops the script, because its owner is not known. Terraform does not
+# update the tags, so a resource from an earlier version can have no tag. The operator adds it.
 # The first argument names the resource in the messages. The other arguments are the
 # command that shows the resource.
 assert_workspace_owns() {
@@ -65,7 +66,11 @@ assert_workspace_owns() {
     echo "Error: failed to read the tags of ${resource}. Aborting so the uninstall can be retried." >&2
     exit 1
   fi
-  if [ -n "${owner}" ] && [ "${owner,,}" != "${WORKSPACE_ID,,}" ]; then
+  if [ -z "${owner}" ]; then
+    echo "Error: ${resource} has no tre_workspace_id tag, so its owner is not known. Aborting without a change to it. If it belongs to this workspace, add the tag tre_workspace_id=${WORKSPACE_ID} to it and run the delete again." >&2
+    exit 1
+  fi
+  if [ "${owner,,}" != "${WORKSPACE_ID,,}" ]; then
     echo "Error: ${resource} has the tag tre_workspace_id=${owner}, so it belongs to another workspace. Aborting without a change to it." >&2
     exit 1
   fi
@@ -99,7 +104,7 @@ remove_backup_locks() {
 }
 
 # Return 0 if the workspace storage account exists and 1 if Azure does not find it.
-# Stop if the account belongs to another workspace.
+# Stop if the tre_workspace_id tag of the account does not name this workspace.
 storage_account_exists() {
   local account_error
   if account_error="$(az resource show --ids "${storage_account_id}" --output none 2>&1)"; then
@@ -134,6 +139,20 @@ delete_leased_shares() {
   done
 }
 
+# The answers of Azure that show that the vault does not exist.
+vault_not_found_pattern="ResourceNotFound|ResourceGroupNotFound|was not found|could not be found|does not exist"
+
+# Return 0 only if Azure answers that it does not find the vault. Return 1 if the vault exists,
+# and also if the read fails for another reason, because such a failure does not show that the
+# vault is gone. The error of the last read stays in vault_show_error.
+vault_is_gone() {
+  if vault_show_error="$(az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}" --output none 2>&1)"; then
+    vault_show_error=""
+    return 1
+  fi
+  echo "${vault_show_error}" | grep -qiE "${vault_not_found_pattern}"
+}
+
 # If the vault no longer exists, there are no backup items to stop. Only a genuine
 # 'not found' response is treated as "no vault" - any other error (for example
 # a permissions or throttling problem) must fail the script so we do not silently skip
@@ -142,10 +161,10 @@ if vault_show_error="$(az backup vault show --name "${vault_name}" --resource-gr
   echo "Recovery Services Vault ${vault_name} found in resource group ${vault_resource_group}."
   assert_workspace_owns "Recovery Services Vault ${vault_name}" az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}"
   # The steps below delete the locks of the storage account. So read the owner of the account here,
-  # before the first change. The function stops the script for an account of another workspace.
-  # A missing account passes this check.
+  # before the first change. The function stops the script for an account of another workspace
+  # and for an account without the tag. A missing account passes this check.
   storage_account_exists || true
-elif echo "${vault_show_error}" | grep -qiE "ResourceNotFound|ResourceGroupNotFound|was not found|could not be found|does not exist"; then
+elif echo "${vault_show_error}" | grep -qiE "${vault_not_found_pattern}"; then
   echo "Recovery Services Vault ${vault_name} was not found - no backup items to stop."
   # An earlier delete can have deleted the vault and then failed on a leased share snapshot.
   if [ "${DELETE_BACKUPS}" == "true" ] && storage_account_exists; then
@@ -257,6 +276,7 @@ if [ "${DELETE_BACKUPS}" == "true" ]; then
   # unregister can briefly return CloudInternalError), then let Terraform destroy the
   # rest of the workspace including its resource group.
   vault_url="https://management.azure.com/subscriptions/${subscription_id}/resourceGroups/${vault_resource_group}/providers/Microsoft.RecoveryServices/vaults/${vault_name}?api-version=2025-08-01"
+  vault_deleted="false"
   for _ in $(seq 1 20); do
     for bmt in "${backup_management_types[@]}"; do
       for container in $(az backup container list --vault-name "${vault_name}" --resource-group "${vault_resource_group}" \
@@ -267,14 +287,20 @@ if [ "${DELETE_BACKUPS}" == "true" ]; then
       done
     done
     az rest --method delete --url "${vault_url}" --output none 2>/dev/null || true
-    if ! az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}" --output none 2>/dev/null; then
+    # A read that fails for a reason other than 'not found' does not show that the vault is
+    # gone. The loop then continues, so the shares and the Terraform state stay as they are.
+    if vault_is_gone; then
+      vault_deleted="true"
       echo "Recovery Services Vault ${vault_name} deleted."
       break
     fi
     sleep 15
   done
-  if az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}" --output none 2>/dev/null; then
+  if [ "${vault_deleted}" != "true" ]; then
     echo "Error: Recovery Services Vault ${vault_name} could not be deleted." >&2
+    if [ -n "${vault_show_error}" ]; then
+      echo "The last read of the vault failed, so Azure did not confirm the delete: ${vault_show_error}" >&2
+    fi
     exit 1
   fi
   if storage_account_exists; then
