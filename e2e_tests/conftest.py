@@ -107,6 +107,7 @@ async def create_or_get_test_workspace(
     client_id: str = "",
     client_secret: str = "",
     properties: dict | None = None,
+    accepted=None,
 ) -> Tuple[str, str]:
     if pre_created_workspace_id != "":
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
@@ -150,6 +151,7 @@ async def create_or_get_test_workspace(
         access_token=admin_token,
         verify=verify,
         cleanup_failed_create=True,
+        accepted=accepted,
     )
 
     LOGGER.info(f"Workspace {workspace_id} {template_name} created")

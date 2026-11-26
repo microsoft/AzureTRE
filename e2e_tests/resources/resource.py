@@ -43,6 +43,7 @@ async def post_resource(
     access_token_for_wait=None,
     *,
     cleanup_failed_create=False,
+    accepted=None,
 ):
     if cleanup_failed_create and (method != "POST" or not wait):
         raise ValueError("Failed-create cleanup requires a POST with deployment polling")
@@ -64,6 +65,9 @@ async def post_resource(
         resource_path = response.json()["operation"]["resourcePath"]
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
+        if accepted is not None:
+            # The caller can own a clean-up for the resource now, before its deployment can fail.
+            accepted(resource_path, resource_id)
 
         if wait:
             wait_token = access_token_for_wait if access_token_for_wait is not None else access_token

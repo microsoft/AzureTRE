@@ -145,31 +145,24 @@ class SQLDeadlineTests(unittest.IsolatedAsyncioTestCase):
             client_id="",
             client_secret="",
             properties=None,
+            accepted=None,
         )
         create_service.assert_awaited_once_with("/workspaces/ws", "token", "", True)
 
-    async def test_setup_calls_the_workspace_callback_before_the_service_create(self):
-        # A case can own a clean-up for its workspace before the service create can fail.
-        order = []
+    async def test_setup_gives_the_workspace_callback_to_the_workspace_create(self):
+        # A case can own a clean-up when the API accepts the workspace create, before the install can fail.
+        seen = []
 
-        async def create_service(*args):
-            order.append("service")
-            raise RuntimeError("the service install failed")
+        async def create_workspace(**kwargs):
+            kwargs["accepted"]("/workspaces/ws", "ws")
+            raise AssertionError("the workspace install failed")
 
-        async def after_workspace(path, workspace_id):
-            order.append(("callback", path, workspace_id))
-
-        with (
-            self.budgets(),
-            patch.object(lifecycle, "create_or_get_test_workspace", AsyncMock(return_value=("/workspaces/ws", "ws"))),
-            patch.object(lifecycle, "get_workspace_owner_token", AsyncMock(return_value="token")),
-            patch.object(lifecycle, "create_or_get_test_workpace_service", create_service),
-        ):
+        with self.budgets(), patch.object(lifecycle, "create_or_get_test_workspace", create_workspace):
             async with lifecycle.sql_lifecycle(True) as owned:
-                with self.assertRaises(RuntimeError):
-                    await owned.setup(workspace_properties={}, after_workspace=after_workspace)
-                owned.finalisers.clear()
-        self.assertEqual(order, [("callback", "/workspaces/ws", "ws"), "service"])
+                with self.assertRaises(AssertionError):
+                    await owned.setup(workspace_properties={}, workspace_accepted=lambda *args: seen.append(args))
+                self.assertEqual(owned.finalisers, [])
+        self.assertEqual(seen, [("/workspaces/ws", "ws")])
 
     async def test_an_early_delete_that_the_work_deadline_stops_ends_before_the_last_cleanup(self):
         # The kept backup clean-up runs only after the API deleted the workspace.

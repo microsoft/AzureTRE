@@ -155,6 +155,19 @@ class AcceptedResourceCleanupTests(unittest.IsolatedAsyncioTestCase):
             await self.create()
         self.assertIn(("DELETE", "/api" + self.path), self.requests)
 
+    async def test_a_workspace_create_tells_the_caller_before_a_failed_install(self):
+        # The clean-up of a failed install deletes the workspace. A caller that owns more clean-up needs the ID first.
+        self.states = ["deployment_failed"]
+        seen = []
+
+        def accepted(path, workspace_id):
+            seen.append((path, workspace_id, list(self.requests)))
+
+        with self.assertRaises(AssertionError):
+            await fixtures.create_or_get_test_workspace("Automatic", True, accepted=accepted)
+        self.assertEqual(seen, [(self.path, "new-workspace", [("POST", "/api/workspaces")])])
+        self.assertIn(("DELETE", "/api" + self.path), self.requests)
+
     async def test_rejected_creation_does_not_delete_anything(self):
         self.create_status = 403
         with self.assertRaises(AssertionError):

@@ -346,8 +346,8 @@ class BackupSetupTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await resources.close(), [])
         failed.assert_awaited_once()
 
-    async def test_the_kept_backup_is_owned_before_the_owner_token_lookup(self):
-        # A failed lookup after the workspace install must not leave the kept backup without its clean-up.
+    async def run_case_with_a_failed_setup(self, create, error, token_error=None):
+        """Run the retain case until its set-up fails with the error, and return the clean-ups that it owns then."""
         resources = sql_lifecycle.SQLResources(False, 0)
 
         @asynccontextmanager
@@ -358,16 +358,37 @@ class BackupSetupTests(unittest.IsolatedAsyncioTestCase):
             patch.dict(case.os.environ, {"AZURE_ENVIRONMENT": "AzureCloud", "ARM_SUBSCRIPTION_ID": "sub"}),
             patch.object(case.config, "TRE_ID", "tre"),
             patch.object(case, "sql_lifecycle", lifecycle),
-            patch.object(
-                sql_lifecycle, "create_or_get_test_workspace", AsyncMock(return_value=("/workspaces/w", "w-abcd"))
-            ),
-            patch.object(case, "get_workspace_owner_token", AsyncMock(side_effect=RuntimeError("no token"))),
+            patch.object(sql_lifecycle, "create_or_get_test_workspace", create),
+            patch.object(sql_lifecycle, "get_workspace_owner_token", AsyncMock(side_effect=token_error)),
         ):
-            with self.assertRaisesRegex(RuntimeError, "no token"):
+            with self.assertRaisesRegex(type(error), str(error)):
                 await case.test_file_share_restore_and_workspace_delete(False, False)
-        self.assertEqual([name for name, _ in resources.finalisers], ["retained backup", "/workspaces/w"])
+        return resources.finalisers
+
+    async def test_the_kept_backup_is_owned_before_a_failed_workspace_install(self):
+        # The clean-up of a failed install deletes the workspace, and that delete keeps the backup resources.
+        failed_install = AssertionError("deployment_failed")
+
+        async def create(**kwargs):
+            kwargs["accepted"]("/workspaces/w", "w-abcd")
+            raise failed_install
+
+        finalisers = await self.run_case_with_a_failed_setup(create, failed_install)
+        self.assertEqual([name for name, _ in finalisers], ["retained backup"])
         group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
-        self.assertEqual(resources.finalisers[0][1].args[:2], ("/workspaces/w", group))
+        self.assertEqual(finalisers[0][1].args[:4], ("/workspaces/w", group, VAULT, ACCOUNT))
+
+    async def test_the_kept_backup_is_owned_before_the_owner_token_lookup(self):
+        # A failed lookup after the workspace install must not leave the kept backup without its clean-up.
+        async def create(**kwargs):
+            kwargs["accepted"]("/workspaces/w", "w-abcd")
+            return "/workspaces/w", "w-abcd"
+
+        no_token = RuntimeError("no token")
+        finalisers = await self.run_case_with_a_failed_setup(create, no_token, token_error=no_token)
+        self.assertEqual([name for name, _ in finalisers], ["retained backup", "/workspaces/w"])
+        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+        self.assertEqual(finalisers[0][1].args[:2], ("/workspaces/w", group))
 
     async def test_a_last_cleanup_runs_after_the_cleanups_owned_before_it(self):
         resources = sql_lifecycle.SQLResources(False, sql_lifecycle.asyncio.get_running_loop().time() + 60)

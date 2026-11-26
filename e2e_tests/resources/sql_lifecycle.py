@@ -69,7 +69,7 @@ class SQLResources:
         await context.__aenter__()
         self.own(name, context.__aexit__, None, None, None)
 
-    async def setup(self, groups=False, workspace_properties=None, after_workspace=None):
+    async def setup(self, groups=False, workspace_properties=None, workspace_accepted=None):
         # Keep these resources inside the SQL budget rather than session fixtures.
         # Only an Automatic workspace gets Entra ID groups, so a case that needs
         # them creates its own workspace and does not use the configured ones.
@@ -85,12 +85,12 @@ class SQLResources:
             client_id=config.TEST_WORKSPACE_APP_ID if manual else "",
             client_secret=config.TEST_WORKSPACE_APP_SECRET if manual else "",
             properties=workspace_properties,
+            # The case can own a clean-up when the API accepts the create of a new workspace. The clean-up
+            # of a failed install deletes the workspace, and that delete can keep resources.
+            accepted=workspace_accepted,
         )
         if not existing_workspace:
             self.own(workspace_path, clean_up_test_workspace, "", workspace_path, self.verify)
-        if after_workspace:
-            # The case can own a clean-up for the workspace before the rest of the set-up can fail.
-            await after_workspace(workspace_path, workspace_id)
         token = await get_workspace_owner_token(workspace_id, self.verify)
         guacamole_path, guacamole_id = await create_or_get_test_workpace_service(
             workspace_path, token, existing_service, self.verify

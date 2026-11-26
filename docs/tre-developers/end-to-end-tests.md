@@ -258,7 +258,8 @@ Azure does not let a request turn off soft delete in some vaults, for example in
 In such a vault, the step deletes the item, unregisters the backup container and then tries the vault delete. The workspace delete uses the same order.
 If Azure keeps the vault, the deleted backup data stays for 14 days. The step then deletes the storage account, and it adds the tag `e2e_delete_after` with a date to the resource group.
 Delete the resource group by hand after that date. Until then, the destroy of the CI environment stops at this resource group.
-This step runs after the workspace delete, also when the case fails after the workspace install. If the workspace install fails, the retained resource group can stay.
+This step runs after the workspace delete, also when the case fails after the workspace install.
+The case owns this step from the time that the API accepts the workspace create. So the step also runs after a failed workspace install, whose clean-up deletes the workspace and keeps its backup resources.
 The step runs only if the API deleted the workspace, so a failed delete stays for diagnosis.
 If the read of the workspace gets a status other than HTTP 200 or HTTP 404, the step fails. The test report then shows the failure.
 If the deadline expires during the workspace delete, the delete continues in the time for clean-up, and this step runs after the delete ends.

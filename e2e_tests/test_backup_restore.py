@@ -69,7 +69,7 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
     async with sql_lifecycle(verify, deadline_variable="BACKUP_VALIDATION_DEADLINE") as resources:
         found = {}
 
-        async def own_kept_backup(workspace_path, workspace_id):
+        def own_kept_backup(workspace_path, workspace_id):
             resource_names = names(workspace_id, config.TRE_ID)
             group = f"/subscriptions/{subscription_id}/resourceGroups/{resource_names['group']}"
             found.update(
@@ -77,8 +77,8 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
                 vault_id=f"{group}/providers/Microsoft.RecoveryServices/vaults/{resource_names['vault']}",
                 account_id=f"{group}/providers/Microsoft.Storage/storageAccounts/{resource_names['account']}",
             )
-            # This runs after the workspace delete, also when the case fails after the workspace install.
-            # The case owns it before the token lookup, because that lookup can fail.
+            # This runs after the workspace delete. The case owns it when the API accepts the workspace create.
+            # The clean-up of a failed install also deletes the workspace and keeps its backup resources.
             resources.own_last(
                 "retained backup",
                 remove_kept_backup,
@@ -88,13 +88,12 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
                 found["account_id"],
                 verify,
             )
-            # The owner token gets a current token for each request, so one token lasts the case and its clean-up.
-            found["token"] = await get_workspace_owner_token(workspace_id, verify)
 
         workspace_path, workspace_id, guacamole_path, guacamole_id = await resources.setup(
-            workspace_properties=properties, after_workspace=own_kept_backup
+            workspace_properties=properties, workspace_accepted=own_kept_backup
         )
-        token = found["token"]
+        # The owner token gets a current token for each request, so one token lasts the case and its clean-up.
+        token = await get_workspace_owner_token(workspace_id, verify)
         group_id, vault_id, account_id = found["group_id"], found["vault_id"], found["account_id"]
         resource_names = names(workspace_id, config.TRE_ID)
         vm_path, vm_id = await resources.create(VM_PAYLOAD, f"/api{guacamole_path}/user-resources", token)
