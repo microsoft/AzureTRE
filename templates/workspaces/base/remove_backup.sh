@@ -258,6 +258,16 @@ if [ "${DELETE_BACKUPS}" == "true" ]; then
   popd > /dev/null
   echo "Vault deleted. Terraform will destroy the remaining workspace resources, including the resource group."
 else
+  # The network rules keep their values when Terraform stops their management. With local
+  # debugging on, the default action is Allow. So set Deny before the removal from the state.
+  # Azure Backup restores through the Azure services bypass.
+  if storage_account_exists; then
+    echo "Setting the default network action of the retained storage account to Deny..."
+    if ! az storage account update --ids "${storage_account_id}" --default-action Deny --bypass AzureServices --output none; then
+      echo "Error: could not set the default network action of the retained storage account to Deny. Aborting so the uninstall can be retried." >&2
+      exit 1
+    fi
+  fi
   remove_from_state "${backup_resources[@]}" "azurerm_resource_group.ws" "${retained_storage[@]}"
   popd > /dev/null
   echo "Backup resources retained. Terraform will delete the other workspace resources and leave the vault, the storage account and their resource group in place."

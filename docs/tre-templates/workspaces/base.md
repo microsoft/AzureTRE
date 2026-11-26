@@ -33,6 +33,9 @@ When `enable_backup` is set (the default) the base workspace deploys a Recovery 
 
 Both flags are updateable, so the choice can be changed on an existing workspace before it is deleted.
 
+A delete with `false` sets the default network action of the retained storage account to `Deny` with the Azure services bypass. Azure Backup restores through this bypass.
+So the account does not stay open to all networks when `enable_local_debugging` set the default action to `Allow`.
+
 If the protection of an item is already stopped with its data kept, a delete with `true` also deletes that data. For example, an operator stopped the backups in the portal, or a delete with `false` failed.
 After a failed delete with `false`, the resource group and the storage account are not in the Terraform state, so a delete with `true` keeps them. Delete them by hand.
 

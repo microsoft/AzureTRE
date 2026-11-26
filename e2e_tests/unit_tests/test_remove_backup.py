@@ -55,6 +55,8 @@ if command.startswith('account show'):print('sub');sys.exit(0)
 if command.startswith('resource show'):
     if state['account']:sys.exit(0)
     print('(ResourceNotFound) The Resource was not found.',file=sys.stderr);sys.exit(1)
+if command.startswith('storage account update') and state['update_fails']:
+    print('(AuthorizationFailed) The client has no authorization.',file=sys.stderr);sys.exit(1)
 if args[:3]==['rest','--method','get'] and '/fileServices/default/shares' in args[4]:print('vm-shared-storage');sys.exit(0)
 if args[:3]==['rest','--method','delete'] and 'Microsoft.RecoveryServices/vaults' in args[4]:
     state['vault']=False;json.dump(state,open(os.environ['AZ_STATE'],'w'))
@@ -89,10 +91,11 @@ class RemoveBackupTests(unittest.TestCase):
             "TF_STATE": str(self.folder / "state.txt"),
         }
 
-    def run_script(self, delete_backups, vault=True, account=True, item="Protected", deferred=False):
-        (self.folder / "az.json").write_text(
-            json.dumps({"vault": vault, "account": account, "item": item, "deferred": deferred})
-        )
+    def run_script(
+        self, delete_backups, vault=True, account=True, item="Protected", deferred=False, update_fails=False
+    ):
+        state = {"vault": vault, "account": account, "item": item, "deferred": deferred, "update_fails": update_fails}
+        (self.folder / "az.json").write_text(json.dumps(state))
         (self.folder / "calls.jsonl").unlink(missing_ok=True)
         (self.folder / "state.txt").write_text("\n".join(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
         arguments = ["rg-mgmt", "stmgmt", "tfstate", "tre", "workspace-1234", "true", delete_backups, ""]
@@ -120,6 +123,31 @@ class RemoveBackupTests(unittest.TestCase):
         disable = [call for call in calls if call[:3] == ["backup", "protection", "disable"]]
         self.assertTrue(disable)
         self.assertTrue(all(call[call.index("--delete-backup-data") + 1] == "false" for call in disable))
+
+    @staticmethod
+    def network_updates(calls):
+        return [call for call in calls if call[:3] == ["storage", "account", "update"]]
+
+    def test_retained_backups_set_the_retained_account_to_deny(self):
+        # With local debugging on, the network rules of the workspace allow all networks.
+        result, _, calls = self.run_script("false")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        [update] = self.network_updates(calls)
+        self.assertTrue(update[update.index("--ids") + 1].endswith("/storageAccounts/stgws1234"))
+        self.assertEqual(update[update.index("--default-action") + 1], "Deny")
+        self.assertEqual(update[update.index("--bypass") + 1], "AzureServices")
+
+    def test_a_failed_change_to_deny_keeps_the_terraform_state(self):
+        # The account must have Deny before Terraform stops the management of its network rules.
+        result, state, _ = self.run_script("false", update_fails=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Deny", result.stderr)
+        self.assertEqual(state, set(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
+
+    def test_deleted_backups_do_not_change_the_network_rules(self):
+        result, _, calls = self.run_script("true")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.network_updates(calls), [])
 
     def test_deleted_backups_leave_the_storage_to_terraform(self):
         result, state, calls = self.run_script("true")
