@@ -12,6 +12,7 @@ the current code and follows the procedure in `upgrading-resources.md`.
 
 import asyncio
 import logging
+import os
 
 from httpx import AsyncClient
 import pytest
@@ -40,6 +41,9 @@ UPGRADE_REQUIRED = "legacy Porter parameter overrides"
 
 
 def require_test_app():
+    # The verify case reads the VM through the Resource Manager endpoint of AzureCloud.
+    if os.environ.get("AZURE_ENVIRONMENT", "AzureCloud") != "AzureCloud":
+        raise ValueError("Porter upgrade validation currently supports AzureCloud only")
     if not config.TEST_WORKSPACE_APP_ID or not config.TEST_WORKSPACE_APP_SECRET:
         raise ValueError("Porter upgrade validation requires a configured manual test workspace application")
 

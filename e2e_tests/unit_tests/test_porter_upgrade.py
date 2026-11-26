@@ -23,7 +23,7 @@ class PorterUpgradeTests(unittest.IsolatedAsyncioTestCase):
         self.seeds = []
         self.upgraded = set()
         self.vm_exists = True
-        self.enterContext(patch.dict(os.environ, PORTER_UPGRADE_VALIDATION_DEADLINE=""))
+        self.enterContext(patch.dict(os.environ, AZURE_ENVIRONMENT="AzureCloud", PORTER_UPGRADE_VALIDATION_DEADLINE=""))
         for name, value in (("TEST_WORKSPACE_APP_ID", "app"), ("TEST_WORKSPACE_APP_SECRET", "s")):
             self.enterContext(patch.object(upgrade.config, name, value))
         self.create = self.enterContext(
@@ -44,7 +44,7 @@ class PorterUpgradeTests(unittest.IsolatedAsyncioTestCase):
             )
         )
         self.enterContext(patch.object(upgrade, "get_workspace_owner_token", AsyncMock(return_value="owner")))
-        self.enterContext(patch.object(upgrade, "get_admin_token", AsyncMock(return_value="admin")))
+        self.admin_token = self.enterContext(patch.object(upgrade, "get_admin_token", AsyncMock(return_value="admin")))
 
         def vm(name, enabled):
             return {
@@ -118,6 +118,16 @@ class PorterUpgradeTests(unittest.IsolatedAsyncioTestCase):
 
     def seed(self):
         self.seeds = [{"id": WORKSPACE, "templateVersion": "2.10.1", "properties": {"display_name": upgrade.SEED_NAME}}]
+
+    async def test_both_cases_stop_before_any_request_outside_azure_cloud(self):
+        # The verify case reads the VM through the Resource Manager endpoint of AzureCloud.
+        self.seed()
+        self.enterContext(patch.dict(os.environ, AZURE_ENVIRONMENT="AzureUSGovernment"))
+        for case in (upgrade.test_seed_resources_with_legacy_overrides, upgrade.test_upgrade_clears_legacy_overrides):
+            with self.subTest(case=case.__name__), self.assertRaisesRegex(ValueError, "AzureCloud only"):
+                await case(True)
+        self.admin_token.assert_not_awaited()
+        self.assertEqual(self.events, [])
 
     async def test_seed_keeps_two_vms_and_disables_one(self):
         await upgrade.test_seed_resources_with_legacy_overrides(True)
