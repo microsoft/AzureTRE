@@ -14,6 +14,9 @@ SOFT_DELETE_DAYS = 14
 FILE_DATA_PRIVILEGED_CONTRIBUTOR = "69566ab7-960f-475b-8e7c-b3118f30c6bd"
 SHARE = "vm-shared-storage"
 FINISHED_JOB_STATES = {"Completed", "CompletedWithWarnings", "Failed", "Cancelled"}
+REFUSED = 400
+TRANSIENT = (429, 500, 502, 503, 504)
+CHANGE_ATTEMPTS = 5
 LOGGER = logging.getLogger(__name__)
 
 
@@ -119,25 +122,53 @@ async def wait_until_gone(arm, resource_id, api_version, minutes):
             await asyncio.sleep(30)
 
 
+async def azure_allows(arm, method, resource_id, body=None):
+    """Send a change to a backup resource. Return False only if Azure refuses the change with HTTP 400.
+
+    HTTP 429 and server errors get new attempts. Any other error stops the clean-up, so that it does not look
+    like a refusal. The ARM client does not give the status of a failed request, so this uses the HTTP client.
+    """
+    for attempt in range(1, CHANGE_ATTEMPTS + 1):
+        token = await asyncio.to_thread(arm.credential.get_token, f"{ARM}/.default")
+        response = await arm.client.request(
+            method,
+            f"{ARM}{resource_id}",
+            params={"api-version": BACKUP_API},
+            headers={"Authorization": f"Bearer {token.token}"},
+            json=body,
+        )
+        if response.status_code not in TRANSIENT or attempt == CHANGE_ATTEMPTS:
+            break
+        LOGGER.warning(
+            "ARM %s %s got HTTP %d, attempt %d. Trying again.", method, resource_id, response.status_code, attempt
+        )
+        await asyncio.sleep(30)
+    if response.status_code == REFUSED:
+        LOGGER.warning("Azure refused ARM %s %s with HTTP %d", method, resource_id, REFUSED)
+        return False
+    # A delete of a resource that is already gone gets HTTP 404.
+    if response.status_code not in (200, 201, 202, 204) and (method, response.status_code) != ("DELETE", 404):
+        raise RuntimeError(f"ARM {method} {resource_id} failed with HTTP {response.status_code}")
+    return True
+
+
 async def soft_delete_turned_off(arm, vault_id):
     """Try to turn off soft delete. Azure refuses this for some vaults, for example with enhanced security on."""
     config_id = f"{vault_id}/backupconfig/vaultconfig"
-    try:
-        await arm.request("PATCH", config_id, BACKUP_API, body={"properties": {"softDeleteFeatureState": "Disabled"}})
-    except RuntimeError:
-        LOGGER.warning("Azure did not turn off soft delete in vault %s", vault_id)
+    await azure_allows(arm, "PATCH", config_id, {"properties": {"softDeleteFeatureState": "Disabled"}})
+    # The read shows the result, also after a refusal.
     config = await arm.request("GET", config_id, BACKUP_API)
     return config["properties"]["softDeleteFeatureState"] == "Disabled"
 
 
 async def delete_if_azure_allows(arm, resource_id, minutes):
-    """Delete a backup resource. Return False if Azure refuses the delete or keeps the resource."""
-    try:
-        await arm.request("DELETE", resource_id, BACKUP_API, missing_ok=True)
-        await wait_until_gone(arm, resource_id, BACKUP_API, minutes)
-    except (RuntimeError, TimeoutError) as error:
-        LOGGER.warning("Azure kept %s: %s", resource_id, error)
+    """Delete a backup resource. Return False only if Azure refuses the delete with HTTP 400.
+
+    Any other error, and an accepted delete that does not end in time, stops the clean-up.
+    """
+    if not await azure_allows(arm, "DELETE", resource_id):
         return False
+    await wait_until_gone(arm, resource_id, BACKUP_API, minutes)
     return True
 
 
