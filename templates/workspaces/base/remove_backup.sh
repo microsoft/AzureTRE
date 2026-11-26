@@ -52,6 +52,25 @@ fi
 subscription_id=$(az account show --query "id" --output tsv)
 storage_account_id="/subscriptions/${subscription_id}/resourceGroups/${vault_resource_group}/providers/Microsoft.Storage/storageAccounts/stgws${short_workspace_id}"
 
+# The names of the vault and the storage account have only the last four characters of the
+# workspace ID. So the resources of another workspace can have these names. Stop without a
+# change if the tre_workspace_id tag of a resource names another workspace. A resource
+# without this tag passes, because Terraform does not update the tags.
+# The first argument names the resource in the messages. The other arguments are the
+# command that shows the resource.
+assert_workspace_owns() {
+  local resource=$1 owner
+  shift
+  if ! owner=$("$@" --query "tags.tre_workspace_id" --output tsv); then
+    echo "Error: failed to read the tags of ${resource}. Aborting so the uninstall can be retried." >&2
+    exit 1
+  fi
+  if [ -n "${owner}" ] && [ "${owner,,}" != "${WORKSPACE_ID,,}" ]; then
+    echo "Error: ${resource} has the tag tre_workspace_id=${owner}, so it belongs to another workspace. Aborting without a change to it." >&2
+    exit 1
+  fi
+}
+
 # Remove any Azure Backup lock on the workspace storage account. Only locks scoped
 # directly to the account are removed; the scope match is case-insensitive because
 # Azure lower-cases segments of the lock id.
@@ -80,9 +99,11 @@ remove_backup_locks() {
 }
 
 # Return 0 if the workspace storage account exists and 1 if Azure does not find it.
+# Stop if the account belongs to another workspace.
 storage_account_exists() {
   local account_error
   if account_error="$(az resource show --ids "${storage_account_id}" --output none 2>&1)"; then
+    assert_workspace_owns "Storage account stgws${short_workspace_id}" az resource show --ids "${storage_account_id}"
     return 0
   fi
   if echo "${account_error}" | grep -qiE "ResourceNotFound|ResourceGroupNotFound|was not found|could not be found"; then
@@ -119,6 +140,7 @@ delete_leased_shares() {
 # the cleanup and leave the workspace stuck in a 'Deleting' state.
 if vault_show_error="$(az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}" --output none 2>&1)"; then
   echo "Recovery Services Vault ${vault_name} found in resource group ${vault_resource_group}."
+  assert_workspace_owns "Recovery Services Vault ${vault_name}" az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}"
 elif echo "${vault_show_error}" | grep -qiE "ResourceNotFound|ResourceGroupNotFound|was not found|could not be found|does not exist"; then
   echo "Recovery Services Vault ${vault_name} was not found - no backup items to stop."
   # An earlier delete can have deleted the vault and then failed on a leased share snapshot.
