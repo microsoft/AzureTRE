@@ -256,9 +256,17 @@ A second restore from the recovery point must pass.
 The last clean-up step turns off soft delete, deletes the item, the backup container and the vault, and deletes the retained resource group.
 Azure does not let a request turn off soft delete in some vaults, for example in a vault with enhanced security.
 In such a vault, the step deletes the item, unregisters the backup container and then tries the vault delete. The workspace delete uses the same order.
-If Azure refuses the vault delete with HTTP 400, the deleted backup data stays for 14 days. The step then deletes the storage account, and it adds the tag `e2e_delete_after` with a date to the resource group.
+If Azure refuses the vault delete, the deleted backup data stays for 14 days. The step then deletes the storage account, and it adds the tag `e2e_delete_after` with a date to the resource group.
 Delete the resource group by hand after that date. Until then, the destroy of the CI environment stops at this resource group.
-Only HTTP 400 is a refusal of the soft delete change, of the container unregister or of the vault delete. After HTTP 429 or a server error, the step sends the request again, five times at most.
+A refusal is HTTP 400 with the error code that Azure gives for the request while soft delete stays on:
+
+- `BMSUserErrorDisablingSoftDeleteStateNotAllowed` for the soft delete change
+- `BMSUserErrorContainerHasDatasources` for the container unregister
+- `BMSUserErrorVaultDeletionNotAllowed` for the vault delete
+
+The step writes the error code of each refusal to the log.
+HTTP 400 with another error code, or without an error code, is not a refusal. It fails the step before the delete of the storage account and before the tag.
+After HTTP 429 or a server error, the step sends the request again, five times at most.
 Any other error fails the step. An accepted delete of the container or the vault that does not end in 10 minutes also fails the step.
 This step runs after the workspace delete, also when the case fails after the workspace install.
 The case owns this step from the time that the API accepts the workspace create. So the step also runs after a failed workspace install, whose clean-up deletes the workspace and keeps its backup resources.

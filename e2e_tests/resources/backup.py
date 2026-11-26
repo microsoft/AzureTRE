@@ -15,6 +15,11 @@ FILE_DATA_PRIVILEGED_CONTRIBUTOR = "69566ab7-960f-475b-8e7c-b3118f30c6bd"
 SHARE = "vm-shared-storage"
 FINISHED_JOB_STATES = {"Completed", "CompletedWithWarnings", "Failed", "Cancelled"}
 REFUSED = 400
+# The error code of the HTTP 400 that Azure gives for each change while soft delete stays on.
+# The codes are from the Azure activity log of live runs.
+SOFT_DELETE_CHANGE_REFUSED = "BMSUserErrorDisablingSoftDeleteStateNotAllowed"
+CONTAINER_UNREGISTER_REFUSED = "BMSUserErrorContainerHasDatasources"
+VAULT_DELETE_REFUSED = "BMSUserErrorVaultDeletionNotAllowed"
 TRANSIENT = (429, 500, 502, 503, 504)
 CHANGE_ATTEMPTS = 5
 LOGGER = logging.getLogger(__name__)
@@ -122,11 +127,22 @@ async def wait_until_gone(arm, resource_id, api_version, minutes):
             await asyncio.sleep(30)
 
 
-async def azure_allows(arm, method, resource_id, body=None):
-    """Send a change to a backup resource. Return False only if Azure refuses the change with HTTP 400.
+def error_code(response):
+    """Return the Azure error code of a response, or None. The message text of the error stays out of the log."""
+    try:
+        code = response.json()["error"]["code"]
+    except (ValueError, KeyError, TypeError):
+        return None
+    return code if isinstance(code, str) and code else None
 
-    HTTP 429 and server errors get new attempts. Any other error stops the clean-up, so that it does not look
-    like a refusal. The ARM client does not give the status of a failed request, so this uses the HTTP client.
+
+async def azure_allows(arm, method, resource_id, refusal, body=None):
+    """Send a change to a backup resource. Return False only if Azure refuses the change.
+
+    A refusal is HTTP 400 with the error code in refusal. HTTP 400 with another error code, or without an error
+    code, is not a refusal. HTTP 429 and server errors get new attempts. Any other error stops the clean-up, so
+    that it does not look like a refusal. The ARM client does not give the status or the error code of a failed
+    request, so this uses the HTTP client.
     """
     for attempt in range(1, CHANGE_ATTEMPTS + 1):
         token = await asyncio.to_thread(arm.credential.get_token, f"{ARM}/.default")
@@ -144,7 +160,13 @@ async def azure_allows(arm, method, resource_id, body=None):
         )
         await asyncio.sleep(30)
     if response.status_code == REFUSED:
-        LOGGER.warning("Azure refused ARM %s %s with HTTP %d", method, resource_id, REFUSED)
+        code = error_code(response)
+        if code != refusal:
+            found = f"the error code {code}" if code else "no error code"
+            raise RuntimeError(
+                f"ARM {method} {resource_id} failed with HTTP {REFUSED} and {found}. Only {refusal} is a refusal."
+            )
+        LOGGER.warning("Azure refused ARM %s %s with HTTP %d and the error code %s", method, resource_id, REFUSED, code)
         return False
     # A delete of a resource that is already gone gets HTTP 404.
     if response.status_code not in (200, 201, 202, 204) and (method, response.status_code) != ("DELETE", 404):
@@ -155,18 +177,19 @@ async def azure_allows(arm, method, resource_id, body=None):
 async def soft_delete_turned_off(arm, vault_id):
     """Try to turn off soft delete. Azure refuses this for some vaults, for example with enhanced security on."""
     config_id = f"{vault_id}/backupconfig/vaultconfig"
-    await azure_allows(arm, "PATCH", config_id, {"properties": {"softDeleteFeatureState": "Disabled"}})
+    body = {"properties": {"softDeleteFeatureState": "Disabled"}}
+    await azure_allows(arm, "PATCH", config_id, SOFT_DELETE_CHANGE_REFUSED, body)
     # The read shows the result, also after a refusal.
     config = await arm.request("GET", config_id, BACKUP_API)
     return config["properties"]["softDeleteFeatureState"] == "Disabled"
 
 
-async def delete_if_azure_allows(arm, resource_id, minutes):
-    """Delete a backup resource. Return False only if Azure refuses the delete with HTTP 400.
+async def delete_if_azure_allows(arm, resource_id, minutes, refusal):
+    """Delete a backup resource. Return False only if Azure refuses the delete with the error code in refusal.
 
     Any other error, and an accepted delete that does not end in time, stops the clean-up.
     """
-    if not await azure_allows(arm, "DELETE", resource_id):
+    if not await azure_allows(arm, "DELETE", resource_id, refusal):
         return False
     await wait_until_gone(arm, resource_id, BACKUP_API, minutes)
     return True
@@ -194,13 +217,13 @@ async def remove_retained_backup(arm, workspace_id, group_id, vault_id, account_
             await arm.request("DELETE", item["id"], BACKUP_API, missing_ok=True)
             if soft_delete:
                 # The workspace delete unregisters the container before the vault delete, also with soft delete on.
-                await delete_if_azure_allows(arm, container, 10)
+                await delete_if_azure_allows(arm, container, 10, CONTAINER_UNREGISTER_REFUSED)
                 continue
             await wait_until_gone(arm, item["id"], BACKUP_API, 15)
             await arm.request("DELETE", container, BACKUP_API, missing_ok=True)
             await wait_until_gone(arm, container, BACKUP_API, 15)
         if soft_delete:
-            vault_kept = not await delete_if_azure_allows(arm, vault_id, 10)
+            vault_kept = not await delete_if_azure_allows(arm, vault_id, 10, VAULT_DELETE_REFUSED)
         else:
             await arm.request("DELETE", vault_id, BACKUP_API, missing_ok=True)
             await wait_until_gone(arm, vault_id, BACKUP_API, 15)

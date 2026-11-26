@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from httpx import Response
 from jsonschema import validate
 import yaml
 
@@ -25,6 +26,15 @@ PROBE_ID = "0123456789abcdef0123456789abcdef"
 WORKSPACE = "00000000-0000-0000-0000-00000000abcd"
 # The names of the group, the vault and the account have only the last four characters of the workspace ID.
 OTHER_WORKSPACE = "11111111-1111-1111-1111-11111111abcd"
+CONFIG = f"{VAULT}/backupconfig/vaultconfig"
+CONTAINER = ITEM.split("/protectedItems/")[0]
+# The error code of the HTTP 400 that Azure gives for each change while soft delete stays on.
+REFUSALS = {
+    CONFIG: "BMSUserErrorDisablingSoftDeleteStateNotAllowed",
+    CONTAINER: "BMSUserErrorContainerHasDatasources",
+    VAULT: "BMSUserErrorVaultDeletionNotAllowed",
+}
+ERROR_TEXT = "The message text of an Azure error"
 
 
 def result(evidence, state="Succeeded", code=0, output=None):
@@ -194,25 +204,32 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(body["properties"]["restoreFilePaths"], [{"path": "e2e.txt", "fileSpecType": "File"}])
         wait.assert_awaited_once_with(unittest.mock.ANY, VAULT, "job-2")
 
-    def retained_backup_requests(self, group, soft_delete, refused=(), owners=None, statuses=None):
+    def retained_backup_requests(self, group, soft_delete, refused=(), owners=None, statuses=None, errors=None):
         """Give the calls and the ARM client of a removal.
 
         owners gives the tre_workspace_id tag of a resource, or None for no tag.
-        Azure refuses a change to a resource in refused, and the soft delete change with soft delete on, with HTTP 400.
+        Azure refuses a change to a resource in refused, and the soft delete change with soft delete on. A refusal
+        is HTTP 400 with the error code of that change in REFUSALS.
+        errors gives the body of another HTTP 400 for a change to a resource, or None for HTTP 400 without a body.
         statuses gives the HTTP statuses of the first changes to a resource.
         """
         calls = []
         owners = owners or {}
+        errors = errors or {}
         statuses = {resource: list(codes) for resource, codes in (statuses or {}).items()}
 
         async def send(method, url, **kwargs):
-            # The removal sends these changes through the HTTP client, because it reads their status.
+            # The removal sends these changes through the HTTP client, because it reads their status and error code.
             resource_id = url.removeprefix(backup.ARM)
             calls.append((method, resource_id))
             if statuses.get(resource_id):
                 return FakeResponse(statuses[resource_id].pop(0))
-            refusal = resource_id in refused or (resource_id.endswith("/vaultconfig") and soft_delete == "Enabled")
-            return FakeResponse(400 if refusal else 202)
+            if resource_id in errors:
+                body = errors[resource_id]
+                return Response(400) if body is None else Response(400, json=body)
+            if resource_id in refused or (resource_id == CONFIG and soft_delete == "Enabled"):
+                return Response(400, json={"error": {"code": REFUSALS[resource_id], "message": ERROR_TEXT}})
+            return FakeResponse(202)
 
         async def request(method, resource_id, api_version, **kwargs):
             calls.append((method, resource_id))
@@ -239,17 +256,16 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
         await backup.remove_retained_backup(arm, WORKSPACE, group, VAULT, ACCOUNT)
         deletes = [resource for method, resource in calls if method == "DELETE"]
         # The removal reads the group, the vault and the account before its first change.
-        soft_delete_off = ("PATCH", f"{VAULT}/backupconfig/vaultconfig")
-        self.assertEqual(calls[:4], [("GET", group), ("GET", VAULT), ("GET", ACCOUNT), soft_delete_off])
+        self.assertEqual(calls[:4], [("GET", group), ("GET", VAULT), ("GET", ACCOUNT), ("PATCH", CONFIG)])
         change = arm.client.request.await_args
-        self.assertEqual(change.args, ("PATCH", f"{backup.ARM}{VAULT}/backupconfig/vaultconfig"))
+        self.assertEqual(change.args, ("PATCH", f"{backup.ARM}{CONFIG}"))
         self.assertEqual(change.kwargs["params"], {"api-version": backup.BACKUP_API})
         self.assertEqual(change.kwargs["json"], {"properties": {"softDeleteFeatureState": "Disabled"}})
         self.assertEqual(
             deletes,
             [
                 ITEM,
-                ITEM.split("/protectedItems/")[0],
+                CONTAINER,
                 VAULT,
                 f"{group}/providers/Microsoft.Authorization/locks/backup",
                 group,
@@ -267,7 +283,7 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
             deletes,
             [
                 ITEM,
-                ITEM.split("/protectedItems/")[0],
+                CONTAINER,
                 VAULT,
                 f"{group}/providers/Microsoft.Authorization/locks/backup",
                 group,
@@ -276,39 +292,86 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_a_vault_that_keeps_soft_delete_stays_with_a_delete_date(self):
         # Azure keeps deleted backup data for 14 days and can refuse the delete of a vault with that data.
+        # Azure refuses each of the three changes with HTTP 400 and the error code of that change.
         group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
-        container = ITEM.split("/protectedItems/")[0]
-        calls, arm = self.retained_backup_requests(group, "Enabled", refused=(container, VAULT))
+        calls, arm = self.retained_backup_requests(group, "Enabled", refused=(CONTAINER, VAULT))
 
-        await backup.remove_retained_backup(arm, WORKSPACE, group, VAULT, ACCOUNT)
+        with self.assertLogs(backup.LOGGER, "WARNING") as logs:
+            await backup.remove_retained_backup(arm, WORKSPACE, group, VAULT, ACCOUNT)
         deletes = [resource for method, resource in calls if method == "DELETE"]
         self.assertEqual(
-            deletes, [ITEM, container, VAULT, f"{group}/providers/Microsoft.Authorization/locks/backup", ACCOUNT]
+            deletes, [ITEM, CONTAINER, VAULT, f"{group}/providers/Microsoft.Authorization/locks/backup", ACCOUNT]
         )
         self.assertEqual(calls[-1], ("PATCH", f"{group}/providers/Microsoft.Resources/tags/default"))
         tags = arm.request.await_args.kwargs["body"]["properties"]["tags"]
         self.assertRegex(tags["e2e_delete_after"], r"^\d{4}-\d{2}-\d{2}$")
+        # The log shows the error code of each refusal, and not the message text of Azure.
+        refusals = [message for message in logs.output if "Azure refused" in message]
+        self.assertEqual(len(refusals), 3)
+        for message, resource in zip(refusals, (CONFIG, CONTAINER, VAULT)):
+            self.assertRegex(message, f"{re.escape(resource)} with HTTP 400 and the error code {REFUSALS[resource]}$")
+        self.assertNotIn(ERROR_TEXT, "\n".join(logs.output))
 
     def assert_the_kept_vault_steps_did_not_run(self, calls, group):
         self.assertNotIn(("DELETE", ACCOUNT), calls)
         self.assertNotIn(("PATCH", f"{group}/providers/Microsoft.Resources/tags/default"), calls)
 
+    def assert_the_removal_stopped_at(self, calls, group, resource):
+        """The change to the resource is the last call. So the lock delete and the kept vault steps did not run."""
+        self.assertEqual(calls[-1], ("PATCH" if resource == CONFIG else "DELETE", resource))
+        self.assertNotIn(("DELETE", f"{group}/providers/Microsoft.Authorization/locks/backup"), calls)
+        self.assert_the_kept_vault_steps_did_not_run(calls, group)
+
     async def test_an_error_that_is_not_a_refusal_fails_the_removal(self):
-        # Only HTTP 400 shows that Azure refuses a change. Another error must not look like a kept vault.
+        # Only HTTP 400 with the error code of a refusal shows that Azure refuses a change.
+        # Another status must not look like a kept vault.
         group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
-        container = ITEM.split("/protectedItems/")[0]
-        for resource in (f"{VAULT}/backupconfig/vaultconfig", container, VAULT):
+        for resource in (CONFIG, CONTAINER, VAULT):
             for status in (401, 403, 409, 429, 500):
                 with self.subTest(resource=resource, status=status):
                     calls, arm = self.retained_backup_requests(
                         group,
                         "Enabled",
-                        refused=(container, VAULT),
+                        refused=(CONTAINER, VAULT),
                         statuses={resource: [status] * backup.CHANGE_ATTEMPTS},
                     )
                     with self.assertRaisesRegex(RuntimeError, f"HTTP {status}"):
                         await backup.remove_retained_backup(arm, WORKSPACE, group, VAULT, ACCOUNT)
                     self.assert_the_kept_vault_steps_did_not_run(calls, group)
+
+    async def test_an_http_400_with_another_error_code_fails_the_removal(self):
+        # HTTP 400 is also the status of a request that Azure cannot read. That must not look like a kept vault.
+        # The error code of one change is not a refusal of a different change.
+        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+        for resource in (CONFIG, CONTAINER, VAULT):
+            other_change = REFUSALS[CONTAINER if resource != CONTAINER else VAULT]
+            for code in ("InvalidRequestContent", other_change):
+                with self.subTest(resource=resource, code=code):
+                    calls, arm = self.retained_backup_requests(
+                        group,
+                        "Enabled",
+                        refused=(CONTAINER, VAULT),
+                        errors={resource: {"error": {"code": code, "message": ERROR_TEXT}}},
+                    )
+                    with self.assertRaisesRegex(RuntimeError, f"HTTP 400 and the error code {code}\\.") as caught:
+                        await backup.remove_retained_backup(arm, WORKSPACE, group, VAULT, ACCOUNT)
+                    self.assertIn(f"Only {REFUSALS[resource]} is a refusal", str(caught.exception))
+                    self.assertNotIn(ERROR_TEXT, str(caught.exception))
+                    self.assert_the_removal_stopped_at(calls, group, resource)
+
+    async def test_an_http_400_without_an_error_code_fails_the_removal(self):
+        # None is a response without a body. The other bodies are JSON without an error code.
+        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+        for resource in (CONFIG, CONTAINER, VAULT):
+            for body in (None, {}, {"error": {"message": ERROR_TEXT}}, {"error": ERROR_TEXT}, [ERROR_TEXT]):
+                with self.subTest(resource=resource, body=body):
+                    calls, arm = self.retained_backup_requests(
+                        group, "Enabled", refused=(CONTAINER, VAULT), errors={resource: body}
+                    )
+                    with self.assertRaisesRegex(RuntimeError, "HTTP 400 and no error code") as caught:
+                        await backup.remove_retained_backup(arm, WORKSPACE, group, VAULT, ACCOUNT)
+                    self.assertNotIn(ERROR_TEXT, str(caught.exception))
+                    self.assert_the_removal_stopped_at(calls, group, resource)
 
     async def test_a_change_gets_new_attempts_after_throttling_or_a_server_error(self):
         group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
