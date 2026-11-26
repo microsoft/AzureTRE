@@ -87,30 +87,30 @@ async def approve_legacy_import(workspace_path, token, verify):
 
 @pytest.mark.asyncio(loop_scope="session")
 @pytest.mark.airlock_upgrade_seed
-@pytest.mark.timeout(120 * 60)
+@pytest.mark.timeout(285 * 60)
 async def test_seed_legacy_airlock_workspace(verify):
     require_test_app()
     admin_token = await get_admin_token(verify)
     if await find_seed(admin_token, verify) is not None:
         raise ValueError("An Airlock upgrade seed workspace already exists")
-    workspace_path, workspace_id = await create_or_get_test_workspace(
-        auth_type="Manual",
-        verify=verify,
-        client_id=config.TEST_WORKSPACE_APP_ID,
-        client_secret=config.TEST_WORKSPACE_APP_SECRET,
-        properties={"enable_airlock": True, "display_name": SEED_NAME},
-    )
-    try:
+    # The seed starts only if the time for the clean-up of a failed seed remains before the deadline of the job.
+    async with sql_lifecycle(verify, deadline_variable="AIRLOCK_UPGRADE_VALIDATION_DEADLINE") as resources:
+        workspace_path, workspace_id = await create_or_get_test_workspace(
+            auth_type="Manual",
+            verify=verify,
+            client_id=config.TEST_WORKSPACE_APP_ID,
+            client_secret=config.TEST_WORKSPACE_APP_SECRET,
+            properties={"enable_airlock": True, "display_name": SEED_NAME},
+        )
+        # The verify case needs a complete seed. The case owns the workspace until all the seed steps pass.
+        resources.own(workspace_path, clean_up_test_workspace, "", workspace_path, verify)
         token = await get_workspace_owner_token(workspace_id, verify)
         require_review_roles(token)
         request_id = await approve_legacy_import(workspace_path, token, verify)
         LOGGER.info("Seed workspace %s has the approved legacy import %s", workspace_id, request_id)
         assert await core_legacy_accounts() == list(CORE_LEGACY_ACCOUNTS)
         assert await legacy_accounts(workspace_id) == dict.fromkeys(LEGACY_ACCOUNTS, "Deny")
-    except BaseException:
-        # The verify case needs a complete seed. Do not keep a partial one.
-        await clean_up_test_workspace("", workspace_path, verify)
-        raise
+        resources.keep(workspace_path)
 
 
 @pytest.mark.asyncio(loop_scope="session")

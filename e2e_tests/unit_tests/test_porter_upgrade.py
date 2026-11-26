@@ -2,6 +2,7 @@
 
 from contextlib import asynccontextmanager
 import os
+import time
 import unittest
 from unittest.mock import AsyncMock, patch
 
@@ -148,6 +149,14 @@ class PorterUpgradeTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "already exists"):
             await upgrade.test_seed_resources_with_legacy_overrides(True)
         self.create.assert_not_awaited()
+
+    async def test_seed_does_not_start_without_the_time_for_its_clean_up(self):
+        # The job gives all its lifecycle cases one deadline. A late seed must not start a workspace install.
+        self.enterContext(patch.dict(os.environ, PORTER_UPGRADE_VALIDATION_DEADLINE=str(time.time() + 60 * 60)))
+        with self.assertRaisesRegex(TimeoutError, "Insufficient"):
+            await upgrade.test_seed_resources_with_legacy_overrides(True)
+        self.create.assert_not_awaited()
+        self.assertEqual(self.events, [])
 
     async def test_a_failed_seed_is_deleted(self):
         self.enterContext(patch.object(upgrade, "post_resource", AsyncMock(side_effect=AssertionError("failed"))))

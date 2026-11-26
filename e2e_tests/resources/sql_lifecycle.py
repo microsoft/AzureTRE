@@ -64,6 +64,10 @@ class SQLResources:
         """Own a cleanup that runs after all the other owned cleanups."""
         self.finalisers.insert(0, (name, partial(callback, *args, **kwargs)))
 
+    def keep(self, name):
+        """Stop the ownership of a resource, so that it stays after the case."""
+        self.finalisers = [entry for entry in self.finalisers if entry[0] != name]
+
     async def enter(self, name, context):
         """Enter a prerequisite context now and exit it in order with the owned resources."""
         await context.__aenter__()

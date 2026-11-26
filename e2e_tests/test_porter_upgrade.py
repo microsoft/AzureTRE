@@ -147,20 +147,23 @@ async def upgrade_in_place(resource_path, token, verify):
 
 @pytest.mark.asyncio(loop_scope="session")
 @pytest.mark.porter_upgrade_seed
-@pytest.mark.timeout(150 * 60)
+@pytest.mark.timeout(285 * 60)
 async def test_seed_resources_with_legacy_overrides(verify):
     require_test_app()
     admin_token = await get_admin_token(verify)
     if await find_seed(admin_token, verify) is not None:
         raise ValueError("A Porter upgrade seed workspace already exists")
-    workspace_path, workspace_id = await create_or_get_test_workspace(
-        auth_type="Manual",
-        verify=verify,
-        client_id=config.TEST_WORKSPACE_APP_ID,
-        client_secret=config.TEST_WORKSPACE_APP_SECRET,
-        properties={"display_name": SEED_NAME},
-    )
-    try:
+    # The seed starts only if the time for the clean-up of a failed seed remains before the deadline of the job.
+    async with sql_lifecycle(verify, deadline_variable="PORTER_UPGRADE_VALIDATION_DEADLINE") as resources:
+        workspace_path, workspace_id = await create_or_get_test_workspace(
+            auth_type="Manual",
+            verify=verify,
+            client_id=config.TEST_WORKSPACE_APP_ID,
+            client_secret=config.TEST_WORKSPACE_APP_SECRET,
+            properties={"display_name": SEED_NAME},
+        )
+        # The verify case needs a complete seed. The case owns the workspace until all the seed steps pass.
+        resources.own(workspace_path, clean_up_test_workspace, "", workspace_path, verify)
         token = await get_workspace_owner_token(workspace_id, verify)
         service_path, _ = await create_or_get_test_workpace_service(workspace_path, token, "", verify)
         endpoint = f"/api{service_path}/{strings.API_USER_RESOURCES}"
@@ -169,10 +172,7 @@ async def test_seed_resources_with_legacy_overrides(verify):
         # The earlier Resource Processor runs the disable as an upgrade with overrides, so the overrides stay.
         await post_resource({"isEnabled": False}, f"/api{uninstall_path}", token, verify, method="PATCH")
         LOGGER.info("Seed workspace %s has a Guacamole service and two Windows VMs", workspace_id)
-    except BaseException:
-        # The verify case needs a complete seed. Do not keep a partial one.
-        await clean_up_test_workspace("", workspace_path, verify)
-        raise
+        resources.keep(workspace_path)
 
 
 @pytest.mark.asyncio(loop_scope="session")

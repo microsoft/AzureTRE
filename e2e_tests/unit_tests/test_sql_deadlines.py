@@ -164,6 +164,17 @@ class SQLDeadlineTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(owned.finalisers, [])
         self.assertEqual(seen, [("/workspaces/ws", "ws")])
 
+    async def test_a_kept_resource_stays_after_the_case(self):
+        # A seed case owns its workspace until all the seed steps pass, and then keeps it.
+        seed, other = AsyncMock(), AsyncMock()
+        with self.budgets():
+            async with lifecycle.sql_lifecycle(True) as owned:
+                owned.own("/workspaces/seed", seed)
+                owned.own("/other", other)
+                owned.keep("/workspaces/seed")
+        seed.assert_not_awaited()
+        other.assert_awaited_once()
+
     async def test_an_early_delete_that_the_work_deadline_stops_ends_before_the_last_cleanup(self):
         # The kept backup clean-up runs only after the API deleted the workspace.
         events = []

@@ -1,6 +1,7 @@
 """Check the order and the checks of the Airlock upgrade cases without Azure."""
 
 import os
+import time
 import unittest
 from unittest.mock import AsyncMock, patch
 
@@ -124,6 +125,14 @@ class UpgradeFlowTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "already exists"):
             await upgrade.test_seed_legacy_airlock_workspace(True)
         self.create.assert_not_awaited()
+
+    async def test_seed_does_not_start_without_the_time_for_its_clean_up(self):
+        # The job gives all its lifecycle cases one deadline. A late seed must not start a workspace install.
+        self.enterContext(patch.dict(os.environ, AIRLOCK_UPGRADE_VALIDATION_DEADLINE=str(time.time() + 60 * 60)))
+        with self.assertRaisesRegex(TimeoutError, "Insufficient"):
+            await upgrade.test_seed_legacy_airlock_workspace(True)
+        self.create.assert_not_awaited()
+        self.assertEqual(self.events, [])
 
     async def test_a_failed_seed_is_deleted(self):
         async def core_accounts():
