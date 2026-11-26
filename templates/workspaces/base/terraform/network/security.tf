@@ -236,7 +236,7 @@ resource "azurerm_network_security_rule" "allow_inbound_from_webapp_to_services"
 
 
 moved {
-  from = azurerm_network_security_rule.deny-outbound-overrid
+  from = azurerm_network_security_rule.deny-outbound-override
   to   = azurerm_network_security_rule.deny_outbound_override
 }
 moved {
