@@ -141,6 +141,10 @@ delete_leased_shares() {
 if vault_show_error="$(az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}" --output none 2>&1)"; then
   echo "Recovery Services Vault ${vault_name} found in resource group ${vault_resource_group}."
   assert_workspace_owns "Recovery Services Vault ${vault_name}" az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}"
+  # The steps below delete the locks of the storage account. So read the owner of the account here,
+  # before the first change. The function stops the script for an account of another workspace.
+  # A missing account passes this check.
+  storage_account_exists || true
 elif echo "${vault_show_error}" | grep -qiE "ResourceNotFound|ResourceGroupNotFound|was not found|could not be found|does not exist"; then
   echo "Recovery Services Vault ${vault_name} was not found - no backup items to stop."
   # An earlier delete can have deleted the vault and then failed on a leased share snapshot.

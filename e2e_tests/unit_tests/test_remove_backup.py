@@ -37,6 +37,11 @@ OTHER = [
     "module.network.azurerm_virtual_network.ws",
     "terraform_data.backup_registration_warm_up[0]",
 ]
+# Azure Backup puts a delete lock on the storage account. Azure writes parts of a lock ID in lower case.
+LOCK = (
+    "/subscriptions/sub/resourcegroups/rg-tre-ws-1234/providers/Microsoft.Storage/storageAccounts/stgws1234"
+    "/providers/Microsoft.Authorization/locks/AzureBackupProtectionLock"
+)
 
 FAKE_AZ = """import json,os,sys
 args=sys.argv[1:]
@@ -60,6 +65,7 @@ if command.startswith('resource show'):
     if not state['account']:print('(ResourceNotFound) The Resource was not found.',file=sys.stderr);sys.exit(1)
     if '--query' in args:print(state['account_owner'])
     sys.exit(0)
+if command.startswith('lock list'):print(os.environ['LOCK']);sys.exit(0)
 if command.startswith('storage account update') and state['update_fails']:
     print('(AuthorizationFailed) The client has no authorization.',file=sys.stderr);sys.exit(1)
 if args[:3]==['rest','--method','get'] and '/fileServices/default/shares' in args[4]:print('vm-shared-storage');sys.exit(0)
@@ -94,6 +100,7 @@ class RemoveBackupTests(unittest.TestCase):
             "CALLS": str(self.folder / "calls.jsonl"),
             "AZ_STATE": str(self.folder / "az.json"),
             "TF_STATE": str(self.folder / "state.txt"),
+            "LOCK": LOCK,
         }
 
     def run_script(
@@ -270,10 +277,26 @@ class RemoveBackupTests(unittest.TestCase):
         self.assertEqual(self.changes(calls), [])
         self.assertNotIn(["lock", "list"], [call[:2] for call in calls])
 
-    def test_the_shares_of_another_workspace_stay_after_the_vault_delete(self):
-        result, _, calls = self.run_script("true", account_owner=OTHER_WORKSPACE)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(self.deletes(calls, "/fileServices/default/shares/"), [])
+    def test_a_storage_account_of_another_workspace_is_not_changed_when_the_vault_exists(self):
+        # The vault passes its check. The script must read the owner of the account before the first change,
+        # because the steps after the vault check delete the locks of the account.
+        for delete_backups in ("false", "true"):
+            for vault_owner in (WORKSPACE, ""):
+                with self.subTest(delete_backups=delete_backups, vault_owner=vault_owner):
+                    result, state, calls = self.run_script(
+                        delete_backups, vault_owner=vault_owner, account_owner=OTHER_WORKSPACE
+                    )
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(f"tre_workspace_id={OTHER_WORKSPACE}", result.stderr)
+                    self.assertEqual(self.changes(calls), [])
+                    self.assertEqual(state, set(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
+
+    def test_the_backup_lock_of_the_workspace_storage_account_is_deleted(self):
+        for delete_backups in ("false", "true"):
+            with self.subTest(delete_backups=delete_backups):
+                result, _, calls = self.run_script(delete_backups)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual([call[3] for call in calls if call[:2] == ["lock", "delete"]], [LOCK])
 
     def test_resources_without_the_workspace_tag_pass(self):
         # Terraform does not update the tags, so a resource from an earlier version can have no tag.

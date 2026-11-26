@@ -37,7 +37,7 @@ A delete with `false` sets the default network action of the retained storage ac
 So the account does not stay open to all networks when `enable_local_debugging` set the default action to `Allow`.
 
 The names of the vault and the storage account have only the last four characters of the workspace ID. So the delete first reads the `tre_workspace_id` tag of the vault and of the storage account.
-If a tag names another workspace, the delete stops with an error and does not change that resource. A resource without this tag passes.
+If a tag names another workspace, the delete stops with an error before its first change to the vault or the storage account. A resource without this tag passes.
 
 If the protection of an item is already stopped with its data kept, a delete with `true` also deletes that data. For example, an operator stopped the backups in the portal, or a delete with `false` failed.
 After a failed delete with `false`, the resource group and the storage account are not in the Terraform state, so a delete with `true` keeps them. Delete them by hand.
