@@ -3,6 +3,7 @@ import { ComponentAction, VMPowerStates, Resource } from "../../models/resource"
 import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from "@fluentui/react";
 import { SecuredByRole } from "./SecuredByRole";
 import { ResourceType } from "../../models/resourceType";
+import { WorkspaceService } from "../../models/workspaceService";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { getActionDisplayName, getActionIcon, TemplateAction } from "../../models/resourceTemplate";
 import { useResourceTemplate } from "../../hooks/useResourceTemplate";
@@ -250,6 +251,8 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
               ? (parentResource as WorkspaceService)
               : undefined
           }
+        />
+      )}
       {actionError && (
         // Keep clicks on the error bar from reaching a clickable parent card.
         <span onClick={(e) => e.stopPropagation()}>
