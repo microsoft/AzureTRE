@@ -224,7 +224,8 @@ delete_if_type_mismatch() {
     echo "ERROR - Could not list Nexus repositories while configuring '$repo_name'. Retrying."
     return 1
   fi
-  if ! existing=$(printf '%s' "$repositories" | jq -er --arg name "$repo_name" '
+  if [[ "$repositories" =~ ^[[:space:]]*$ ]] \
+    || ! existing=$(printf '%s' "$repositories" | jq -er --arg name "$repo_name" '
     if type != "array" then error("Expected a repository list")
     else
       [.[] | select(.name == $name)] |
