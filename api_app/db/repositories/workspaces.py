@@ -13,7 +13,13 @@ from resources import constants
 from core import config, credentials
 from azure.core.exceptions import HttpResponseError
 from azure.cosmos.exceptions import CosmosHttpResponseError
-from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
+from db.errors import (
+    EntityDoesNotExist,
+    InvalidInput,
+    ResourceIsNotDeployed,
+    StorageAccountNameGenerationTimeout,
+    StorageAccountNameCheckFailed,
+)
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository
 from models.domain.operation import Status
@@ -42,18 +48,16 @@ class WorkspaceRepository(ResourceRepository):
 
     @staticmethod
     def workspaces_query_string():
-        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType'
-        parameters = [
-            {'name': '@resourceType', 'value': ResourceType.Workspace}
-        ]
+        query = "SELECT * FROM c WHERE c.resourceType = @resourceType"
+        parameters = [{"name": "@resourceType", "value": ResourceType.Workspace}]
         return query, parameters
 
     @staticmethod
     def active_workspaces_query_string():
-        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.deploymentStatus != @deletedStatus'
+        query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND c.deploymentStatus != @deletedStatus"
         parameters = [
-            {'name': '@resourceType', 'value': ResourceType.Workspace},
-            {'name': '@deletedStatus', 'value': Status.Deleted}
+            {"name": "@resourceType", "value": ResourceType.Workspace},
+            {"name": "@deletedStatus", "value": Status.Deleted},
         ]
         return query, parameters
 
@@ -70,16 +74,15 @@ class WorkspaceRepository(ResourceRepository):
     async def set_default_airlock_version_for_legacy_workspaces(self) -> List[str]:
         # The bundle now defaults to v2, so pre-v2 workspaces must be stamped v1 explicitly
         # or a later redeploy would migrate them - and destroy their legacy storage.
-        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND NOT IS_DEFINED(c.properties.airlock_version)'
-        parameters = [{'name': '@resourceType', 'value': ResourceType.Workspace}]
+        query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND NOT IS_DEFINED(c.properties.airlock_version)"
+        parameters = [{"name": "@resourceType", "value": ResourceType.Workspace}]
         migrated = []
         for workspace in await self.query(query=query, parameters=parameters):
             try:
                 # Do not replace a snapshot read by the query: a concurrent PATCH or deployment
                 # output update must survive this one-off migration intact.
-                await self.add_item_property_if_undefined(
-                    workspace['id'], '/properties/airlock_version', 1)
-                migrated.append(workspace['id'])
+                await self.add_item_property_if_undefined(workspace["id"], "/properties/airlock_version", 1)
+                migrated.append(workspace["id"])
             except CosmosHttpResponseError as error:
                 # The predicate can become false after the query if another writer stamps the
                 # version first. That is the desired, idempotent outcome.
@@ -96,16 +99,16 @@ class WorkspaceRepository(ResourceRepository):
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
 
-        if (not await operations_repo.resource_has_deployed_operation(resource_id=workspace_id)):
+        if not await operations_repo.resource_has_deployed_operation(resource_id=workspace_id):
             raise ResourceIsNotDeployed
 
         return workspace
 
     async def get_workspace_by_id(self, workspace_id: str) -> Workspace:
         query, parameters = self.workspaces_query_string()
-        query += ' AND c.id = @workspaceId AND c.deploymentStatus != @deletedStatus'
-        parameters.append({'name': '@workspaceId', 'value': str(workspace_id)})
-        parameters.append({'name': '@deletedStatus', 'value': Status.Deleted})
+        query += " AND c.id = @workspaceId AND c.deploymentStatus != @deletedStatus"
+        parameters.append({"name": "@workspaceId", "value": str(workspace_id)})
+        parameters.append({"name": "@deletedStatus", "value": Status.Deleted})
         workspaces = await self.query(query=query, parameters=parameters)
         if not workspaces:
             raise EntityDoesNotExist
@@ -129,38 +132,52 @@ class WorkspaceRepository(ResourceRepository):
         finally:
             await storage_client.close()
 
-    async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
+    async def create_workspace_item(
+        self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]
+    ) -> Tuple[Workspace, ResourceTemplate]:
 
         full_workspace_id = str(uuid.uuid4())
 
         # Ensure workspace with last four digits of ID does not already exist - remove when https://github.com/microsoft/AzureTRE/issues/3666 is resolved
         async with credentials.get_credential_async_context() as credential:
+
             async def name_check():
                 nonlocal full_workspace_id
                 while not await self.is_workspace_storage_account_available(credential, full_workspace_id):
                     full_workspace_id = str(uuid.uuid4())
+
             try:
                 await asyncio.wait_for(name_check(), timeout=45.0)
             except asyncio.TimeoutError:
-                raise StorageAccountNameGenerationTimeout("Unable to generate a unique storage account name within the timeout limit.")
+                raise StorageAccountNameGenerationTimeout(
+                    "Unable to generate a unique storage account name within the timeout limit."
+                )
             except HttpResponseError as e:
                 raise StorageAccountNameCheckFailed("Storage name availability check failed.") from e
 
-        template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
+        template = await self.validate_input_against_template(
+            workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles
+        )
 
         # allow for workspace template taking a single address_space or multiple address_spaces
         intial_address_space = await self.get_address_space_based_on_size(workspace_input.properties)
         address_space_param = {"address_space": intial_address_space}
         address_spaces_param = {"address_spaces": [intial_address_space]}
 
-        auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
-        workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
+        auto_app_registration_param = {
+            "register_aad_application": self.automatically_create_application_registration(workspace_input.properties)
+        }
+        workspace_owner_param = {
+            "workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)
+        }
 
         # Derive airlock_version from the template: a template that doesn't declare it is legacy (v1) and
         # must not be stamped v2, which would route airlock to consolidated storage it never provisioned.
         if "airlock_version" in template.properties:
             template_default = template.properties["airlock_version"].default
-            default_airlock_version = template_default if template_default is not None else constants.DEFAULT_AIRLOCK_VERSION
+            default_airlock_version = (
+                template_default if template_default is not None else constants.DEFAULT_AIRLOCK_VERSION
+            )
             airlock_version = workspace_input.properties.get("airlock_version", default_airlock_version)
         else:
             airlock_version = 1
@@ -173,29 +190,30 @@ class WorkspaceRepository(ResourceRepository):
         enable_airlock_param = {}
         if enable_airlock_default and enable_airlock_default.default is not None:
             enable_airlock_param = {
-                "enable_airlock": workspace_input.properties.get(
-                    "enable_airlock", enable_airlock_default.default)
+                "enable_airlock": workspace_input.properties.get("enable_airlock", enable_airlock_default.default)
             }
 
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
-        resource_spec_parameters = {**workspace_input.properties,
-                                    **address_space_param,
-                                    **address_spaces_param,
-                                    **auto_app_registration_param,
-                                    **workspace_owner_param,
-                                    **airlock_version_param,
-                                    **enable_airlock_param,
-                                    **auth_info,
-                                    **self.get_workspace_spec_params(full_workspace_id)}
+        resource_spec_parameters = {
+            **workspace_input.properties,
+            **address_space_param,
+            **address_spaces_param,
+            **auto_app_registration_param,
+            **workspace_owner_param,
+            **airlock_version_param,
+            **enable_airlock_param,
+            **auth_info,
+            **self.get_workspace_spec_params(full_workspace_id),
+        }
 
         workspace = Workspace(
             id=full_workspace_id,
             templateName=workspace_input.templateName,
             templateVersion=template.version,
             properties=resource_spec_parameters,
-            resourcePath=f'/workspaces/{full_workspace_id}',
-            etag=''  # need to validate the model
+            resourcePath=f"/workspaces/{full_workspace_id}",
+            etag="",  # need to validate the model
         )
 
         return workspace, template
@@ -204,10 +222,18 @@ class WorkspaceRepository(ResourceRepository):
         # Add the objectId of the user that will become the workspace owner. If it is not present in
         # the request, we can assume the logged in user will be WorkspaceOwner
         user_defined_workspace_owner_object_id = workspace_properties.get("workspace_owner_object_id")
-        return workspace_owner_object_id if user_defined_workspace_owner_object_id is None else user_defined_workspace_owner_object_id
+        return (
+            workspace_owner_object_id
+            if user_defined_workspace_owner_object_id is None
+            else user_defined_workspace_owner_object_id
+        )
 
     def automatically_create_application_registration(self, workspace_properties: dict) -> bool:
-        return True if ("auth_type" in workspace_properties and workspace_properties["auth_type"] == "Automatic") else False
+        return (
+            True
+            if ("auth_type" in workspace_properties and workspace_properties["auth_type"] == "Automatic")
+            else False
+        )
 
     async def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.
@@ -219,7 +245,7 @@ class WorkspaceRepository(ResourceRepository):
 
         # 773 allow custom sized networks to be requested
         if address_space_size == "custom":
-            if (await self.validate_address_space(workspace_properties.get("address_space"))):
+            if await self.validate_address_space(workspace_properties.get("address_space")):
                 return workspace_properties.get("address_space")
             else:
                 raise InvalidInput("The custom 'address_space' you requested does not fit in the current network.")
@@ -240,7 +266,7 @@ class WorkspaceRepository(ResourceRepository):
 
     # 772 check that the provided address_space is available in the network.
     async def validate_address_space(self, address_space):
-        if (address_space is None):
+        if address_space is None:
             raise InvalidInput("Missing 'address_space' from properties.")
 
         allocated_networks = [x.properties["address_space"] for x in await self.get_active_workspaces()]
@@ -255,15 +281,38 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    async def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool) -> Tuple[Workspace, ResourceTemplate]:
+    async def patch_workspace(
+        self,
+        workspace: Workspace,
+        workspace_patch: ResourcePatch,
+        etag: str,
+        resource_template_repo: ResourceTemplateRepository,
+        resource_history_repo: ResourceHistoryRepository,
+        user: User,
+        force_version_update: bool,
+    ) -> Tuple[Workspace, ResourceTemplate]:
         # get the workspace template
-        workspace_template = await resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
-        return await self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE, force_version_update)
+        workspace_template = await resource_template_repo.get_template_by_name_and_version(
+            workspace.templateName, workspace.templateVersion, ResourceType.Workspace
+        )
+        return await self.patch_resource(
+            workspace,
+            workspace_patch,
+            workspace_template,
+            etag,
+            resource_template_repo,
+            resource_history_repo,
+            user,
+            strings.RESOURCE_ACTION_UPDATE,
+            force_version_update,
+        )
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()
-        params.update({
-            "azure_location": config.RESOURCE_LOCATION,
-            "workspace_id": full_workspace_id[-4:],  # TODO: remove with #729
-        })
+        params.update(
+            {
+                "azure_location": config.RESOURCE_LOCATION,
+                "workspace_id": full_workspace_id[-4:],  # TODO: remove with #729
+            }
+        )
         return params

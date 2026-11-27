@@ -52,7 +52,7 @@ The below example references 2 properties from the primary resource to be used i
         "stepId": "1234567-87654-2345-6543",
         "stepTitle": "Update a firewall rule",
         "resourceTemplateName": "tre-shared-service-firewall",
-        "resourceType": "shared-service", 
+        "resourceType": "shared-service",
         "resourceAction": "upgrade",
         "arraySubstitutionAction": "replace", // <-- [append | remove | replace]
         "arrayMatchField": "name", // <-- name of the field in the array object to match on, for remove / replace
@@ -79,7 +79,7 @@ The below example references 2 properties from the primary resource to be used i
 It's possible that a resource property would actually be an array. As an example, the firewall shared service has the `rule_collections` property. This single property contains
 an array of objects. Since the values inside this array may have been sourced from different resources, it's important to leave other values in tact when modifying the property.
 To do so, the `arraySubstitutionAction` field supports the following values:
-- `append` - just append this object into the array
+- `append` - add this object to the end of the array. If the array already has an equal object, the array does not change. So if the API prepares a step again, for example after an API stop, the array does not get the same object two times.
 - `replace` - find this object in the array (using the `arrayMatchField` value), and replace it with this value
 - `remove` - remove this property from the array (useful for `uninstall` actions)
 

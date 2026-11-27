@@ -21,11 +21,11 @@ def workspace_service_operations_list(workspace_service_context: WorkspaceServic
 
     workspace_id = workspace_service_context.workspace_id
     if workspace_id is None:
-        raise click.UsageError('Missing workspace ID')
+        raise click.UsageError("Missing workspace ID")
     workspace_service_id = workspace_service_context.workspace_service_id
     if workspace_service_id is None:
-        raise click.UsageError('Missing workspace-service ID')
-    operations_url = f'/api/workspaces/{workspace_id}/workspace-services/{workspace_service_id}/operations'
+        raise click.UsageError("Missing workspace-service ID")
+    operations_url = f"/api/workspaces/{workspace_id}/workspace-services/{workspace_service_id}/operations"
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
     operations_list(log, operations_url, output_format, query, scope_id=workspace_scope)

@@ -23,6 +23,10 @@ on: # yamllint disable-line rule:truthy
 permissions:
   contents: read
 
+env:
+  # A fork sets this repository variable. Cleanup then selects only rg-<prefix> groups.
+  CI_ENV_PREFIX: ${{ vars.CI_ENV_PREFIX }}
+
 jobs:
   plan:
     if: github.event_name == 'schedule' || inputs.mode == 'cleanup'

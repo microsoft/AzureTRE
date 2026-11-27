@@ -87,8 +87,14 @@ resource "azurerm_user_assigned_identity" "nexus_msi" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_role_assignment" "keyvault_nexus_role" {
-  scope                = data.azurerm_key_vault.kv.id
+# The VM reads only the Nexus admin password and its TLS certificate, so its identity gets a role on each of them.
+resource "azurerm_role_assignment" "keyvault_nexus_secret_role" {
+  for_each = {
+    admin_password  = azurerm_key_vault_secret.nexus_admin_password.resource_versionless_id
+    ssl_certificate = "${data.azurerm_key_vault.kv.id}/secrets/${data.azurerm_key_vault_certificate.nexus_cert.name}"
+  }
+
+  scope                = each.value
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.nexus_msi.principal_id
 }
@@ -148,7 +154,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   }
 
   depends_on = [
-    azurerm_role_assignment.keyvault_nexus_role
+    azurerm_role_assignment.keyvault_nexus_secret_role
   ]
 
   connection {

@@ -10,6 +10,10 @@ See: [MySQL Azure](https://learn.microsoft.com/en-GB/azure/mysql/)
 
   `make workspace_service_bundle BUNDLE=mysql`
 
+## Network access
+
+The MySQL server has public network access disabled. Clients connect through its private endpoint, for example from a VM in the workspace.
+
 ## Authenticating to MySQL
 
 1. Navigate to the MySQL workspace service using the `Mysql fqdn` from the details tab.

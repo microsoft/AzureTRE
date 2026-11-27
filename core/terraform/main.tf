@@ -55,12 +55,12 @@ provider "azurerm" {
 resource "azurerm_resource_group" "core" {
   location = var.location
   name     = "rg-${var.tre_id}"
-  tags = {
+  tags = merge({
     project    = "Azure Trusted Research Environment"
     tre_id     = var.tre_id
     source     = "https://github.com/microsoft/AzureTRE/"
     ci_git_ref = var.ci_git_ref # TODO: not include if empty
-  }
+  }, var.ci_repository != "" ? { ci_repository = var.ci_repository } : {})
 
   lifecycle { ignore_changes = [tags] }
 }

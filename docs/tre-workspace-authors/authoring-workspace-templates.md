@@ -103,7 +103,15 @@ Registration preserves the root validation fields `properties`, `required`, `all
 
 Put conditional rules inside `allOf`, rather than using root `if`, `then` or `else`. Property schemas can contain local references such as `#/$defs/label`, nested object and array constraints, and nullable types. Form rendering remains limited to the features supported by React JSON Schema Form. This is not full JSON Schema conformance.
 
-Keep Azure TRE annotations such as `updateable`, `sensitive` and `readOnly` on the property itself when using a `$ref`. A reusable definition does not supply these annotations to Azure TRE's resource processing.
+Keep Azure TRE annotations such as `updateable` and `readOnly` on the property itself when using a `$ref`. A reusable definition does not supply these annotations to Azure TRE's resource processing.
+The `sensitive` annotation is different. The API also finds it in a local definition that a `$ref` points to, for example `#/$defs/credentials`.
+
+The API stores `REDACTED` in place of each sensitive value, at the install and at an update. Only the first message of a request has the real value.
+The API finds a sensitive value by its path in the template schema, also in a nested object or in an array item. A key with the same name at a different path is not sensitive. If one declaration of a property has `sensitive: true`, for example in an `allOf` branch, the property is sensitive.
+The path can go through `additionalProperties`, `patternProperties`, `prefixItems`, `unevaluatedProperties` and `unevaluatedItems`.
+A sensitive flag under `contains` masks each item of the list, because a path cannot name the item that `contains` describes.
+
+At an update that changes the template version, the new version decides which values are sensitive. If a later action does not give a new value for a sensitive property, the bundle gets `REDACTED`. The bundle must then use the earlier value. For example, the base workspace reads its client secret from the workspace Key Vault.
 
 An API upgrade does not rewrite stored templates or add missing metadata. To adopt Draft 2020-12, review the custom template's keywords, increment its bundle version and register the updated bundle. Changing only `$schema` can change validation semantics. Test creation and updates before upgrading existing resources.
 
@@ -217,6 +225,6 @@ See [Registering workspace templates](../tre-admins/registering-templates.md).
 
   ```cmd
   make bundle-build DIR=./templates/<scope>/<bundle_name>
-  make bundle-publish DIR=./templates/<scope>/<bundle_name> 
+  make bundle-publish DIR=./templates/<scope>/<bundle_name>
   make bundle-register DIR=./templates/<scope>/<bundle_name> BUNDLE_TYPE=<scope>
   ```

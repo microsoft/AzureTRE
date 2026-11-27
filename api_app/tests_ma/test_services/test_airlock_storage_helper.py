@@ -5,13 +5,9 @@ from resources import constants
 
 
 class TestGetStorageAccountNameForRequestConsolidatedMode:
-
     class TestImportRequestsConsolidated:
-
         def test_import_draft_uses_core_storage(self):
-            account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Draft, "tre123"
-            )
+            account = get_storage_account_name_for_request(constants.IMPORT_TYPE, AirlockRequestStatus.Draft, "tre123")
             assert account == "stalairlocktre123"
 
         def test_import_submitted_uses_core_storage(self):
@@ -51,11 +47,8 @@ class TestGetStorageAccountNameForRequestConsolidatedMode:
             assert account == "stalairlocktre123"
 
     class TestExportRequestsConsolidated:
-
         def test_export_draft_uses_workspace_global_storage(self):
-            account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Draft, "tre123"
-            )
+            account = get_storage_account_name_for_request(constants.EXPORT_TYPE, AirlockRequestStatus.Draft, "tre123")
             assert account == "stalairlockgtre123"
 
         def test_export_submitted_uses_workspace_global_storage(self):
@@ -96,7 +89,6 @@ class TestGetStorageAccountNameForRequestConsolidatedMode:
 
 
 class TestABACStageConstants:
-
     def test_import_external_stage_constant_value(self):
         assert constants.STAGE_IMPORT_EXTERNAL == "import-external"
 
@@ -129,12 +121,18 @@ class TestABACStageConstants:
 
 
 class TestGetContainerNameForRequest:
-
     def test_draft_uses_its_own_container(self):
         assert get_container_name_for_request("req-1", AirlockRequestStatus.Draft) == "req-1-draft"
 
-    @pytest.mark.parametrize("status", [
-        AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview,
-        AirlockRequestStatus.Approved, AirlockRequestStatus.Rejected, AirlockRequestStatus.Blocked])
+    @pytest.mark.parametrize(
+        "status",
+        [
+            AirlockRequestStatus.Submitted,
+            AirlockRequestStatus.InReview,
+            AirlockRequestStatus.Approved,
+            AirlockRequestStatus.Rejected,
+            AirlockRequestStatus.Blocked,
+        ],
+    )
     def test_sealed_stages_use_the_request_id(self, status):
         assert get_container_name_for_request("req-1", status) == "req-1"

@@ -8,7 +8,9 @@ from resources.strings import UNABLE_TO_GET_STATE_STORE_CLIENT
 from services.logging import logger
 
 
-def get_repository(repo_type: Type[BaseRepository],) -> Callable:
+def get_repository(
+    repo_type: Type[BaseRepository],
+) -> Callable:
     async def _get_repo() -> BaseRepository:
         try:
             return await repo_type.create()

@@ -4,6 +4,11 @@ from shared.logging import logger, tracer
 
 
 VERSION = __version__
+STORAGE_SUFFIXES = {
+    "AzureCloud": "core.windows.net",
+    "AzureUSGovernment": "core.usgovcloudapi.net",
+    "AzureChinaCloud": "core.chinacloudapi.cn",
+}
 
 
 def get_config() -> dict:
@@ -24,6 +29,9 @@ def get_config() -> dict:
         config["azure_environment"] = os.environ.get("AZURE_ENVIRONMENT", "AzureCloud")
         config["aad_authority_url"] = os.environ.get("AAD_AUTHORITY_URL", "https://login.microsoftonline.com")
         config["microsoft_graph_fqdn"] = os.environ.get("MICROSOFT_GRAPH_FQDN", "graph.microsoft.com")
+        # The execution leases use the Terraform state account, which the identity of the RP can already write.
+        suffix = STORAGE_SUFFIXES.get(config["azure_environment"], STORAGE_SUFFIXES["AzureCloud"])
+        config["mgmt_blob_url"] = f"https://{config['tfstate_storage_account_name']}.blob.{suffix}"
 
         try:
             config["number_processes_int"] = int(config["number_processes"])
@@ -58,7 +66,6 @@ def get_config() -> dict:
             "KEY_VAULT_URL": config["key_vault_url"],
             "ARM_ENVIRONMENT": config["arm_environment"],
             "AZURE_ENVIRONMENT": config["azure_environment"],
-
             # These are needed since they are referenced as credentials in every bundle and also in arm_auth credential set.
             "ARM_CLIENT_ID": config["arm_client_id"],
             "ARM_CLIENT_SECRET": config["arm_client_secret"],
@@ -77,20 +84,21 @@ def get_config() -> dict:
 
         # when running in vscode devcontainer
         if "DEVCONTAINER" in os.environ:
-            config["porter_env"].update(
-                {
-                    "REMOTE_CONTAINERS_IPC": config["remote_containers_ipc"]
-                }
-            )
+            config["porter_env"].update({"REMOTE_CONTAINERS_IPC": config["remote_containers_ipc"]})
 
         # Load env vars for bundles
         def envvar_to_key(name: str) -> str:
-            return name[len("RP_BUNDLE_"):].lower()
+            return name[len("RP_BUNDLE_") :].lower()
 
         config["bundle_params"] = {
             envvar_to_key(env_var_name): os.getenv(env_var_name)
             for env_var_name in os.environ
             if env_var_name.startswith("RP_BUNDLE")
         }
+        # Test setting, off by default. While Porter runs, the RP does not renew the session lock,
+        # so that Service Bus gives the message to another worker. Never turn it on in production.
+        config["test_skip_session_lock_renewal"] = (
+            str(config["bundle_params"].get("test_skip_session_lock_renewal", "")).lower() == "true"
+        )
 
     return config

@@ -23,10 +23,12 @@ def _mock_blob_client():
     return mock_client
 
 
-class TestV2BlobCreated():
-
+class TestV2BlobCreated:
     @patch("BlobCreatedTrigger.get_blob_client_from_blob_info", return_value=_mock_blob_client())
-    @patch("shared_code.blob_operations_metadata.get_container_metadata", return_value={"stage": constants.STAGE_IMPORT_APPROVED, "workspace_id": "ws01"})
+    @patch(
+        "shared_code.blob_operations_metadata.get_container_metadata",
+        return_value={"stage": constants.STAGE_IMPORT_APPROVED, "workspace_id": "ws01"},
+    )
     @patch("BlobCreatedTrigger.get_blob_info_from_topic_and_subject")
     def test_v2_import_approved_emits_step_result(self, mock_get_blob_info, mock_get_metadata, mock_blob_client):
         topic = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stalairlockgtre123"
@@ -45,7 +47,10 @@ class TestV2BlobCreated():
         assert event_data.get_json()["new_status"] == constants.STAGE_APPROVED
 
     @patch("BlobCreatedTrigger.get_blob_client_from_blob_info", return_value=_mock_blob_client())
-    @patch("shared_code.blob_operations_metadata.get_container_metadata", return_value={"stage": constants.STAGE_EXPORT_APPROVED, "workspace_id": "ws01"})
+    @patch(
+        "shared_code.blob_operations_metadata.get_container_metadata",
+        return_value={"stage": constants.STAGE_EXPORT_APPROVED, "workspace_id": "ws01"},
+    )
     @patch("BlobCreatedTrigger.get_blob_info_from_topic_and_subject")
     def test_v2_export_approved_emits_step_result(self, mock_get_blob_info, mock_get_metadata, mock_blob_client):
         topic = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stalairlocktre123"
@@ -63,7 +68,10 @@ class TestV2BlobCreated():
         assert event_data.get_json()["completed_step"] == constants.STAGE_APPROVAL_INPROGRESS
         assert event_data.get_json()["new_status"] == constants.STAGE_APPROVED
 
-    @patch("shared_code.blob_operations_metadata.get_container_metadata", return_value={"stage": constants.STAGE_IMPORT_EXTERNAL, "workspace_id": "ws01"})
+    @patch(
+        "shared_code.blob_operations_metadata.get_container_metadata",
+        return_value={"stage": constants.STAGE_IMPORT_EXTERNAL, "workspace_id": "ws01"},
+    )
     @patch("BlobCreatedTrigger.get_blob_info_from_topic_and_subject")
     def test_v2_non_terminal_stage_does_not_emit_step_result(self, mock_get_blob_info, mock_get_metadata):
         topic = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stalairlocktre123"
@@ -78,7 +86,10 @@ class TestV2BlobCreated():
 
         step_result.set.assert_not_called()
 
-    @patch("shared_code.blob_operations_metadata.get_container_metadata", return_value={"stage": constants.STAGE_IMPORT_REJECTED, "workspace_id": "ws01"})
+    @patch(
+        "shared_code.blob_operations_metadata.get_container_metadata",
+        return_value={"stage": constants.STAGE_IMPORT_REJECTED, "workspace_id": "ws01"},
+    )
     @patch("BlobCreatedTrigger.get_blob_info_from_topic_and_subject")
     def test_v2_rejected_stage_does_not_emit_step_result(self, mock_get_blob_info, mock_get_metadata):
         topic = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stalairlockgtre123"

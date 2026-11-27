@@ -16,7 +16,9 @@ resource "azurerm_mysql_flexible_server" "gitea" {
   version                      = "8.0.21"
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
-  tags                         = local.workspace_service_tags
+  # Clients connect through the private endpoint only.
+  public_network_access = "Disabled"
+  tags                  = local.workspace_service_tags
 
   lifecycle { ignore_changes = [tags, zone] }
 }
@@ -63,10 +65,6 @@ resource "azurerm_key_vault_secret" "db_password" {
   value        = random_password.password.result
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.workspace_service_tags
-
-  depends_on = [
-    azurerm_role_assignment.keyvault_gitea_ws_role
-  ]
 
   lifecycle { ignore_changes = [tags] }
 }

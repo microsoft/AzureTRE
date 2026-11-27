@@ -13,7 +13,7 @@ pytestmark = pytest.mark.asyncio
 
 @pytest_asyncio.fixture
 async def resource_template_repo():
-    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+    with patch("api.dependencies.database.Database.get_container_proxy", return_value=None):
         resource_template_repo = await ResourceTemplateRepository().create()
         yield resource_template_repo
 
@@ -29,35 +29,38 @@ def sample_user_resource_template_as_dict(name: str, version: str = "1.0") -> di
         authorizedRoles=[],
         properties={},
         customActions=[],
-        parentWorkspaceService="parent_service")
+        parentWorkspaceService="parent_service",
+    )
     return template.model_dump()
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_user_resource_template_by_name_and_version_queries_db(query_mock, resource_template_repo):
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.version = @version AND c.parentWorkspaceService = @parentWorkspaceService'
+    expected_query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.version = @version AND c.parentWorkspaceService = @parentWorkspaceService"
     expected_parameters = [
-        {'name': '@resourceType', 'value': ResourceType.UserResource},
-        {'name': '@name', 'value': 'test'},
-        {'name': '@version', 'value': '1.0'},
-        {'name': '@parentWorkspaceService', 'value': 'parent_service'}
+        {"name": "@resourceType", "value": ResourceType.UserResource},
+        {"name": "@name", "value": "test"},
+        {"name": "@version", "value": "1.0"},
+        {"name": "@parentWorkspaceService", "value": "parent_service"},
     ]
     query_mock.return_value = [sample_user_resource_template_as_dict(name="test", version="1.0")]
 
-    await resource_template_repo.get_template_by_name_and_version(name="test", version="1.0", resource_type=ResourceType.UserResource, parent_service_name="parent_service")
+    await resource_template_repo.get_template_by_name_and_version(
+        name="test", version="1.0", resource_type=ResourceType.UserResource, parent_service_name="parent_service"
+    )
 
     query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_current_user_resource_template_queries_db(query_mock, resource_template_repo):
     template_name = "template1"
     parent_template_name = "parent_template1"
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.current = true AND c.parentWorkspaceService = @parentWorkspaceService'
+    expected_query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.current = true AND c.parentWorkspaceService = @parentWorkspaceService"
     expected_parameters = [
-        {'name': '@resourceType', 'value': ResourceType.UserResource},
-        {'name': '@name', 'value': 'template1'},
-        {'name': '@parentWorkspaceService', 'value': 'parent_template1'}
+        {"name": "@resourceType", "value": ResourceType.UserResource},
+        {"name": "@name", "value": "template1"},
+        {"name": "@parentWorkspaceService", "value": "parent_template1"},
     ]
     query_mock.return_value = [sample_user_resource_template_as_dict(name=template_name)]
 
@@ -66,41 +69,56 @@ async def test_get_current_user_resource_template_queries_db(query_mock, resourc
     query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_current_user_resource_template_returns_matching_template(query_mock, resource_template_repo):
     template_name = "template1"
     parent_template_name = "parent_template1"
     query_mock.return_value = [sample_user_resource_template_as_dict(name=template_name)]
 
-    template = await resource_template_repo.get_current_template(template_name, ResourceType.UserResource, parent_template_name)
+    template = await resource_template_repo.get_current_template(
+        template_name, ResourceType.UserResource, parent_template_name
+    )
 
     assert template.name == template_name
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
-async def test_get_current_user_resource_template_raises_entity_does_not_exist_if_no_template_found(query_mock, resource_template_repo):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
+async def test_get_current_user_resource_template_raises_entity_does_not_exist_if_no_template_found(
+    query_mock, resource_template_repo
+):
     query_mock.return_value = []
 
     with pytest.raises(EntityDoesNotExist):
         await resource_template_repo.get_current_template("template1", ResourceType.UserResource, "parent_template1")
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
-async def test_get_current_user_resource_template_raises_duplicate_entity_if_multiple_current_found(query_mock, resource_template_repo):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
+async def test_get_current_user_resource_template_raises_duplicate_entity_if_multiple_current_found(
+    query_mock, resource_template_repo
+):
     template_name = "template1"
     parent_template_name = "parent_template1"
-    query_mock.return_value = [sample_user_resource_template_as_dict(name=template_name), sample_user_resource_template_as_dict(name=template_name)]
+    query_mock.return_value = [
+        sample_user_resource_template_as_dict(name=template_name),
+        sample_user_resource_template_as_dict(name=template_name),
+    ]
 
     with pytest.raises(DuplicateEntity):
-        await resource_template_repo.get_current_template(template_name, ResourceType.UserResource, parent_template_name)
+        await resource_template_repo.get_current_template(
+            template_name, ResourceType.UserResource, parent_template_name
+        )
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
-@patch('uuid.uuid4')
-async def test_create_user_resource_template_item_calls_create_item_with_the_correct_parameters(uuid_mock, save_item_mock, resource_template_repo, input_user_resource_template):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.save_item")
+@patch("uuid.uuid4")
+async def test_create_user_resource_template_item_calls_create_item_with_the_correct_parameters(
+    uuid_mock, save_item_mock, resource_template_repo, input_user_resource_template
+):
     uuid_mock.return_value = "1234"
 
-    returned_template = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource, "parent_service_template_name")
+    returned_template = await resource_template_repo.create_template(
+        input_user_resource_template, ResourceType.UserResource, "parent_service_template_name"
+    )
 
     expected_resource_template = UserResourceTemplate(
         id="1234",
@@ -115,21 +133,23 @@ async def test_create_user_resource_template_item_calls_create_item_with_the_cor
         current=input_user_resource_template.current,
         schema_uri=input_user_resource_template.json_schema["$schema"],
         schema_id=input_user_resource_template.json_schema["$id"],
-        parentWorkspaceService="parent_service_template_name"
+        parentWorkspaceService="parent_service_template_name",
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_template_infos_for_user_resources_queries_db(query_mock, resource_template_repo):
-    expected_query = 'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = @resourceType AND c.current = true AND c.parentWorkspaceService = @parentWorkspaceService'
+    expected_query = "SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = @resourceType AND c.current = true AND c.parentWorkspaceService = @parentWorkspaceService"
     expected_parameters = [
-        {'name': '@resourceType', 'value': ResourceType.UserResource},
-        {'name': '@parentWorkspaceService', 'value': 'parent_service'}
+        {"name": "@resourceType", "value": ResourceType.UserResource},
+        {"name": "@parentWorkspaceService", "value": "parent_service"},
     ]
     query_mock.return_value = [sample_user_resource_template_as_dict(name="test", version="1.0")]
 
-    await resource_template_repo.get_templates_information(ResourceType.UserResource, parent_service_name="parent_service")
+    await resource_template_repo.get_templates_information(
+        ResourceType.UserResource, parent_service_name="parent_service"
+    )
 
     query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)

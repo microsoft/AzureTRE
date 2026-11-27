@@ -3,15 +3,11 @@ from unittest.mock import patch
 
 import pytest
 
-from shared_code.airlock_storage_helper import (
-    get_storage_account_name_for_request,
-    get_stage_from_status
-)
+from shared_code.airlock_storage_helper import get_storage_account_name_for_request, get_stage_from_status
 from shared_code import constants
 
 
 class TestGetStageFromStatus:
-
     def test_import_draft_maps_to_import_external(self):
         stage = get_stage_from_status(constants.IMPORT_TYPE, constants.STAGE_DRAFT)
         assert stage == constants.STAGE_IMPORT_EXTERNAL
@@ -90,10 +86,8 @@ class TestGetStageFromStatus:
 
 
 class TestGetStorageAccountNameForRequestConsolidated:
-
     @patch.dict(os.environ, {"TRE_ID": "tre123"}, clear=True)
     class TestImportRequests:
-
         def test_import_draft_uses_core_storage(self):
             account = get_storage_account_name_for_request(constants.IMPORT_TYPE, constants.STAGE_DRAFT)
             assert account == "stalairlocktre123"
@@ -132,7 +126,6 @@ class TestGetStorageAccountNameForRequestConsolidated:
 
     @patch.dict(os.environ, {"TRE_ID": "tre123"}, clear=True)
     class TestExportRequests:
-
         def test_export_draft_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(constants.EXPORT_TYPE, constants.STAGE_DRAFT)
             assert account == "stalairlockgtre123"

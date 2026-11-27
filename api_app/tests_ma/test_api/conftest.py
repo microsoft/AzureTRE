@@ -8,7 +8,7 @@ from httpx import AsyncClient, ASGITransport
 from models.domain.authentication import User
 
 
-@pytest.fixture(autouse=True, scope='module')
+@pytest.fixture(autouse=True, scope="module")
 def no_lifespan_events():
     with patch("main.lifespan"):
         yield
@@ -16,7 +16,7 @@ def no_lifespan_events():
 
 @pytest.fixture(autouse=True)
 def no_auth_token():
-    """ overrides validating and decoding tokens for all tests"""
+    """overrides validating and decoding tokens for all tests"""
     from auth.models import AuthenticatedUser
     from fastapi.security import HTTPAuthorizationCredentials
     from mock import AsyncMock, MagicMock
@@ -27,10 +27,10 @@ def no_auth_token():
     mock_validator = MagicMock()
     mock_validator.validate.return_value = default_validated
 
-    with patch('fastapi.security.HTTPBearer.__call__', new=AsyncMock(return_value=fake_credentials)):
-        with patch('auth.dependencies.get_core_validator', return_value=mock_validator):
-            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
-                with patch('auth.rbac.get_workspace_validator', return_value=mock_validator):
+    with patch("fastapi.security.HTTPBearer.__call__", new=AsyncMock(return_value=fake_credentials)):
+        with patch("auth.dependencies.get_core_validator", return_value=mock_validator):
+            with patch("auth.rbac.get_core_validator", return_value=mock_validator):
+                with patch("auth.rbac.get_workspace_validator", return_value=mock_validator):
                     yield
 
 
@@ -41,13 +41,7 @@ def patch_user_management_enabled():
 
 
 def create_test_user() -> User:
-    return User(
-        id="user-guid-here",
-        name="Test User",
-        email="test@user.com",
-        roles=[],
-        roleAssignments=[]
-    )
+    return User(id="user-guid-here", name="Test User", email="test@user.com", roles=[], roleAssignments=[])
 
 
 def create_admin_user() -> User:
@@ -91,60 +85,66 @@ def override_get_user():
 
 def get_required_roles(endpoint):
     defaults = endpoint.__defaults__ or ()
-    dependencies = list(filter(lambda x: hasattr(x.dependency, 'require_one_of_roles'), defaults))
+    dependencies = list(filter(lambda x: hasattr(x.dependency, "require_one_of_roles"), defaults))
     if dependencies:
         return dependencies[0].dependency.require_one_of_roles
     # New-style deps: check for _role_names attribute on the closure
-    dependencies = list(filter(lambda x: hasattr(x.dependency, '_role_names'), defaults))
+    dependencies = list(filter(lambda x: hasattr(x.dependency, "_role_names"), defaults))
     if dependencies:
         return dependencies[0].dependency._role_names
     return []
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def admin_user():
     def inner():
         return create_admin_user()
+
     return inner
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def non_admin_user():
     def inner():
         return create_non_admin_user()
+
     return inner
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def owner_user():
     def inner():
         return create_workspace_owner_user()
+
     return inner
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def researcher_user():
     def inner():
         return create_workspace_researcher_user()
+
     return inner
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def airlock_manager_user():
     def inner():
         return create_workspace_airlock_manager_user()
+
     return inner
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def no_workspace_role_user():
     def inner():
         user = create_test_user()
         return user
+
     return inner
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def app() -> FastAPI:
     from main import get_application
 
@@ -155,5 +155,7 @@ def app() -> FastAPI:
 @pytest_asyncio.fixture
 async def client(app: FastAPI) -> AsyncClient:
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver", headers={"Content-Type": "application/json"}) as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver", headers={"Content-Type": "application/json"}
+    ) as client:
         yield client

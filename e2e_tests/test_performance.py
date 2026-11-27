@@ -24,16 +24,18 @@ async def test_parallel_resource_creations(verify) -> None:
         payload = {
             "templateName": strings.BASE_WORKSPACE,
             "properties": {
-                "display_name": f'Perf Test Workspace {i}',
+                "display_name": f"Perf Test Workspace {i}",
                 "description": "workspace for perf test",
                 "address_space_size": "small",
                 "auth_type": "Manual",
-                "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
-            }
+                "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
+            },
         }
 
         admin_token = await get_admin_token(verify)
-        task = asyncio.create_task(post_resource(payload=payload, endpoint=strings.API_WORKSPACES, access_token=admin_token, verify=verify))
+        task = asyncio.create_task(
+            post_resource(payload=payload, endpoint=strings.API_WORKSPACES, access_token=admin_token, verify=verify)
+        )
         tasks.append(task)
 
     resource_paths = await asyncio.gather(*tasks)
@@ -69,8 +71,8 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
                 "address_space_size": "small",
                 "auth_type": "Manual",
                 "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-                "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
-            }
+                "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
+            },
         }
 
         admin_token = await get_admin_token(verify)
@@ -78,7 +80,9 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
     else:
         workspace_path = f"/workspaces/{workspace_id}"
 
-    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
+    workspace_owner_token, scope_uri = await get_workspace_auth_details(
+        admin_token=admin_token, workspace_id=workspace_id, verify=verify
+    )
 
     workspace_service_id = config.TEST_WORKSPACE_SERVICE_ID
 
@@ -86,17 +90,15 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
         # create a guac service
         service_payload = {
             "templateName": strings.GUACAMOLE_SERVICE,
-            "properties": {
-                "display_name": "Workspace service test",
-                "description": ""
-            }
+            "properties": {"display_name": "Workspace service test", "description": ""},
         }
 
         workspace_service_path, _ = await post_resource(
             payload=service_payload,
-            endpoint=f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}',
+            endpoint=f"/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}",
             access_token=workspace_owner_token,
-            verify=verify)
+            verify=verify,
+        )
     else:
         workspace_service_path = f"{workspace_path}/{strings.API_WORKSPACE_SERVICES}/{workspace_service_id}"
 
@@ -107,17 +109,20 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
             "display_name": "Perf test VM",
             "description": "",
             "os_image": "Ubuntu 22.04 LTS",
-            "admin_username": "researcher"
-        }
+            "admin_username": "researcher",
+        },
     }
 
     tasks = []
     for i in range(number_vms):
-        task = asyncio.create_task(post_resource(
-            payload=user_resource_payload,
-            endpoint=f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}',
-            access_token=workspace_owner_token,
-            verify=verify))
+        task = asyncio.create_task(
+            post_resource(
+                payload=user_resource_payload,
+                endpoint=f"/api{workspace_service_path}/{strings.API_USER_RESOURCES}",
+                access_token=workspace_owner_token,
+                verify=verify,
+            )
+        )
         tasks.append(task)
 
     resource_paths = await asyncio.gather(*tasks)
@@ -130,16 +135,17 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
         for i in range(number_updates):
             patch_payload = {
                 "properties": {
-                    "display_name": f'Perf test VM update {i}',
+                    "display_name": f"Perf test VM update {i}",
                 }
             }
             await post_resource(
                 payload=patch_payload,
-                endpoint=f'/api{resource_path}',
+                endpoint=f"/api{resource_path}",
                 access_token=workspace_owner_token,
                 verify=verify,
                 method="PATCH",
-                wait=False)
+                wait=False,
+            )
 
         # clear up all the VMs in parallel
         # NOTE: Due to bug https://github.com/microsoft/AzureTRE/issues/1163 - this VM delete step currently fails

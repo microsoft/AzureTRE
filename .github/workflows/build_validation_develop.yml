@@ -17,6 +17,27 @@ permissions:
   contents: read
 
 jobs:
+  python_unit_tests:
+    name: Python unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container: mcr.microsoft.com/vscode/devcontainers/python:dev-3.12-bookworm
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "24"
+      - name: Install test dependencies
+        run: |
+          python -m venv "$RUNNER_TEMP/tre-venv"
+          "$RUNNER_TEMP/tre-venv/bin/python" -m pip install -r requirements.txt
+          echo "$RUNNER_TEMP/tre-venv/bin" >> "$GITHUB_PATH"
+          npm install --global pajv@1.2.0
+      - name: Run unit tests from the repository root
+        run: pytest --ignore=e2e_tests
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -65,6 +86,13 @@ jobs:
               - '**/porter-build-context.env'
             ci_cleanup:
               - 'Makefile'
+              - 'config_schema.json'
+              - 'core/terraform/outputs.tf'
+              - 'core/terraform/outputs.sh'
+              - 'core/terraform/write_outputs.sh'
+              - 'core/terraform/json-to-env.sh'
+              - 'devops/scripts/load_env.sh'
+              - 'devops/scripts/load_and_validate_env.sh'
               - 'core/terraform/scripts/letsencrypt.sh'
               - 'core/terraform/scripts/validate_certbot.sh'
               - 'devops/scripts/clean_ci_validation_envs.sh'
@@ -74,16 +102,23 @@ jobs:
               - 'devops/scripts/recover_bootstrap_lease.py'
               - 'devops/scripts/ci_environment_id.py'
               - 'devops/scripts/ci_cleanup_scope.py'
+              - 'devops/scripts/ci_cleanup_activity.py'
+              - 'devops/scripts/verify_deployment_lock.py'
               - 'devops/scripts/destroy_ci_ref_env.py'
               - 'devops/scripts/destroy_env_no_terraform.sh'
               - 'devops/scripts/validate_ci_cleanup.py'
               - 'devops/scripts/kv_add_network_exception.sh'
+              - 'core/terraform/deploy.sh'
+              - 'core/terraform/mgmt_storage_private_endpoint.sh'
               - 'devops/terraform/**'
               - '.github/actions/devcontainer_run_command/action.yml'
               - '.github/workflows/deploy_tre_reusable.yml'
               - '.github/workflows/deploy_tre_branch.yml'
               - '.github/workflows/pr_comment_bot.yml'
               - 'devops/tests/**'
+              - 'templates/shared_services/sonatype-nexus-vm/scripts/**'
+              - 'templates/shared_services/certs/**'
+              - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/terraform/**'
               - '.github/workflows/build_validation_develop.yml'
               - '.github/workflows/clean_validation_envs.yml'
 
@@ -99,6 +134,17 @@ jobs:
             terraform_workspace_services:
               - templates/workspace_services/**/terraform/**/*.tf
 
+            workspace_templates:
+              - templates/workspaces/base/porter.yaml
+              - templates/workspaces/base/template_schema.json
+              - templates/workspaces/unrestricted/porter.yaml
+              - templates/workspaces/unrestricted/template_schema.json
+              - templates/workspaces/airlock-import-review/porter.yaml
+              - templates/workspaces/airlock-import-review/template_schema.json
+              - tests/requirements.txt
+              - tests/test_workspace_template_defaults.py
+              - .github/workflows/build_validation_develop.yml
+
       - name: Set up Node.js for GitHub scripts
         if: ${{ steps.filter.outputs.github_scripts == 'true' }}
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
@@ -112,9 +158,19 @@ jobs:
           npm ci
           npm test -- --runInBand
 
-      - name: Test CI environment cleanup
+      - name: Test deployment scripts
         if: ${{ steps.filter.outputs.ci_cleanup == 'true' }}
         run: python3 -m unittest discover -s devops/tests -v
+
+      - name: Test core outputs in the development-container base
+        if: ${{ steps.filter.outputs.ci_cleanup == 'true' }}
+        # Bookworm provides jq 1.6; the hosted runner has a newer jq version.
+        run: |
+          docker run --rm --network none \
+            --mount "type=bind,source=${PWD},target=/workspaces/tre,readonly" \
+            --workdir /workspaces/tre --entrypoint /bin/bash \
+            mcr.microsoft.com/vscode/devcontainers/python:dev-3.12-bookworm \
+            -c 'jq --version; python3 -m unittest discover -s devops/tests -p test_core_outputs.py -v'
 
       - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
         if: ${{ steps.filter.outputs.terraform == 'true' }}
@@ -149,7 +205,10 @@ jobs:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_MARKDOWN: true
-          VALIDATE_PYTHON_FLAKE8: true
+          VALIDATE_PYTHON_RUFF: true
+          VALIDATE_PYTHON_RUFF_FORMAT: true
+          PYTHON_RUFF_CONFIG_FILE: ../../pyproject.toml
+          PYTHON_RUFF_FORMAT_CONFIG_FILE: ../../pyproject.toml
           VALIDATE_YAML: true
           VALIDATE_TERRAFORM_TFLINT: true
           VALIDATE_JAVA: true
@@ -163,11 +222,29 @@ jobs:
           TYPESCRIPT_ES_CONFIG_FILE: ../../ui/app/eslint.config.js
           TSX_CONFIG_FILE: ../../ui/app/eslint.config.js
 
+      - name: Set up Python for Bandit
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Bandit
+        run: pip install bandit==1.8.3
+
+      - name: Run Bandit security checks
+        run: bandit -ll -c pyproject.toml -r .
+
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
         run: |
           pip install -r docs/requirements.txt
           mkdocs build --strict
+
+      - name: Workspace template defaults
+        if: ${{ steps.filter.outputs.workspace_templates == 'true' }}
+        run: |
+          pip install -r tests/requirements.txt
+          python tests/test_workspace_template_defaults.py
 
       - name: Core Tags
         if: ${{ steps.filter.outputs.terraform_core == 'true' }}

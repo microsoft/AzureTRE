@@ -11,10 +11,19 @@ from models.domain.resource import Resource
 from models.domain.operation import Operation
 
 from db.repositories.operations import OperationRepository
-from services.logging import tracer
+from services.logging import logger, tracer
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, action: RequestAction = RequestAction.Install, is_cascade: str = False) -> Operation:
+async def send_resource_request_message(
+    resource: Resource,
+    operations_repo: OperationRepository,
+    resource_repo: ResourceRepository,
+    user: User,
+    resource_template_repo: ResourceTemplateRepository,
+    resource_history_repo: ResourceHistoryRepository,
+    action: RequestAction = RequestAction.Install,
+    is_cascade: str = False,
+) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -42,26 +51,54 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
             resource_version=resource.resourceVersion,
             user=user,
             resource_repo=resource_repo,
-            resource_template_repo=resource_template_repo)
+            resource_template_repo=resource_template_repo,
+            resource_properties=resource.properties,
+        )
         current_span.set_attribute("operation_id", operation.id)
 
         # prep the first step to send in SB
         # resource at this point is the original object with unmaskked values
         first_step = operation.steps[0]
         current_span.set_attribute("step_id", first_step.id)
-        resource_to_send = await update_resource_for_step(
-            operation_step=first_step,
-            resource_repo=resource_repo,
-            resource_template_repo=resource_template_repo,
-            resource_history_repo=resource_history_repo,
-            root_resource=resource,
-            step_resource=None,
-            resource_to_update_id=first_step.resourceId,
-            primary_action=action,
-            user=user)
+        message_id = OperationRepository.dispatch_message_id(operation.id, first_step.id)
+        try:
+            resource_to_send = await update_resource_for_step(
+                operation_step=first_step,
+                resource_repo=resource_repo,
+                resource_template_repo=resource_template_repo,
+                resource_history_repo=resource_history_repo,
+                root_resource=resource,
+                step_resource=None,
+                resource_to_update_id=first_step.resourceId,
+                primary_action=action,
+                user=user,
+            )
 
-        # create + send the message
-        content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=first_step.id, action=first_step.resourceAction))
-        await send_deployment_message(content=content, correlation_id=operation.id, session_id=first_step.resourceId, action=first_step.resourceAction)
+            # create + send the message
+            content = json.dumps(
+                resource_to_send.get_resource_request_message_payload(
+                    operation_id=operation.id, step_id=first_step.id, action=first_step.resourceAction
+                )
+            )
+            await send_deployment_message(
+                content=content,
+                correlation_id=operation.id,
+                session_id=first_step.resourceId,
+                action=first_step.resourceAction,
+                message_id=message_id,
+            )
+        except Exception:
+            # The caller reports this error, so the deployment status updater must not send the message later.
+            await clear_pending_dispatch(operations_repo, operation.id, message_id)
+            raise
+        await clear_pending_dispatch(operations_repo, operation.id, message_id)
 
     return operation
+
+
+async def clear_pending_dispatch(operations_repo: OperationRepository, operation_id: str, message_id: str):
+    try:
+        await operations_repo.clear_pending_dispatch(operation_id, message_id)
+    except Exception:
+        # If the entry stays, the deployment status updater handles it later. A second send is safe.
+        logger.exception(f"Unable to clear the pending dispatch of operation {operation_id}")

@@ -10,6 +10,7 @@ class ResourceType(StrEnum):
     """
     Type of resource to deploy
     """
+
     Workspace = strings.RESOURCE_TYPE_WORKSPACE
     WorkspaceService = strings.RESOURCE_TYPE_WORKSPACE_SERVICE
     UserResource = strings.USER_RESOURCE
@@ -20,9 +21,12 @@ class ResourceHistoryItem(AzureTREModel):
     """
     Resource History Item - to preserve history of resource properties
     """
+
     id: str = Field(title="Id", description="GUID identifying the resource request")
     resourceId: str = Field(title="Id", description="GUID identifying the resource request")
-    properties: dict = Field(default_factory=dict, title="Resource template parameters", description="Parameters for the deployment")
+    properties: dict = Field(
+        default_factory=dict, title="Resource template parameters", description="Parameters for the deployment"
+    )
     isEnabled: bool = True
     resourceVersion: int = 0
     updatedWhen: float = 0.0
@@ -35,7 +39,9 @@ class ResourceHistoryItem(AzureTREModel):
             return value.model_dump()
         return value
 
-    templateVersion: Optional[str] = Field(None, title="Resource template version", description="The version of the resource template (bundle) to deploy")
+    templateVersion: Optional[str] = Field(
+        None, title="Resource template version", description="The version of the resource template (bundle) to deploy"
+    )
 
 
 class AvailableUpgrade(BaseModel):
@@ -47,14 +53,23 @@ class Resource(AzureTREModel):
     """
     Resource request
     """
+
     id: str = Field(title="Id", description="GUID identifying the resource request")
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
-    templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
-    properties: dict = Field(default_factory=dict, title="Resource template parameters", description="Parameters for the deployment")
-    availableUpgrades: Optional[List[AvailableUpgrade]] = Field(None, title="Available template upgrades", description="Versions of the template that are available for upgrade")
+    templateVersion: str = Field(
+        title="Resource template version", description="The version of the resource template (bundle) to deploy"
+    )
+    properties: dict = Field(
+        default_factory=dict, title="Resource template parameters", description="Parameters for the deployment"
+    )
+    availableUpgrades: Optional[List[AvailableUpgrade]] = Field(
+        None, title="Available template upgrades", description="Versions of the template that are available for upgrade"
+    )
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
-    deploymentStatus: Optional[str] = Field(None, title="Deployment Status", description="Overall deployment status of the resource")
+    deploymentStatus: Optional[str] = Field(
+        None, title="Deployment Status", description="Overall deployment status of the resource"
+    )
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
@@ -87,7 +102,7 @@ class Resource(AzureTREModel):
             "id": self.id,
             "name": self.templateName,
             "version": self.templateVersion,
-            "parameters": self.properties
+            "parameters": self.properties,
         }
 
         if self.resourceType == ResourceType.WorkspaceService:
@@ -105,7 +120,7 @@ class Resource(AzureTREModel):
     @field_validator("etag", mode="before")
     @classmethod
     def parse_etag_to_remove_escaped_quotes(cls, value):
-        return value.replace('\"', '')
+        return value.replace('"', "")
 
 
 class Output(AzureTREModel):

@@ -119,4 +119,4 @@ fi
 add_exit_trap "mgmtacr_disable_public_access"
 
 # Enable public access for deployment
-mgmtacr_enable_public_access "$@" 
+mgmtacr_enable_public_access "$@"

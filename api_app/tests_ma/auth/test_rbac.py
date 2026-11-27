@@ -1,4 +1,5 @@
 """Tests for auth.rbac role-checking dependencies."""
+
 import pytest
 from unittest.mock import MagicMock, patch
 from pydantic import ValidationError
@@ -102,8 +103,8 @@ class TestRequireWorkspaceRoles:
         import asyncio
 
         async def _run():
-            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator):
-                with patch('auth.rbac.get_core_validator', return_value=core_validator):
+            with patch("auth.rbac.get_workspace_validator", return_value=ws_validator):
+                with patch("auth.rbac.get_core_validator", return_value=core_validator):
                     result = await dep(credentials=fake_creds, workspace=fake_workspace)
             assert result.id == "uid"
 
@@ -116,7 +117,7 @@ class TestRequireWorkspaceRoles:
         import asyncio
 
         async def _run():
-            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator):
+            with patch("auth.rbac.get_workspace_validator", return_value=ws_validator):
                 result = await dep(credentials=fake_creds, workspace=fake_workspace)
             assert result.id == "uid"
 
@@ -131,7 +132,7 @@ class TestRequireWorkspaceRoles:
         import asyncio
 
         async def _run():
-            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator):
+            with patch("auth.rbac.get_workspace_validator", return_value=ws_validator):
                 with pytest.raises(HTTPException) as exc_info:
                     await dep(credentials=fake_creds, workspace=fake_workspace)
             assert exc_info.value.status_code == 403
@@ -162,8 +163,8 @@ class TestRequireWorkspaceRoles:
         import asyncio
 
         async def _run():
-            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator_mock):
-                with patch('auth.rbac.get_core_validator', return_value=core_validator_mock):
+            with patch("auth.rbac.get_workspace_validator", return_value=ws_validator_mock):
+                with patch("auth.rbac.get_core_validator", return_value=core_validator_mock):
                     with pytest.raises(HTTPException) as exc_info:
                         await dep(credentials=fake_creds, workspace=fake_workspace)
             assert exc_info.value.status_code == 401
@@ -196,8 +197,8 @@ class TestRequireWorkspaceRoles:
         import asyncio
 
         async def _run():
-            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator_mock):
-                with patch('auth.rbac.get_core_validator', return_value=core_validator_mock):
+            with patch("auth.rbac.get_workspace_validator", return_value=ws_validator_mock):
+                with patch("auth.rbac.get_core_validator", return_value=core_validator_mock):
                     with pytest.raises(HTTPException) as exc_info:
                         await dep(credentials=fake_creds, workspace=fake_workspace)
             assert exc_info.value.status_code == 401
@@ -220,8 +221,8 @@ class TestRequireWorkspaceRoles:
         import asyncio
 
         async def _run():
-            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator_mock):
-                with patch('auth.rbac.get_core_validator', return_value=core_validator_mock):
+            with patch("auth.rbac.get_workspace_validator", return_value=ws_validator_mock):
+                with patch("auth.rbac.get_core_validator", return_value=core_validator_mock):
                     with pytest.raises(HTTPException) as exc_info:
                         await dep(credentials=fake_creds, workspace=fake_workspace)
             assert exc_info.value.status_code == 401

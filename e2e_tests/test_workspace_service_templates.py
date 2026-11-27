@@ -10,11 +10,7 @@ from helpers import get_admin_token
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
 
-workspace_service_templates = [
-    (strings.AZUREML_SERVICE),
-    (strings.GUACAMOLE_SERVICE),
-    (strings.GITEA_SERVICE)
-]
+workspace_service_templates = [(strings.AZUREML_SERVICE), (strings.GUACAMOLE_SERVICE), (strings.GITEA_SERVICE)]
 
 
 @pytest.mark.smoke
@@ -22,10 +18,12 @@ workspace_service_templates = [
 async def test_get_workspace_service_templates(template_name, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         admin_token = await get_admin_token(verify)
-        response = await client.get(f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token))
+        response = await client.get(
+            f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token)
+        )
 
         template_names = [templates["name"] for templates in response.json()["templates"]]
-        assert (template_name in template_names), f"No {template_name} template found"
+        assert template_name in template_names, f"No {template_name} template found"
 
 
 @pytest.mark.smoke
@@ -33,7 +31,7 @@ async def test_get_workspace_service_templates(template_name, verify) -> None:
 async def test_get_workspace_service_template(template_name, verify) -> None:
     admin_token = await get_admin_token(verify)
     async with get_template(template_name, strings.API_WORKSPACE_SERVICE_TEMPLATES, admin_token, verify) as response:
-        assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} failed"
+        assert response.status_code == status.HTTP_200_OK, f"GET Request for {template_name} failed"
         assert_status(response, [status.HTTP_200_OK], f"Failed to GET {template_name}")
 
 
@@ -51,11 +49,17 @@ async def test_create_workspace_service_templates(verify) -> None:
                 "title": "DONOTUSE",
                 "description": "DO NOT USE",
                 "required": [],
-                "properties": {}
-            }
+                "properties": {},
+            },
         }
 
         admin_token = await get_admin_token(verify)
-        response = await client.post(f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token), json=payload)
+        response = await client.post(
+            f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}",
+            headers=get_auth_header(admin_token),
+            json=payload,
+        )
 
-        assert_status(response, [status.HTTP_201_CREATED, status.HTTP_409_CONFLICT], "Failed to create workspace service template")
+        assert_status(
+            response, [status.HTTP_201_CREATED, status.HTTP_409_CONFLICT], "Failed to create workspace service template"
+        )

@@ -23,11 +23,10 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-bas
             "address_space_size": Property(
                 type="string",
                 default="small",
-                description="Network address size as a CIDR value or (small /24, medium /22, large /16 or custom with an IP range e.g. 10.2.1.0/25) to be used by the workspace.")
+                description="Network address size as a CIDR value or (small /24, medium /22, large /16 or custom with an IP range e.g. 10.2.1.0/25) to be used by the workspace.",
+            ),
         },
-        customActions=[
-            CustomAction()
-        ]
+        customActions=[CustomAction()],
     )
 
 
@@ -42,56 +41,48 @@ def get_sample_workspace_template_in_response() -> dict:
 
 
 class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "name": "my-tre-workspace",
-            "version": "0.0.1",
-            "current": True,
-            "json_schema": {
-                "$schema": "https://json-schema.org/draft/2020-12/schema",
-                "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
-                "type": "object",
-                "title": "My Workspace Template",
-                "description": "This is a test workspace template schema",
-                "required": [
-                    "vm_size",
-                    "no_of_vms"
-                ],
-                "authorizedRoles": [],
-                "properties": {
-                    "display_name": {
-                        "type": "string",
-                        "title": "Name for the workspace",
-                        "description": "The name of the workspace to be displayed to users"
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "my-tre-workspace",
+                "version": "0.0.1",
+                "current": True,
+                "json_schema": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
+                    "type": "object",
+                    "title": "My Workspace Template",
+                    "description": "This is a test workspace template schema",
+                    "required": ["vm_size", "no_of_vms"],
+                    "authorizedRoles": [],
+                    "properties": {
+                        "display_name": {
+                            "type": "string",
+                            "title": "Name for the workspace",
+                            "description": "The name of the workspace to be displayed to users",
+                        },
+                        "description": {
+                            "type": "string",
+                            "title": "Description of the workspace",
+                            "description": "Description of the workspace",
+                        },
+                        "address_space_size": {
+                            "type": "string",
+                            "title": "Address space size",
+                            "description": "Network address size as a CIDR value or (small /24, medium /22, large /16 or custom with an IP range e.g. 10.2.1.0/25) to be used by the workspace.",
+                        },
+                        "address_space": {
+                            "type": "string",
+                            "title": "Address space",
+                            "description": "Network address space to be used by the workspace if address_space_size is custom",
+                        },
                     },
-                    "description": {
-                        "type": "string",
-                        "title": "Description of the workspace",
-                        "description": "Description of the workspace"
-                    },
-                    "address_space_size": {
-                        "type": "string",
-                        "title": "Address space size",
-                        "description": "Network address size as a CIDR value or (small /24, medium /22, large /16 or custom with an IP range e.g. 10.2.1.0/25) to be used by the workspace."
-                    },
-                    "address_space": {
-                        "type": "string",
-                        "title": "Address space",
-                        "description": "Network address space to be used by the workspace if address_space_size is custom"
-                    }
-                }
-            },
-            "customActions": [
-                {
-                    "name": "disable",
-                    "description": "Deallocates resources"
-                }
-            ]
+                },
+                "customActions": [{"name": "disable", "description": "Deallocates resources"}],
+            }
         }
-    })
+    )
 
 
 class WorkspaceTemplateInResponse(ResourceTemplateInResponse):
-    model_config = ConfigDict(json_schema_extra={
-        "example": get_sample_workspace_template_in_response()
-    })
+    model_config = ConfigDict(json_schema_extra={"example": get_sample_workspace_template_in_response()})

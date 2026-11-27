@@ -7,6 +7,7 @@ class Migration(BaseModel):
     """
     Migration
     """
+
     issueNumber: str
     status: str
 

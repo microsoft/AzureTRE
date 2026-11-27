@@ -31,6 +31,21 @@ The request may be blocked by network rules of storage account. Please check net
 If you want to change the default action to apply when no rule matches, please use 'az storage account update'.
 """
 
+# Diagnostic from fresh management deployment 38181301145, attempt 1.
+STATE_READ_PERMISSION_ERROR = (
+    "Error: Error loading state: executing request: unexpected status 403 "
+    "(403 This request is not authorized to perform this operation using this permission.) "
+    "with AuthorizationPermissionMismatch: This request is not authorized to perform "
+    "this operation using this permission."
+)
+
+# Diagnostic from run 38486176508, attempt 1, job 115600410156.
+BOOTSTRAP_CREATION_PERMISSION_ERROR = (
+    "Error: Error loading state: failed to lock azure state: executing request: unexpected status 403 "
+    "(403 This request is not authorized to perform this operation using this permission.) with EOF\n"
+    "executing request: unexpected status 404 (404 The specified blob does not exist.) with EOF"
+)
+
 MOCK_COMMAND = r"""
 import hashlib
 import json
@@ -53,6 +68,7 @@ state = json.loads(state_path.read_text()) if state_path.exists() else {
     "probe_calls": {},
     "probe_completed": 0,
     "bootstrap_blob": config.get("bootstrap_blob"),
+    "bootstrap_exists_checks": 0,
 }
 command = Path(sys.argv[0]).name
 args = sys.argv[1:]
@@ -104,6 +120,10 @@ elif command == "terraform":
         index = state["init_calls"]
         state["init_calls"] += 1
         response("init_responses", index)
+    elif args[:2] == ["workspace", "show"]:
+        if "workspace_responses" in config:
+            response("workspace_responses", 0)
+        finish(output=os.environ.get("TF_WORKSPACE", "default"))
     elif args[:2] == ["state", "show"]:
         finish(1)
     elif args[0] == "import":
@@ -168,6 +188,12 @@ elif command == "az":
             if args[args.index("--auth-mode") + 1] != "login":
                 finish(99, "State check did not use Entra authentication")
             if operation == "exists":
+                if "--query" in args:
+                    index = state["bootstrap_exists_checks"]
+                    state["bootstrap_exists_checks"] += 1
+                    if "bootstrap_exists_responses" in config:
+                        response("bootstrap_exists_responses", index)
+                    finish(output=json.dumps(state["bootstrap_blob"] is not None))
                 finish(output=json.dumps({"exists": state["bootstrap_blob"] is not None}))
             if operation == "show":
                 finish(output=json.dumps(state["bootstrap_blob"]))
@@ -778,6 +804,158 @@ class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
         self.assertIn("Error loading state: HTTP 403", self.output)
         self.assert_no_imports()
 
+    def test_bootstrap_creation_permission_failure_retries_only_after_absence_check(self):
+        error = 'Initializing the backend...\nSuccessfully configured the backend "azurerm"!\n\n'
+        error += BOOTSTRAP_CREATION_PERMISSION_ERROR
+        result = self.run_bootstrap(
+            init_responses=[{"code": 1, "output": error}, {"code": 0, "output": "Backend ready"}]
+        )
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertIn(error, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 2)
+        self.assertEqual(self.sleeps(), [10])
+        self.assertEqual(len(self.commands("terraform", "import")), 2)
+        check = self.commands("az", "storage", "blob", "exists")[0]
+        for flag, value in (
+            ("--account-name", "mockstorage"),
+            ("--container-name", "tfstate"),
+            ("--name", "bootstrap.tfstate"),
+            ("--auth-mode", "login"),
+            ("--query", "exists"),
+            ("--output", "json"),
+        ):
+            self.assertEqual(check[check.index(flag) + 1], value)
+        first_init = self.calls.index(self.commands("terraform", "init")[0])
+        check_index = self.calls.index(check)
+        retry = max(i for i, call in enumerate(self.calls) if call[:2] == ["terraform", "init"])
+        self.assertLess(first_init, check_index)
+        self.assertLess(check_index, self.calls.index(["sleep", "10"]))
+        self.assertLess(check_index, retry)
+
+    def test_bootstrap_creation_permission_retries_are_bounded(self):
+        result = self.run_bootstrap(init_responses=[{"code": 1, "output": BOOTSTRAP_CREATION_PERMISSION_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("terraform", "init")), 6)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "exists")), 6)
+        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
+        self.assertEqual(self.output.count(BOOTSTRAP_CREATION_PERMISSION_ERROR), 6)
+        self.assert_no_imports()
+
+    def test_bootstrap_creation_can_succeed_on_final_attempt(self):
+        result = self.run_bootstrap(
+            init_responses=[
+                *[{"code": 1, "output": BOOTSTRAP_CREATION_PERMISSION_ERROR}] * 5,
+                {"code": 0, "output": "Backend ready"},
+            ]
+        )
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 6)
+        self.assertEqual(len(self.commands("terraform", "import")), 2)
+        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
+
+    def assert_bootstrap_creation_refused(self, error=BOOTSTRAP_CREATION_PERMISSION_ERROR, **config):
+        result = self.run_bootstrap(init_responses=[{"code": 1, "output": error}], **config)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(error, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assert_no_imports()
+
+    def test_existing_empty_bootstrap_blob_is_not_retried(self):
+        self.assert_bootstrap_creation_refused(bootstrap_blob={})
+        self.assertIn("Bootstrap state exists", self.output)
+
+    def test_existing_locked_bootstrap_blob_is_not_retried(self):
+        self.assert_bootstrap_creation_refused(
+            bootstrap_blob={
+                "properties": {"contentLength": 1000, "lease": {"state": "leased", "status": "locked"}},
+                "metadata": {"terraformlockid": "test-lock"},
+            }
+        )
+        self.assertEqual(self.commands("az", "storage", "blob", "lease", "break"), [])
+
+    def test_bootstrap_absence_check_permission_error_stops_retries(self):
+        self.assert_bootstrap_creation_refused(bootstrap_exists_responses=[{"code": 1, "output": CLI_PERMISSION_ERROR}])
+        self.assertIn(CLI_PERMISSION_ERROR, self.output)
+        self.assertIn("Could not check whether bootstrap state exists", self.output)
+
+    def test_bootstrap_absence_check_unknown_response_stops_retries(self):
+        self.assert_bootstrap_creation_refused(bootstrap_exists_responses=[{"code": 0, "output": "null"}])
+        self.assertIn("absence could not be confirmed", self.output)
+
+    def test_bootstrap_blob_appearing_between_attempts_stops_retries(self):
+        result = self.run_bootstrap(
+            init_responses=[{"code": 1, "output": BOOTSTRAP_CREATION_PERMISSION_ERROR}],
+            bootstrap_exists_responses=[{"code": 0, "output": "false"}, {"code": 0, "output": "true"}],
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("terraform", "init")), 2)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "exists")), 2)
+        self.assertEqual(self.sleeps(), [10])
+        self.assert_no_imports()
+
+    def test_named_workspace_does_not_check_the_default_bootstrap_blob(self):
+        self.assert_bootstrap_creation_refused(env={"TF_WORKSPACE": "other"})
+        self.assertEqual(self.commands("az", "storage", "blob", "exists"), [])
+
+    def test_workspace_lookup_failure_does_not_retry_bootstrap_creation(self):
+        self.assert_bootstrap_creation_refused(workspace_responses=[{"code": 1, "output": "Backend not ready"}])
+        self.assertEqual(self.commands("az", "storage", "blob", "exists"), [])
+
+    def test_backend_cli_override_does_not_check_the_default_bootstrap_blob(self):
+        self.assert_bootstrap_creation_refused(env={"TF_CLI_ARGS_init": "-backend-config=key=other.tfstate"})
+        self.assertEqual(self.commands("az", "storage", "blob", "exists"), [])
+
+    def test_unlock_failure_after_bootstrap_creation_error_stops_retries(self):
+        self.assert_bootstrap_creation_refused(
+            error=f"{BOOTSTRAP_CREATION_PERMISSION_ERROR}\nError unlocking Azure state. Lock ID: test-lock"
+        )
+        self.assertEqual(self.commands("az", "storage", "blob", "exists"), [])
+
+    def test_lock_failure_before_bootstrap_creation_error_stops_retries(self):
+        self.assert_bootstrap_creation_refused(
+            error=f"Error acquiring the state lock: LeaseAlreadyPresent\n{BOOTSTRAP_CREATION_PERMISSION_ERROR}"
+        )
+        self.assertEqual(self.commands("az", "storage", "blob", "exists"), [])
+
+    def test_state_read_permission_failure_after_probe_is_retried(self):
+        result = self.run_bootstrap(
+            init_responses=[
+                {"code": 1, "output": STATE_READ_PERMISSION_ERROR},
+                {"code": 0, "output": "Backend ready"},
+            ]
+        )
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 2)
+        self.assertEqual(self.sleeps(), [10])
+        self.assertIn(STATE_READ_PERMISSION_ERROR, self.output)
+
+    def test_state_read_permission_retries_are_bounded(self):
+        result = self.run_bootstrap(init_responses=[{"code": 1, "output": STATE_READ_PERMISSION_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("terraform", "init")), 6)
+        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
+        self.assertEqual(self.output.count(STATE_READ_PERMISSION_ERROR), 6)
+        self.assert_no_imports()
+
+    def test_state_read_permission_error_does_not_hide_lock_failure(self):
+        error = f"{STATE_READ_PERMISSION_ERROR}\nfailed to lock azure state: failed to write lock metadata"
+        result = self.run_bootstrap(init_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assertIn(error, self.output)
+        self.assert_no_imports()
+
+    def test_state_read_permission_error_does_not_hide_unlock_failure(self):
+        error = f"{STATE_READ_PERMISSION_ERROR}\nError unlocking Azure state. Lock ID: test-lock"
+        result = self.run_bootstrap(init_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assertIn(error, self.output)
+        self.assert_no_imports()
+
     def test_failed_unlock_with_403_is_visible_and_not_retried(self):
         error = (
             "Error unlocking Azure state. Lock ID: test-lock\nError: failed to delete lock info from metadata: HTTP 403"
@@ -926,6 +1104,44 @@ class ManagementDeployTests(BlobReadinessChecks, TerraformScriptTests):
         self.assertIn(error, self.output)
         self.assertEqual(len(self.commands("terraform", "init")), 1)
         self.assertEqual(self.sleeps(), [])
+        self.assert_no_deployment()
+
+    def test_bootstrap_creation_retry_is_not_enabled_for_management_deployment(self):
+        result = self.run_deploy(init_responses=[{"code": 1, "output": BOOTSTRAP_CREATION_PERMISSION_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(BOOTSTRAP_CREATION_PERMISSION_ERROR, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.commands("az", "storage", "blob", "exists"), [])
+        self.assertEqual(self.sleeps(), [])
+        self.assert_no_deployment()
+
+    def test_state_read_permission_failure_is_retried_before_plan(self):
+        result = self.run_deploy(
+            init_responses=[
+                {"code": 1, "output": STATE_READ_PERMISSION_ERROR},
+                {"code": 0, "output": "Backend ready"},
+            ]
+        )
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 2)
+        self.assertEqual(self.sleeps(), [10])
+        self.assertIn(STATE_READ_PERMISSION_ERROR, self.output)
+        self.assert_deployed_once()
+
+    def test_state_read_permission_exhaustion_stops_before_plan(self):
+        result = self.run_deploy(init_responses=[{"code": 1, "output": STATE_READ_PERMISSION_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("terraform", "init")), 6)
+        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
+        self.assert_no_deployment()
+
+    def test_state_read_permission_error_does_not_hide_unlock_failure(self):
+        error = f"{STATE_READ_PERMISSION_ERROR}\nError unlocking Azure state. Lock ID: test-lock"
+        result = self.run_deploy(init_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assertIn(error, self.output)
         self.assert_no_deployment()
 
     def test_state_permission_error_is_not_retried(self):

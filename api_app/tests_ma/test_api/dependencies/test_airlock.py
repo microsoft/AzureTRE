@@ -14,10 +14,8 @@ AIRLOCK_REQUEST_ID = "af89dccd-cdf8-4e47-8cfe-995faeac0f09"
 
 def _request(workspace_id):
     return AirlockRequest(
-        id=AIRLOCK_REQUEST_ID,
-        workspaceId=workspace_id,
-        type=AirlockRequestType.Import,
-        businessJustification="test")
+        id=AIRLOCK_REQUEST_ID, workspaceId=workspace_id, type=AirlockRequestType.Import, businessJustification="test"
+    )
 
 
 async def test_returns_request_belonging_to_the_workspace_in_the_path():
@@ -25,7 +23,8 @@ async def test_returns_request_belonging_to_the_workspace_in_the_path():
     repo.get_airlock_request_by_id.return_value = _request(WORKSPACE_ID)
 
     result = await get_airlock_request_by_id_from_path(
-        airlock_request_id=AIRLOCK_REQUEST_ID, workspace_id=WORKSPACE_ID, airlock_request_repo=repo)
+        airlock_request_id=AIRLOCK_REQUEST_ID, workspace_id=WORKSPACE_ID, airlock_request_repo=repo
+    )
 
     assert result.id == AIRLOCK_REQUEST_ID
 
@@ -36,6 +35,7 @@ async def test_rejects_request_belonging_to_another_workspace():
 
     with pytest.raises(HTTPException) as exc:
         await get_airlock_request_by_id_from_path(
-            airlock_request_id=AIRLOCK_REQUEST_ID, workspace_id=WORKSPACE_ID, airlock_request_repo=repo)
+            airlock_request_id=AIRLOCK_REQUEST_ID, workspace_id=WORKSPACE_ID, airlock_request_repo=repo
+        )
 
     assert exc.value.status_code == 404

@@ -149,6 +149,12 @@ variable "ci_git_ref" {
   type        = string
 }
 
+variable "ci_repository" {
+  default     = ""
+  description = "The GitHub repository (owner/name) whose CI deployed this TRE. Empty outside CI."
+  type        = string
+}
+
 variable "enable_local_debugging" {
   default     = false
   description = "This will allow Cosmos to be accessible from your local IP address and add some extra role permissions."
