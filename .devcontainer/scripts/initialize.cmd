@@ -1,2 +1,2 @@
 @echo off
-mkdir %USERPROFILE%\.azure %USERPROFILE%\.config || exit /b 0
+mkdir %USERPROFILE%\.azure %USERPROFILE%\.config %USERPROFILE%\.codex || exit /b 0
