@@ -4,7 +4,10 @@
   "type": "object",
   "title": "Azure Health Data Services Workspace Service",
   "description": "Provides Azure Health Data Services within the workspace",
-  "required": [],
+  "required": [
+    "deploy_fhir",
+    "deploy_dicom"
+  ],
   "properties": {
     "display_name": {
       "type": "string",
@@ -23,14 +26,14 @@
     "deploy_dicom": {
       "type": "boolean",
       "title": "Deploy DICOM",
-      "description": "Deploy DICOM instance",
+      "description": "Deploy a DICOM service. Turn on FHIR, DICOM or both.",
       "updateable": true,
       "default": false
     },
     "deploy_fhir": {
       "type": "boolean",
       "title": "Deploy FHIR",
-      "description": "Deploy FHIR instance",
+      "description": "Deploy a FHIR service. Turn on FHIR, DICOM or both.",
       "updateable": true,
       "default": false
     },
@@ -78,6 +81,56 @@
             ]
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "deploy_fhir": {
+            "const": false
+          }
+        },
+        "required": [
+          "deploy_fhir"
+        ]
+      },
+      "then": {
+        "properties": {
+          "deploy_dicom": {
+            "enum": [
+              true
+            ],
+            "updateable": true
+          }
+        },
+        "required": [
+          "deploy_dicom"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "deploy_dicom": {
+            "const": false
+          }
+        },
+        "required": [
+          "deploy_dicom"
+        ]
+      },
+      "then": {
+        "properties": {
+          "deploy_fhir": {
+            "enum": [
+              true
+            ],
+            "updateable": true
+          }
+        },
+        "required": [
+          "deploy_fhir"
+        ]
       }
     }
   ],
