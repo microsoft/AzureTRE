@@ -5,6 +5,8 @@
 ENHANCEMENTS:
 
 BUG FIXES:
+* Reject a template registration with HTTP 422 when its `resourceType` does not match the endpoint, for example a workspace service template posted to `/workspace-templates`. Before this fix, the API ignored `resourceType` and registered the template as the endpoint's type.
+  `resourceType` stays optional, and both `workspace_service` and `workspace-service` spellings are accepted. (`api` 0.29.1) ([#1123](https://github.com/microsoft/AzureTRE/issues/1123))
 
 ## (0.30.0)
 **BREAKING CHANGES**
@@ -176,8 +178,6 @@ BUG FIXES:
 * Fix API resource update retries so a successful retry returns the patched resource to the original caller. (`API` 0.27.32) ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
 * Fix the health check falsely returning OK when Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
 * Keep a new Health FHIR service in the Terraform state when Azure reports it as `Accepted` after the create. Before version 4.75.0, the azurerm provider waited for `Succeeded` after the create and saved the service only after this wait. So the install failed, and each later update and delete of the service failed. The Health bundle now uses azurerm 5.11.0. (`tre-workspace-service-health` 1.0.0) ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
-* Reject a template registration with HTTP 422 when its `resourceType` does not match the endpoint, for example a workspace service template posted to `/workspace-templates`. Before this fix, the API ignored `resourceType` and registered the template as the endpoint's type.
-  `resourceType` stays optional, and both `workspace_service` and `workspace-service` spellings are accepted. (`api` 0.29.1) ([#1123](https://github.com/microsoft/AzureTRE/issues/1123))
 
 COMPONENTS:
 
