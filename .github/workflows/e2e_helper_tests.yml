@@ -12,6 +12,15 @@ on:  # yamllint disable-line rule:truthy
       # test_azure_monitor_contract.py reads these Terraform files.
       - 'core/terraform/azure-monitor/**'
       - 'templates/workspaces/base/terraform/azure-monitor/**'
+      # test_vm_size_defaults.py reads these files.
+      - 'core/terraform/variables.tf'
+      - 'config.sample.yaml'
+      - '.github/actions/devcontainer_run_command/action.yml'
+      - 'docs/tre-admins/environment-variables.md'
+      - 'docs/tre-admins/setup-instructions/cicd-pre-deployment-steps.md'
+      - 'docs/tre-admins/setup-instructions/workflows.md'
+      - 'templates/**/template_schema.json'
+      - 'templates/shared_services/sonatype-nexus-vm/terraform/variables.tf'
       - '.github/workflows/e2e_helper_tests.yml'
 
 permissions:

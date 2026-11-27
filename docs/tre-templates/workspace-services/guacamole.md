@@ -44,3 +44,24 @@ packages, we recommend using a custom VM image with the tooling pre-installed.
 The included user resource templates that rely on bootstrap scripts should only
 be used for trial/demonstration purposes. More info can be found in the
 [custom templates documentation](../user-resources/custom.md).
+
+### Command trace in earlier versions
+
+Before `tre-service-guacamole` 0.14.8, the Guacamole server wrote the start
+command of oauth2-proxy to the console log of its web app. This command has the
+cookie secret of oauth2-proxy, and the web app sends the log to the Log
+Analytics workspace of the TRE core. The server makes a new cookie secret at
+each start and keeps it only in memory. The upgrade to 0.14.8 restarts the
+server, so after the upgrade the old value in Log Analytics has no use.
+
+Before `tre-service-guacamole-linuxvm` 1.4.10, the setup script of the Linux VM
+wrote its commands to the cloud-init output log `/var/log/cloud-init-output.log`
+on the VM. Some of these commands have the key of the workspace storage
+account, which the VM uses for the workspace file share. An upgrade does not
+change an existing VM, so its log keeps the key. The VM also keeps the key in
+the credential file of the share in `/etc/smbcredentials` and in its cloud-init
+user data, so a change of the log does not remove the key from the VM.
+
+If the people who can sign in to such a VM must not keep the key, rotate the
+key of the workspace storage account. After a rotation, the share mount of each
+existing VM fails until the VM gets the new key.

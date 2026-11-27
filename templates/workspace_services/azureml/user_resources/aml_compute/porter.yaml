@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-user-resource-aml-compute-instance
-version: 0.5.15
+version: 0.5.16
 description: "Azure Machine Learning Compute Instance"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -30,7 +30,7 @@ parameters:
     type: string
   - name: vm_size
     type: string
-    default: "Standard_DS2_v3"
+    default: "Standard_D2_v3"
   - name: user_object_id
     type: string
   - name: tfstate_resource_group_name

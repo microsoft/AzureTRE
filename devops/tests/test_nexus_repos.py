@@ -334,5 +334,25 @@ class CloudInitWaitTests(unittest.TestCase):
                     self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
 
 
+class UbuntuSourceTests(unittest.TestCase):
+    def test_nexus_proxies_use_https(self):
+        for path in sorted((NEXUS / "nexus_repos_config").glob("*.json")):
+            remote = json.loads(path.read_text()).get("proxy", {}).get("remoteUrl")
+            if remote:
+                with self.subTest(config=path.name):
+                    self.assertTrue(remote.startswith("https://"), remote)
+
+    def test_linux_vm_apt_sources_name_their_key(self):
+        sources = re.findall(
+            r"^\s*deb\s+(?:(\[[^\]]*\])\s+)?(\S+)", (LINUXVM / "apt_sources_config.yml").read_text(), re.MULTILINE
+        )
+        self.assertLessEqual({"$PRIMARY", "$SECURITY"}, {source for _, source in sources})
+        for options, source in sources:
+            with self.subTest(source=source):
+                self.assertRegex(options, r"^\[signed-by=/[^\]\s]+\]$")
+                if source in ("$PRIMARY", "$SECURITY"):
+                    self.assertEqual(options, "[signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg]")
+
+
 if __name__ == "__main__":
     unittest.main()

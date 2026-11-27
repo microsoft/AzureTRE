@@ -6,7 +6,7 @@
         "strictContentTypeValidation": false
     },
     "proxy": {
-        "remoteUrl": "http://archive.ubuntu.com/ubuntu/",
+        "remoteUrl": "https://archive.ubuntu.com/ubuntu/",
         "contentMaxAge": 1440,
         "metadataMaxAge": 1440
     },

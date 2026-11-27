@@ -1,10 +1,29 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
+* If the Airlock notifier shared service is installed, upgrade it to 1.0.15 directly after the upgrade to `core` 0.20.0. This upgrade is required. Azure mounts the content share of earlier notifier versions over the public network, which the core storage account no longer accepts.
+  An earlier notifier fails at the first restart or configuration change of its Logic App after the core upgrade. See [Airlock notifier](docs/tre-templates/shared-services/airlock-notifier.md#storage-and-network).
+  Also upgrade the Sonatype Nexus shared service to 3.11.6. Earlier versions keep the boot diagnostics of the Nexus VM in the core storage account. Until the upgrade, the boot diagnostics view of that VM does not load from outside the virtual network. ([#5294](https://github.com/microsoft/AzureTRE/issues/5294))
 
 ENHANCEMENTS:
+* Report the VM sizes that the repository uses and their availability in one or more Azure regions, for VMs and Azure ML compute, with `devops/scripts/vm_size_report.py` or the **VM Size Availability** workflow. See [VM size availability](docs/tre-admins/vm-size-availability.md). (`devops` 0.8.0) ([#5289](https://github.com/microsoft/AzureTRE/issues/5289))
+* Add `Standard_B2ls_v2` as a size of the admin VM, and `Standard_B2s_v2` and `Standard_B4s_v2` as sizes of Nexus. Azure does not offer the default sizes `Standard_B2s` and `Standard_B2ms` to all subscriptions in all regions, for example in Switzerland North.
+  The defaults do not change, because the sizes that Azure offers depend on the subscription. If Azure does not offer a default size, set `resource_processor_vmss_sku`, `admin_jumpbox_vm_sku` or the Nexus `vm_size` to a size that the [VM size report](docs/tre-admins/vm-size-availability.md) shows as available.
+  (`tre-shared-service-admin-vm` 0.5.8, `tre-shared-service-sonatype-nexus` 3.11.6) ([#5289](https://github.com/microsoft/AzureTRE/issues/5289))
 
 BUG FIXES:
+* Change the Porter default of the AML compute instance bundle from `Standard_DS2_v3` to `Standard_D2_v3`, the same as its schema. `Standard_DS2_v3` does not exist. (`tre-user-resource-aml-compute-instance` 0.5.16) ([#5289](https://github.com/microsoft/AzureTRE/issues/5289))
+* Make apt on the Guacamole Linux VM use the Ubuntu archive key for the Ubuntu sources from Nexus, and make Nexus get the Ubuntu packages over HTTPS, the same as its other proxies. An upgrade does not change the apt sources of an existing VM. (`tre-service-guacamole-linuxvm` 1.4.10, `tre-shared-service-sonatype-nexus` 3.11.6) ([#5291](https://github.com/microsoft/AzureTRE/issues/5291))
+* Create the network rules of the Gitea storage account together with the account. A separate resource set them after the create and changed them again before the delete. An upgrade removes the separate resource from the Terraform state and keeps the rules.
+  An uninstall uses the installed bundle version, so complete an upgrade of the service first to keep the rules during the uninstall. (`tre-workspace-service-gitea` 2.0.1) ([#5292](https://github.com/microsoft/AzureTRE/issues/5292))
+* Create the network rules of the workspace storage account and the Airlock export in-progress storage account together with each account. A separate resource set them after the create and changed them again before the delete. An upgrade removes the separate resource from the Terraform state and keeps the rules.
+  An uninstall uses the installed bundle version, so complete an upgrade of a workspace and its Gitea services first to keep the rules during the delete.
+  (`tre-workspace-base` 2.12.5, `tre-workspace-unrestricted` 0.15.4, `tre-workspace-airlock-import-review` 0.18.4) ([#5292](https://github.com/microsoft/AzureTRE/issues/5292))
+* Turn off the shell command trace in the Guacamole Linux VM setup script and around the oauth2-proxy start of the Guacamole server. The comment in the setup script says that the trace is for debugging only.
+  Earlier versions wrote some values of these commands to their logs. See [Command trace in earlier versions](docs/tre-templates/workspace-services/guacamole.md#command-trace-in-earlier-versions). (`tre-service-guacamole-linuxvm` 1.4.10, `tre-service-guacamole` 0.14.8) ([#5293](https://github.com/microsoft/AzureTRE/issues/5293))
+* Accept traffic to the core storage account only through its private endpoints and from trusted Azure services. Add private endpoints for the queue and table services, which the Airlock notifier Logic App uses. The Logic App reaches its content share through the virtual network, and Nexus keeps its boot diagnostics in managed storage.
+  The notifier uses the AzureRM provider 4.57.0, which updates the Logic App in one request with all its app settings.
+  (`core` 0.20.0, `tre-shared-service-airlock-notifier` 1.0.15, `tre-shared-service-sonatype-nexus` 3.11.6) ([#5294](https://github.com/microsoft/AzureTRE/issues/5294))
 
 ## (0.30.0)
 **BREAKING CHANGES**

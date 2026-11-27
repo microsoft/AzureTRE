@@ -14,6 +14,12 @@ resource "azurerm_storage_account" "stg" {
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
+  # Shared services reach the account through the private endpoints below.
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -85,5 +91,60 @@ resource "azurerm_private_endpoint" "filepe" {
   # private endpoints in serial
   depends_on = [
     azurerm_private_endpoint.blobpe
+  ]
+}
+
+# The Airlock notifier Logic App keeps its runtime state in queues and tables.
+resource "azurerm_private_endpoint" "queuepe" {
+  name                = "pe-queue-${var.tre_id}"
+  location            = azurerm_resource_group.core.location
+  resource_group_name = azurerm_resource_group.core.name
+  subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-queuecore"
+    private_dns_zone_ids = [module.network.queue_core_dns_zone_id]
+  }
+
+  private_service_connection {
+    name                           = "psc-queuestg-${var.tre_id}"
+    private_connection_resource_id = azurerm_storage_account.stg.id
+    is_manual_connection           = false
+    subresource_names              = ["queue"]
+  }
+
+  # private endpoints in serial
+  depends_on = [
+    azurerm_private_endpoint.filepe
+  ]
+}
+
+resource "azurerm_private_endpoint" "tablepe" {
+  name                = "pe-table-${var.tre_id}"
+  location            = azurerm_resource_group.core.location
+  resource_group_name = azurerm_resource_group.core.name
+  subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-tablecore"
+    private_dns_zone_ids = [module.network.table_core_dns_zone_id]
+  }
+
+  private_service_connection {
+    name                           = "psc-tablestg-${var.tre_id}"
+    private_connection_resource_id = azurerm_storage_account.stg.id
+    is_manual_connection           = false
+    subresource_names              = ["table"]
+  }
+
+  # private endpoints in serial
+  depends_on = [
+    azurerm_private_endpoint.queuepe
   ]
 }

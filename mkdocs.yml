@@ -145,6 +145,7 @@ nav:
           - Upgrading Resources Version: tre-admins/upgrading-resources.md
           - Configuring Airlock Reviews: tre-admins/configure-airlock-review.md
           - Supported Clouds: tre-admins/supported-clouds.md
+          - VM Size Availability: tre-admins/vm-size-availability.md
           - Customer Managed Keys: tre-admins/customer-managed-keys.md
           - Custom Domain Name: tre-admins/custom-domain.md
           - Firewall Force Tunneling: tre-admins/configure-firewall-force-tunneling.md
