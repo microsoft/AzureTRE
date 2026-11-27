@@ -1,8 +1,8 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
-* If the Airlock notifier shared service is installed, upgrade it to 1.0.15 directly after the upgrade to `core` 0.20.0. Azure mounts the content share of earlier notifier versions over the public network, which the core storage account no longer accepts.
-  A running notifier can continue to work, but a restart or a configuration change of its Logic App can fail until the upgrade. See [Airlock notifier](docs/tre-templates/shared-services/airlock-notifier.md#storage-and-network).
+* If the Airlock notifier shared service is installed, upgrade it to 1.0.15 directly after the upgrade to `core` 0.20.0. This upgrade is required. Azure mounts the content share of earlier notifier versions over the public network, which the core storage account no longer accepts.
+  An earlier notifier fails at the first restart or configuration change of its Logic App after the core upgrade. See [Airlock notifier](docs/tre-templates/shared-services/airlock-notifier.md#storage-and-network).
   Also upgrade the Sonatype Nexus shared service to 3.11.6. Earlier versions keep the boot diagnostics of the Nexus VM in the core storage account. Until the upgrade, the boot diagnostics view of that VM does not load from outside the virtual network. ([#5294](https://github.com/microsoft/AzureTRE/issues/5294))
 
 ENHANCEMENTS:
