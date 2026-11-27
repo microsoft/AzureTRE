@@ -1,6 +1,13 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+## (0.30.0)
+**BREAKING CHANGES**
 * `tre-workspace-service-health` 1.0.0 stops an install, update or upgrade of a Health service without FHIR and DICOM before Terraform changes a resource. Azure fails a private endpoint to a healthcare workspace without a FHIR or DICOM service.
   The API rejects a create or a PATCH without FHIR and DICOM with HTTP 400, before it stores the request. A create must give `deploy_fhir` and `deploy_dicom`. A PATCH that turns off one of them must give the other as `true`.
   If the upgrade of an earlier service without FHIR and DICOM stops, turn on FHIR or DICOM with an update, or delete the service. ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
@@ -53,6 +60,8 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Let a fork run CI in a shared subscription with the `CI_ENV_PREFIX` variable and a `ci_repository` tag, which scope cleanup and destruction. Keep a CI environment, for example for a demo, with a `ci_keep_until` tag. (`core` 0.18.15, `devops` 0.7.0, `build-scripts` 1.1.5) ([#5272](https://github.com/microsoft/AzureTRE/pull/5272))
 
 BUG FIXES:
+* Fix Porter test collection from the repository root and run the Python unit suite on pull requests. Retry Nexus repository lookups when the response body is blank.
+  (`resource_processor` 0.13.17, `tre-shared-service-sonatype-nexus` 3.11.5) ([#5318](https://github.com/microsoft/AzureTRE/issues/5318))
 * Update Nexus from 3.94.0 to 3.94.3. The Nexus 3.94.3 image stops trusting the eMudhra certificate chains that Sonatype reports as compromised. (`tre-shared-service-sonatype-nexus` 3.11.3) ([#5276](https://github.com/microsoft/AzureTRE/issues/5276))
 * Change the Azure Monitor private link scope of the core and of each workspace only after its private endpoint exists. In workspaces, also wait 5 minutes after the scope changes before Terraform deletes the endpoint.
   A scope change makes Azure update the endpoint, and during the update Azure rejects DNS zone group changes with 409 AnotherOperationInProgress, so some workspaces failed to deploy or delete.
@@ -169,6 +178,48 @@ BUG FIXES:
 * Keep a new Health FHIR service in the Terraform state when Azure reports it as `Accepted` after the create. Before version 4.75.0, the azurerm provider waited for `Succeeded` after the create and saved the service only after this wait. So the install failed, and each later update and delete of the service failed. The Health bundle now uses azurerm 5.11.0. (`tre-workspace-service-health` 1.0.0) ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
 * Reject a template registration with HTTP 422 when its `resourceType` does not match the endpoint, for example a workspace service template posted to `/workspace-templates`. Before this fix, the API ignored `resourceType` and registered the template as the endpoint's type.
   `resourceType` stays optional, and both `workspace_service` and `workspace-service` spellings are accepted. (`api` 0.29.1) ([#1123](https://github.com/microsoft/AzureTRE/issues/1123))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.7.0 |
+| core | 0.19.1 |
+| ui | 0.10.4 |
+| api | 0.29.0 |
+| resource_processor | 0.13.17 |
+| airlock_processor | 0.8.35 |
+| cli | 0.2.13 |
+| build-scripts | 1.1.5 |
+| guacamole-server-image | 0.10.2 |
+| gitea-image | 0.3.13 |
+| tre-service-guacamole-linuxvm | 1.4.9 |
+| tre-service-guacamole-import-reviewvm | 2.0.6 |
+| tre-service-guacamole-export-reviewvm | 2.0.9 |
+| tre-service-guacamole-windowsvm | 3.0.5 |
+| tre-service-guacamole | 0.14.7 |
+| tre-service-databricks | 1.0.19 |
+| tre-workspace-service-ohdsi | 0.3.14 |
+| tre-workspace-service-gitea | 2.0.0 |
+| tre-workspace-service-mysql | 1.0.16 |
+| tre-workspace-service-azuresql | 1.0.20 |
+| tre-user-resource-aml-compute-instance | 0.5.15 |
+| tre-service-azureml | 1.1.8 |
+| tre-workspace-service-health | 1.0.0 |
+| tre-workspace-service-openai | 1.1.0 |
+| tre-workspace-airlock-import-review | 0.18.3 |
+| tre-workspace-unrestricted | 0.15.3 |
+| tre-workspace-base | 2.12.4 |
+| tre-shared-service-cyclecloud | 1.0.0 |
+| tre-shared-service-databricks-private-auth | 0.1.16 |
+| tre-shared-service-sonatype-nexus | 3.11.5 |
+| tre-shared-service-admin-vm | 0.5.7 |
+| tre-shared-service-firewall | 1.6.4 |
+| tre-shared-service-gitea | 1.2.6 |
+| tre-shared-service-certs | 0.9.0 |
+| tre-shared-service-airlock-notifier | 1.0.14 |
+
+**Full Changelog**: [v0.29.1...v0.30.0](https://github.com/microsoft/AzureTRE/compare/v0.29.1...v0.30.0)
 
 ## (0.29.1)
 **BREAKING CHANGES**
