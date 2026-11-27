@@ -63,12 +63,12 @@ async def test_registered_templates_preserve_create_and_patch_restrictions(diale
     with pytest.raises(ValidationError):
         resources._validate_resource_parameters({"properties": {**valid, "editable": "x"}}, enriched)
 
-    resources.validate_patch(
+    await resources.validate_patch(
         ResourcePatch(properties={"editable": "changed"}), template_repo, template, RESOURCE_ACTION_UPDATE
     )
     for properties in [{"fixed": "changed"}, {"unexpected": "value"}, {"editable": "x"}]:
         with pytest.raises(ValidationError):
-            resources.validate_patch(
+            await resources.validate_patch(
                 ResourcePatch(properties=properties), template_repo, template, RESOURCE_ACTION_UPDATE
             )
     assert enriched == original

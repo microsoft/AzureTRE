@@ -3,6 +3,7 @@ import { ComponentAction, VMPowerStates, Resource } from "../../models/resource"
 import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from "@fluentui/react";
 import { SecuredByRole } from "./SecuredByRole";
 import { ResourceType } from "../../models/resourceType";
+import { WorkspaceService } from "../../models/workspaceService";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { getActionDisplayName, getActionIcon, TemplateAction } from "../../models/resourceTemplate";
 import { useResourceTemplate } from "../../hooks/useResourceTemplate";
@@ -240,7 +241,18 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       )}
       {showDelete && <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />}
       {showCopyUrl && <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />}
-      {showUpgrade && <ConfirmUpgradeResource onDismiss={() => setShowUpgrade(false)} resource={props.resource} />}
+      {showUpgrade && (
+        <ConfirmUpgradeResource
+          onDismiss={() => setShowUpgrade(false)}
+          resource={props.resource}
+          parentWorkspaceService={
+            props.resource.resourceType === ResourceType.UserResource &&
+            (parentResource as WorkspaceService)?.templateName
+              ? (parentResource as WorkspaceService)
+              : undefined
+          }
+        />
+      )}
       {actionError && (
         // Keep clicks on the error bar from reaching a clickable parent card.
         <span onClick={(e) => e.stopPropagation()}>

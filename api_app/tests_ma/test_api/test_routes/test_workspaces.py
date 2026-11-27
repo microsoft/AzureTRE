@@ -120,7 +120,15 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
         etag="",
-        properties={"client_id": "12345", "scope_id": "test_scope_id", "sp_id": "test_sp_id"},
+        properties={
+            "client_id": "12345",
+            "scope_id": "test_scope_id",
+            "sp_id": "test_sp_id",
+            "display_name": "Test Name",
+            "description": "desc here",
+            "title": "Test Title",
+            "os_image": "Windows 11",
+        },
         resourcePath=f"/workspaces/{workspace_id}",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=create_admin_user().model_dump(),
@@ -192,12 +200,17 @@ def sample_deployed_workspace(workspace_id=WORKSPACE_ID, authInfo={}):
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
         etag="",
-        properties={},
+        properties={
+            "display_name": "Test Name",
+            "description": "desc here",
+            "title": "Test Title",
+            "os_image": "Windows 11",
+        },
         resourcePath="test",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
     )
     if authInfo:
-        workspace.properties = {**authInfo}
+        workspace.properties.update(authInfo)
     return workspace
 
 
@@ -208,7 +221,12 @@ def sample_workspace_service(workspace_service_id=SERVICE_ID, workspace_id=WORKS
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
         etag="",
-        properties={},
+        properties={
+            "display_name": "Test Name",
+            "description": "desc here",
+            "title": "Test Title",
+            "os_image": "Windows 11",
+        },
         resourcePath=f"/workspaces/{workspace_id}/workspace-services/{workspace_service_id}",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=create_workspace_owner_user().model_dump(),
@@ -225,7 +243,12 @@ def sample_user_resource_object(
         templateName="tre-user-resource",
         templateVersion="0.1.0",
         etag="",
-        properties={},
+        properties={
+            "display_name": "Test Name",
+            "description": "desc here",
+            "title": "Test Title",
+            "os_image": "Windows 11",
+        },
         resourcePath=f"/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{user_resource_id}",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=create_workspace_researcher_user().model_dump(),
@@ -244,6 +267,8 @@ def sample_resource_template() -> ResourceTemplate:
         current=True,
         required=["os_image", "title"],
         properties={
+            "display_name": {"type": "string", "title": "Display Name"},
+            "description": {"type": "string", "title": "Description"},
             "title": {"type": "string", "title": "Title of the resource"},
             "os_image": {
                 "type": "string",
@@ -259,6 +284,12 @@ def sample_resource_template() -> ResourceTemplate:
                 "enum": ["small", "large"],
                 "updateable": True,
             },
+            "overview": {"type": "string", "title": "Overview"},
+            "private_field_1": {"type": "string", "title": "Private Field 1"},
+            "private_field_2": {"type": "string", "title": "Private Field 2"},
+            "client_id": {"type": "string", "title": "Client ID"},
+            "scope_id": {"type": "string", "title": "Scope ID"},
+            "sp_id": {"type": "string", "title": "SP ID"},
         },
         actions=[],
     )
@@ -884,7 +915,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
     @patch(
         "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
-        return_value=sample_workspace(),
+        return_value=sample_resource_template(),
     )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspaces_with_upgrade_major_version_and_force_update_returns_patched_workspace(
@@ -961,7 +992,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
     @patch(
         "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
-        return_value=sample_workspace(),
+        return_value=sample_resource_template(),
     )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspaces_with_upgrade_minor_version_patches_workspace(

@@ -16,6 +16,7 @@ from .test_workspaces import (
     OPERATION_ID,
     assert_no_submitted_value,
     sample_resource_operation,
+    sample_resource_template,
     model_error_with_a_secret,
     schema_error_with_a_secret,
 )
@@ -52,6 +53,8 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
             "overview": "overview here",
             "private_field_1": "value_1",
             "private_field_2": "value_2",
+            "title": "A display name",
+            "os_image": "Windows 11",
         },
         resourcePath=f"/shared-services/{shared_service_id}",
         updatedWhen=FAKE_CREATE_TIMESTAMP,
@@ -324,7 +327,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     )
     @patch(
         "api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version",
-        return_value=sample_shared_service(),
+        return_value=sample_resource_template(),
     )
     @patch(
         "api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service()
@@ -363,7 +366,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     )
     @patch(
         "api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version",
-        return_value=sample_shared_service(),
+        return_value=sample_resource_template(),
     )
     @patch(
         "api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service()
