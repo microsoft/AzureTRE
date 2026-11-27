@@ -272,8 +272,12 @@ async def patch_workspace(
                     workspace, resource_patch, resource_template_repo, current_template, force_version_update
                 )
             if resource_patch.properties:
-                workspace_repo.validate_patch(
-                    resource_patch, resource_template_repo, current_template, strings.RESOURCE_ACTION_UPDATE
+                await workspace_repo.validate_patch(
+                    resource_patch,
+                    resource_template_repo,
+                    current_template,
+                    strings.RESOURCE_ACTION_UPDATE,
+                    current_properties=workspace.properties,
                 )
 
             pending_upgrade_workspace = copy.deepcopy(workspace)

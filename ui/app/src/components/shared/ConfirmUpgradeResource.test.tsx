@@ -1243,7 +1243,11 @@ describe("ConfirmUpgradeResource Component", () => {
       count_val: 0,
     };
 
-    expect(matchesIfCondition(ifSchema, stateWithUndefined)).toBe(false);
+    // An absent property only fails the condition when it is also required.
+    expect(matchesIfCondition(ifSchema, stateWithUndefined)).toBe(true);
+    expect(matchesIfCondition({ ...ifSchema, required: ["enabled_flag", "count_val"] }, stateWithUndefined)).toBe(
+      false,
+    );
   });
 
   it("renders exception layout when parent workspace service info is missing for user resource", async () => {

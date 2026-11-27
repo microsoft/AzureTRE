@@ -6,6 +6,7 @@ import {
   isKeyActiveInTemplate,
   isPropertyRequiredInState,
   pruneSchemaNode,
+  resolveLocalRefs,
   setNestedValue,
 } from "./schemaUpgradeUtils";
 
@@ -60,14 +61,27 @@ describe("schema upgrade utilities", () => {
     });
   });
 
-  it("does not extract conditionals when a new key is only declared in a branch", () => {
+  it("extracts conditionals when a new key is only declared in a branch", () => {
     const conditional = {
       if: { properties: { selector: { const: "enabled" } } },
       then: { required: ["new_property"] },
     };
     const schema = { allOf: [conditional] };
 
-    expect(extractConditionalBlocks(schema, ["new_property"])).toEqual({ allOf: [] });
+    expect(extractConditionalBlocks(schema, ["new_property"])).toEqual({ allOf: [conditional] });
+  });
+
+  it("discovers properties behind local references and tolerates cycles", () => {
+    const schema: any = {
+      $defs: {
+        settings: { type: "object", properties: { child: { type: "string" }, next: { $ref: "#/$defs/settings" } } },
+      },
+      properties: { settings: { $ref: "#/$defs/settings" } },
+    };
+
+    const keys = getAllPropertyKeysFromTemplate(resolveLocalRefs(schema), { settings: { child: "x" } });
+
+    expect(keys).toContain("settings.child");
   });
 
   it("keeps only target schema fields when cloning an upgrade array", () => {

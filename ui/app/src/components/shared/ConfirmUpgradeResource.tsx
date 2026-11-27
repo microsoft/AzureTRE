@@ -24,7 +24,7 @@ import { ExceptionLayout } from "./ExceptionLayout";
 import { useAppDispatch } from "../../hooks/customReduxHooks";
 import { addUpdateOperation } from "../shared/notifications/operationsSlice";
 import Form from "@rjsf/fluent-ui";
-import validator from "@rjsf/validator-ajv8";
+import { createResourceTemplateValidator } from "../../models/resourceTemplateValidator";
 import {
   getNestedValue,
   setNestedValue,
@@ -36,6 +36,7 @@ import {
   buildReducedSchema,
   extractConditionalBlocks,
   getAllPropertyKeysFromTemplate,
+  resolveLocalRefs,
   getConditionalPropertyKeysForTriggers,
   isKeyActiveInTemplate,
 } from "../../utils/schemaUpgradeUtils";
@@ -254,7 +255,9 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
         let fetchUrl = `${activeTemplateGetPath}/${props.resource.templateName}?version=${selectedVersion}`;
 
-        const newTemplate = await apiCall(fetchUrl, HttpMethod.Get, undefined, undefined, ResultType.JSON);
+        const newTemplate = resolveLocalRefs(
+          await apiCall(fetchUrl, HttpMethod.Get, undefined, undefined, ResultType.JSON),
+        );
         if (didCancel) return;
 
         // Reuse cached current template if available to avoid redundant network calls
@@ -262,12 +265,14 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         if (currentTemplateRef.current) {
           currentTemplate = currentTemplateRef.current;
         } else {
-          currentTemplate = await apiCall(
-            `${activeTemplateGetPath}/${props.resource.templateName}?version=${props.resource.templateVersion}`,
-            HttpMethod.Get,
-            undefined,
-            undefined,
-            ResultType.JSON,
+          currentTemplate = resolveLocalRefs(
+            await apiCall(
+              `${activeTemplateGetPath}/${props.resource.templateName}?version=${props.resource.templateVersion}`,
+              HttpMethod.Get,
+              undefined,
+              undefined,
+              ResultType.JSON,
+            ),
           );
           if (didCancel) return;
           currentTemplateRef.current = currentTemplate;
@@ -510,6 +515,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
   // Use buildReducedSchema to include all new properties (including hidden ones)
   // Hidden properties will be rendered but not shown due to tre-hidden CSS class
+  const validator = useMemo(() => createResourceTemplateValidator(newTemplateSchema), [newTemplateSchema]);
   const reducedSchemaProperties = newTemplateSchema ? buildReducedSchema(newTemplateSchema, allNewProperties) : null;
 
   // Extract any conditional blocks from full schema, filtered by all new properties

@@ -191,13 +191,11 @@ def sample_resource_template_with_new_property(version: str = "0.2.0") -> dict:
     ).model_dump(exclude_none=True)
 
 
-def test_matches_if_condition_requires_referenced_properties(resource_repo):
+def test_matches_if_condition_follows_json_schema_for_absent_properties(resource_repo):
+    # An absent optional selector satisfies `properties`, so `then` applies as in the schema validator.
+    assert resource_repo._matches_if_condition({"properties": {"selector": {"const": "A"}}}, {})
     assert not resource_repo._matches_if_condition(
-        {"properties": {"selector": {"const": "A"}}},
-        {},
-    )
-    assert not resource_repo._matches_if_condition(
-        {"properties": {"selector": {"enum": [None, "A"]}}},
+        {"properties": {"selector": {"const": "A"}}, "required": ["selector"]},
         {},
     )
     assert resource_repo._matches_if_condition(
@@ -474,7 +472,7 @@ async def test_patch_resource_preserves_property_history(
         resource_patch,
         basic_resource_template,
         etag,
-        None,
+        MagicMock(enrich_template=MagicMock(return_value={})),
         resource_history_repo,
         user,
         strings.RESOURCE_ACTION_UPDATE,
@@ -494,7 +492,7 @@ async def test_patch_resource_preserves_property_history(
         new_patch,
         basic_resource_template,
         etag,
-        None,
+        MagicMock(enrich_template=MagicMock(return_value={})),
         resource_history_repo,
         user,
         strings.RESOURCE_ACTION_UPDATE,
@@ -524,7 +522,7 @@ async def test_patch_resource_stores_a_placeholder_for_sensitive_values(_, __, r
         resource_patch,
         template_with_secret(basic_resource_template),
         "etag",
-        None,
+        MagicMock(enrich_template=MagicMock(return_value={})),
         history_repo,
         create_test_user(),
         strings.RESOURCE_ACTION_UPDATE,
@@ -1049,7 +1047,7 @@ async def test_patch_resource_stores_a_placeholder_for_sensitive_values_in_array
         resource_patch,
         masking_template(ACCOUNTS),
         "etag",
-        None,
+        MagicMock(enrich_template=MagicMock(return_value={})),
         history_repo,
         create_test_user(),
         strings.RESOURCE_ACTION_UPDATE,
@@ -1168,13 +1166,115 @@ async def test_patch_resource_replaces_same_length_array_on_ordinary_update(
         patch,
         basic_resource_template,
         "some-etag",
-        None,
+        MagicMock(
+            enrich_template=MagicMock(return_value={"properties": {"items": {"type": "array", "updateable": True}}})
+        ),
         resource_history_repo,
         create_test_user(),
         strings.RESOURCE_ACTION_UPDATE,
     )
 
     assert resource.properties["items"] == [{"name": "new"}]
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.resources.ResourceRepository.validate_patch")
+async def test_patch_resource_keeps_sibling_of_partially_patched_nested_object(
+    _, resource_repo, resource_history_repo, basic_resource_template
+):
+    resource_repo.update_item_with_etag = AsyncMock(return_value=None)
+    resource_history_repo.create_resource_history_item = AsyncMock()
+    resource = sample_resource()
+    resource.properties["parent_obj"] = {"child_a": "a", "child_b": "b"}
+    patch_ = ResourcePatch(properties={"parent_obj": {"child_b": "new"}})
+
+    await resource_repo.patch_resource(
+        resource,
+        patch_,
+        basic_resource_template,
+        "some-etag",
+        MagicMock(enrich_template=MagicMock(return_value={})),
+        resource_history_repo,
+        create_test_user(),
+        strings.RESOURCE_ACTION_UPDATE,
+    )
+
+    assert resource.properties["parent_obj"] == {"child_a": "a", "child_b": "new"}
+
+
+def test_get_property_schema_searches_nested_conditionals(resource_repo):
+    schema = {
+        "properties": {
+            "parent": {
+                "type": "object",
+                "properties": {"mode": {"type": "string"}},
+                "allOf": [
+                    {
+                        "if": {"properties": {"mode": {"const": "a"}}},
+                        "then": {"properties": {"tier": {"type": "string", "updateable": True}}},
+                    }
+                ],
+            }
+        }
+    }
+
+    assert resource_repo._get_property_schema(schema, "parent.tier")["updateable"] is True
+    assert resource_repo._is_updateable_path(schema, "parent.tier")
+
+
+def test_property_keys_follow_local_references(resource_repo):
+    schema = {
+        "$defs": {"settings": {"type": "object", "properties": {"child": {"type": "string"}}}},
+        "properties": {"settings": {"$ref": "#/$defs/settings"}},
+    }
+
+    assert "settings.child" in resource_repo._get_all_property_keys_from_template(schema)
+    assert resource_repo._get_property_schema(schema, "settings.child") == {"type": "string"}
+
+
+@pytest.mark.asyncio
+async def test_validate_patch_rejects_resizing_protected_array_through_updateable_leaf(resource_repo):
+    template = sample_resource_template()
+    template["properties"]["rules"] = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "note": {"type": "string", "updateable": True}},
+        },
+    }
+    template_repo = MagicMock()
+    template_repo.enrich_template = MagicMock(return_value=template)
+    patch_ = ResourcePatch(properties={"rules": [{"note": "x"}]})
+
+    with pytest.raises(ValidationError):
+        await resource_repo.validate_patch(
+            patch_,
+            template_repo,
+            template,
+            strings.RESOURCE_ACTION_UPDATE,
+            current_properties={"rules": [{"name": "a", "note": "1"}, {"name": "b", "note": "2"}]},
+        )
+
+
+@pytest.mark.asyncio
+async def test_validate_patch_enforces_required_fields_of_replaced_array_items(resource_repo):
+    template = sample_resource_template()
+    template["properties"]["rules"] = {
+        "type": "array",
+        "updateable": True,
+        "items": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}}},
+    }
+    template_repo = MagicMock()
+    template_repo.enrich_template = MagicMock(return_value=template)
+
+    with pytest.raises(ValidationError):
+        await resource_repo.validate_patch(
+            ResourcePatch(properties={"rules": [{}]}),
+            template_repo,
+            template,
+            strings.RESOURCE_ACTION_UPDATE,
+            current_properties={"rules": [{"name": "a"}]},
+        )
 
 
 @pytest.mark.asyncio

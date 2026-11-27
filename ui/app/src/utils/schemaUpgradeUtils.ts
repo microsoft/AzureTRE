@@ -15,6 +15,30 @@ export const clonePropertyValues = <T>(value: T): T => {
   return JSON.parse(JSON.stringify(value)) as T;
 };
 
+// Inline local references such as "#/$defs/settings" so that discovery, lookup and required-field checks see the
+// same properties as the validator. A reference that points back into its own chain is left as it is.
+export const resolveLocalRefs = (schema: any): any => {
+  const resolve = (node: any, chain: string[]): any => {
+    if (Array.isArray(node)) return node.map((item) => resolve(item, chain));
+    if (!node || typeof node !== "object") return node;
+    const ref = node.$ref;
+    if (typeof ref === "string" && ref.startsWith("#/")) {
+      if (chain.includes(ref)) return node;
+      let target: any = schema;
+      for (const part of ref.slice(2).split("/")) {
+        target = target?.[part.replace(/~1/g, "/").replace(/~0/g, "~")];
+      }
+      if (target && typeof target === "object") {
+        const { $ref: _ignored, ...siblings } = node;
+        return resolve({ ...target, ...siblings }, [...chain, ref]);
+      }
+      return node;
+    }
+    return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, resolve(value, chain)]));
+  };
+  return resolve(schema, []);
+};
+
 const getAllPropertyKeysFromSchemaNode = (schema: any, prefix = "", data: any = undefined): string[] => {
   if (!schema || typeof schema !== "object") return [];
   let keys = getAllPropertyKeys(schema.properties, prefix, data);
@@ -193,8 +217,12 @@ export const getNestedUiSchema = (uiSchema: any, path: string): any => {
 // Utility to check if a simple JSON Schema condition matches the current state
 export const matchesIfCondition = (ifSchema: any, state: any): boolean => {
   if (!ifSchema || !ifSchema.properties) return false;
+  const required: string[] = Array.isArray(ifSchema.required) ? ifSchema.required : [];
+  if (required.some((key) => getNestedValue(state, key) === undefined)) return false;
   for (const [key, cond] of Object.entries(ifSchema.properties)) {
     const val = getNestedValue(state, key);
+    // JSON Schema: an absent property satisfies `properties` unless it is also required.
+    if (val === undefined) continue;
     if (cond && typeof cond === "object") {
       if ("const" in (cond as any)) {
         if (val !== (cond as any).const) return false;
@@ -390,7 +418,13 @@ export const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
       const conditionalKeys = collectConditionalKeys(entry);
       const conditionalTopKeys = conditionalKeys.map((k) => (typeof k === "string" ? k.split(".")[0] : k));
       // include entry if any top-level conditional key matches a top-level new key
-      if (conditionalTopKeys.some((ck) => newTopKeys.has(ck))) {
+      // also include entries whose then/else branches introduce or require a new property
+      const branchKeys = [entry.then, entry.else].flatMap((branch: any) => [
+        ...Object.keys(branch?.properties ?? {}),
+        ...(Array.isArray(branch?.required) ? branch.required : []),
+      ]);
+      const branchTopKeys = branchKeys.map((k) => (typeof k === "string" ? k.split(".")[0] : k));
+      if ([...conditionalTopKeys, ...branchTopKeys].some((ck) => newTopKeys.has(ck))) {
         conditionalEntries.push(entry);
       }
     }

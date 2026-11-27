@@ -52,6 +52,22 @@ def local_definition(root: dict, ref: str) -> Any:
     return part
 
 
+def inline_local_refs(node: Any, root: dict, chain: tuple = ()) -> Any:
+    """Return node with local references inlined; a reference back into its own chain is left unresolved."""
+    if isinstance(node, list):
+        return [inline_local_refs(item, root, chain) for item in node]
+    if not isinstance(node, dict):
+        return node
+    ref = node.get("$ref")
+    if isinstance(ref, str) and ref.startswith("#/"):
+        target = local_definition(root, ref)
+        if ref in chain or not isinstance(target, dict):
+            return node
+        siblings = {k: v for k, v in node.items() if k != "$ref"}
+        return inline_local_refs({**target, **siblings}, root, chain + (ref,))
+    return {k: inline_local_refs(v, root, chain) for k, v in node.items()}
+
+
 def declares_sensitive(schema: Any, root: dict, refs: set) -> bool:
     """Return True if schema, a part of it or a definition that it references has sensitive set to true."""
     if isinstance(schema, list):
@@ -416,6 +432,9 @@ class ResourceRepository(BaseRepository):
         else:
             template_dict = {}
 
+        if not prefix:
+            template_dict = inline_local_refs(template_dict, template_dict)
+
         keys = set()
         properties = template_dict.get("properties", {})
         if isinstance(properties, dict):
@@ -535,9 +554,12 @@ class ResourceRepository(BaseRepository):
             return False
         if not isinstance(state, dict):
             return False
+        if any(key not in state for key in if_schema.get("required", [])):
+            return False
         for key, cond in if_schema.get("properties", {}).items():
             if key not in state:
-                return False
+                # JSON Schema: an absent property satisfies `properties` unless also listed in `required`.
+                continue
             if not isinstance(cond, dict):
                 continue
             state_val = state.get(key)
@@ -553,38 +575,35 @@ class ResourceRepository(BaseRepository):
         return True
 
     def _get_property_schema(self, schema: dict, path: str) -> Optional[dict]:
-        """Resolve a dotted property path from top-level or conditional schema properties."""
+        """Resolve a dotted property path through properties and conditional branches at every nesting level."""
         parts = path.split(".")
+        root = inline_local_refs(schema, schema)
 
-        def walk(properties: dict) -> Optional[dict]:
-            current: Any = properties
-            for index, part in enumerate(parts):
-                if not isinstance(current, dict) or part not in current:
-                    return None
-                current = current[part]
+        def candidates(node: Any, name: str):
+            if not isinstance(node, dict):
+                return
+            properties = node.get("properties")
+            if isinstance(properties, dict) and isinstance(properties.get(name), dict):
+                yield properties[name]
+            for condition in node.get("allOf", []):
+                if not isinstance(condition, dict):
+                    continue
+                for clause in ("then", "else"):
+                    yield from candidates(condition.get(clause), name)
+
+        def walk(node: Any, index: int) -> Optional[dict]:
+            for candidate in candidates(node, parts[index]):
                 if index == len(parts) - 1:
-                    return current if isinstance(current, dict) else None
-                if not isinstance(current, dict):
-                    return None
-                if isinstance(current.get("items"), dict):
-                    current = current["items"].get("properties", current["items"])
-                else:
-                    current = current.get("properties", {})
+                    if candidate:
+                        return candidate
+                    continue
+                items = candidate.get("items")
+                found = walk(items if isinstance(items, dict) else candidate, index + 1)
+                if found:
+                    return found
             return None
 
-        prop = walk(schema.get("properties", {}))
-        if prop:
-            return prop
-        for condition in schema.get("allOf", []):
-            if not isinstance(condition, dict):
-                continue
-            for clause in ("then", "else"):
-                branch = condition.get(clause)
-                if isinstance(branch, dict):
-                    prop = walk(branch.get("properties", {}))
-                    if prop:
-                        return prop
-        return None
+        return walk(root, 0)
 
     @staticmethod
     def _get_nested_value(data: Any, path: str) -> tuple[bool, Any]:
@@ -615,25 +634,38 @@ class ResourceRepository(BaseRepository):
         return walk(data, 0)
 
     @staticmethod
-    def _deep_merge_dicts(base: dict, patch: dict) -> dict:
+    def _deep_merge_dicts(base: dict, patch: dict, merge_arrays: Any = True, schema_path: str = "") -> dict:
+        """Merge patch into base. Arrays are replaced unless merge_arrays (a bool, or a function of the
+        schema path) says that same-length arrays of objects are merged item by item."""
         result = copy.deepcopy(base)
         for key, value in patch.items():
+            path = f"{schema_path}.{key}" if schema_path else key
             if isinstance(value, dict) and isinstance(result.get(key), dict):
-                result[key] = ResourceRepository._deep_merge_dicts(result[key], value)
+                result[key] = ResourceRepository._deep_merge_dicts(result[key], value, merge_arrays, path)
             elif (
-                isinstance(value, list)
+                (merge_arrays(path) if callable(merge_arrays) else merge_arrays)
+                and isinstance(value, list)
                 and isinstance(result.get(key), list)
                 and len(value) == len(result[key])
                 and all(isinstance(item, dict) for item in value)
                 and all(isinstance(item, dict) for item in result[key])
             ):
                 result[key] = [
-                    ResourceRepository._deep_merge_dicts(current_item, patch_item)
+                    ResourceRepository._deep_merge_dicts(current_item, patch_item, merge_arrays, path)
                     for current_item, patch_item in zip(result[key], value)
                 ]
             else:
                 result[key] = copy.deepcopy(value)
         return result
+
+    def _is_updateable_path(self, template: dict, schema_path: str) -> bool:
+        """True if the property, or any ancestor object, is marked updateable: true."""
+        parts = schema_path.split(".")
+        for i in range(len(parts), 0, -1):
+            definition = self._get_property_schema(template, ".".join(parts[:i]))
+            if definition and definition.get("updateable", False) is True:
+                return True
+        return False
 
     def _deep_dict_update(self, target: dict, patch: dict):
         for k, v in patch.items():
@@ -714,6 +746,7 @@ class ResourceRepository(BaseRepository):
             resource.isEnabled = resource_patch.isEnabled
 
         new_template = None
+        post_patch_props = None
         is_template_upgrade = False
         if resource_patch.templateVersion is not None:
             new_template = await self.validate_template_version_patch(
@@ -802,6 +835,7 @@ class ResourceRepository(BaseRepository):
                 resource_action,
                 current_properties=resource.properties,
                 target_template=new_template,
+                candidate_properties=post_patch_props if is_template_upgrade else None,
             )
 
             # if we're here then we're valid - update the props + persist if present
@@ -809,7 +843,15 @@ class ResourceRepository(BaseRepository):
                 if is_template_upgrade:
                     resource.properties = post_patch_props
                 else:
-                    resource.properties.update(resource_patch.properties)
+                    # Build the state exactly as validated: protected arrays merge item by item, others are replaced.
+                    enriched = resource_template_repo.enrich_template(resource_template, is_update=True)
+                    merged = self._deep_merge_dicts(
+                        resource.properties,
+                        resource_patch.properties,
+                        merge_arrays=lambda path: not self._is_updateable_path(enriched, path),
+                    )
+                    self._remove_inactive_branch_properties(enriched, merged)
+                    resource.properties = merged
 
         target_template = new_template if new_template is not None else resource_template
         # Cosmos DB keeps sensitive values as a placeholder, as at the install. The returned resource keeps the
@@ -1001,6 +1043,7 @@ class ResourceRepository(BaseRepository):
         resource_action: str,
         current_properties: Optional[dict] = None,
         target_template: Optional[ResourceTemplate] = None,
+        candidate_properties: Optional[dict] = None,
     ):
         # get the enriched (combined) template for the old/current template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
@@ -1031,18 +1074,8 @@ class ResourceRepository(BaseRepository):
         pipeline_properties = self._get_pipeline_properties(enriched_template, action=action_phase)
 
         def has_updateable_parent(path: str) -> bool:
-            """
-            Returns True if any ancestor object of the dotted property path is marked
-            updateable: true in the template schema (including properties defined under allOf).
-            """
             parts = path.split(".")
-            # Walk up the chain excluding the full leaf path (checked separately)
-            for i in range(len(parts) - 1, 0, -1):
-                ancestor_path = ".".join(parts[:i])
-                ancestor_def = self._get_property_schema(enriched_template, ancestor_path)
-                if ancestor_def and ancestor_def.get("updateable", False) is True:
-                    return True
-            return False
+            return len(parts) > 1 and self._is_updateable_path(enriched_template, ".".join(parts[:-1]))
 
         target_template_properties = self._get_all_property_keys_from_template(enriched_template)
 
@@ -1052,11 +1085,25 @@ class ResourceRepository(BaseRepository):
                 if any(prop_key == k or prop_key.startswith(f"{k}.") for prop_key in target_template_properties):
                     valid_current_properties[k] = copy.deepcopy(v)
 
-        merged_properties = (
-            self._deep_merge_dicts(valid_current_properties, resource_patch.properties or {})
-            if current_properties is not None
-            else (resource_patch.properties or {})
-        )
+        if candidate_properties is not None:
+            # The caller has already built the pruned post-patch state that will be saved.
+            merged_properties = {
+                k: copy.deepcopy(v)
+                for k, v in candidate_properties.items()
+                if any(prop_key == k or prop_key.startswith(f"{k}.") for prop_key in target_template_properties)
+            }
+        elif current_properties is not None:
+            merged_properties = self._deep_merge_dicts(
+                valid_current_properties,
+                resource_patch.properties or {},
+                merge_arrays=True
+                if is_upgrade
+                else (lambda path: not self._is_updateable_path(enriched_template, path)),
+            )
+            if not is_upgrade:
+                self._remove_inactive_branch_properties(enriched_template, merged_properties)
+        else:
+            merged_properties = resource_patch.properties or {}
 
         def is_property_required_in_target(template_schema: dict, path: str, state: dict) -> bool:
             if not template_schema or not isinstance(template_schema, dict):
@@ -1154,11 +1201,16 @@ class ResourceRepository(BaseRepository):
             is_updateable = (prop_def.get("updateable", False) is True if prop_def else False) or has_updateable_parent(
                 schema_path
             )
-            if current_properties is not None and is_upgrade and not is_updateable:
-                array_parts = prop_path.split(".")
-                array_index = next((i for i, part in enumerate(array_parts) if part.isdigit()), None)
-                if array_index is not None:
-                    array_path = ".".join(array_parts[:array_index])
+            if current_properties is not None:
+                # A shorter or longer array replaces items, and their protected fields, so the container decides.
+                parts = prop_path.split(".")
+                for index, part in enumerate(parts):
+                    if not part.isdigit():
+                        continue
+                    array_path = ".".join(parts[:index])
+                    array_schema_path = ".".join(p for p in parts[:index] if not p.isdigit())
+                    if self._is_updateable_path(enriched_template, array_schema_path):
+                        continue
                     patch_array_exists, patch_array = self._get_nested_value(
                         resource_patch.properties or {}, array_path
                     )
@@ -1241,19 +1293,25 @@ class ResourceRepository(BaseRepository):
             ):
                 update_template["properties"][prop_name] = copy.deepcopy(prop)
 
-        def _adjust_required(schema_node: Any):
+        def _adjust_required(schema_node: Any, in_items: bool = False):
+            # Array items are replaced as a whole, so their required fields stay enforced.
             if isinstance(schema_node, dict):
-                if not is_upgrade and resource_action != RESOURCE_ACTION_INSTALL:
-                    schema_node.pop("required", None)
-                elif "required" in schema_node and isinstance(schema_node["required"], list):
-                    schema_node["required"] = [r for r in schema_node["required"] if r not in pipeline_properties]
-                    if not schema_node["required"]:
+                if not in_items:
+                    if not is_upgrade and resource_action != RESOURCE_ACTION_INSTALL:
                         schema_node.pop("required", None)
-                for v in schema_node.values():
-                    _adjust_required(v)
+                    elif "required" in schema_node and isinstance(schema_node["required"], list):
+                        schema_node["required"] = [r for r in schema_node["required"] if r not in pipeline_properties]
+                        if not schema_node["required"]:
+                            schema_node.pop("required", None)
+                for key, v in schema_node.items():
+                    if key == "properties" and isinstance(v, dict):
+                        for property_schema in v.values():
+                            _adjust_required(property_schema, in_items)
+                    else:
+                        _adjust_required(v, in_items or key == "items")
             elif isinstance(schema_node, list):
                 for item in schema_node:
-                    _adjust_required(item)
+                    _adjust_required(item, in_items)
 
         _adjust_required(update_template)
 
