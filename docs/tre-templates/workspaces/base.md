@@ -28,10 +28,37 @@ When `enable_backup` is set (the default) the base workspace deploys a Recovery 
 
 | `delete_backups_on_uninstall` | Behaviour on workspace deletion |
 | ----------------------------- | ------------------------------- |
-| `false` (default) | **Retain the backups.** Protection is stopped but the recovery points are kept. The vault, its backup resources and the workspace resource group are removed from the Terraform state, so the **resource group is retained and continues to hold the Recovery Services Vault and its recovery points** after the workspace is deleted. |
-| `true` | **Delete the backups.** Protection is stopped with data deletion, the backup containers are unregistered and the Recovery Services Vault (with its recovery points) is deleted. Terraform then destroys the rest of the workspace, including its resource group, leaving nothing behind. |
+| `false` (default) | **Retain the backups.** Protection is stopped but the recovery points are kept. The vault, its backup resources and the workspace resource group are removed from the Terraform state, so the **resource group is retained and continues to hold the Recovery Services Vault and its recovery points** after the workspace is deleted. A file share recovery point is a snapshot in the workspace storage account, so the storage account, its share, its container and its network rules are also retained. With customer-managed keys, the encryption key, its identity and the role of that identity on the key store are retained too. |
+| `true` | **Delete the backups.** Protection is stopped with data deletion, the backup containers are unregistered and the Recovery Services Vault (with its recovery points) is deleted. Azure Backup soft delete keeps a lease on the snapshots of the file shares after the vault delete, so the file shares are then deleted with their leased snapshots. This skips the soft delete retention of these snapshots. Terraform then destroys the rest of the workspace, including its resource group, leaving nothing behind. |
 
 Both flags are updateable, so the choice can be changed on an existing workspace before it is deleted.
+
+A delete with `false` sets the default network action of the retained storage account to `Deny` with the Azure services bypass. Azure Backup restores through this bypass.
+So the account does not stay open to all networks when `enable_local_debugging` set the default action to `Allow`.
+
+The names of the vault and the storage account have only the last four characters of the workspace ID. So the delete first reads the `tre_workspace_id` tag of the vault and of the storage account.
+If a tag names another workspace, the delete stops with an error before its first change to the vault or the storage account.
+A resource without this tag also stops the delete, because its owner is not known. Terraform sets the tag only when it creates a resource, so a storage account from an early version of the template can have no tag.
+If the resource belongs to the workspace, add the tag: `az tag update --resource-id <resource ID> --operation Merge --tags tre_workspace_id=<full workspace ID>`. Then delete the workspace again.
+
+A delete with `true` deletes the file shares only after Azure answers that it does not find the vault. If the read of the vault fails for another reason, the delete sends the vault delete again. It makes 20 tries at most.
+If Azure does not confirm the vault delete in these tries, the delete stops with an error, and the file shares and the Terraform state stay. Delete the workspace again.
+
+If the protection of an item is already stopped with its data kept, a delete with `true` also deletes that data. For example, an operator stopped the backups in the portal, or a delete with `false` failed.
+After a failed delete with `false`, the resource group and the storage account are not in the Terraform state, so a delete with `true` keeps them. Delete them by hand.
+
+Before version 2.12.6, the retained path deleted the storage account and its share. The share delete failed with `DeleteShareWhenSnapshotLeased`, so the workspace stayed in `deleting_failed`.
+To delete such a workspace, upgrade it to 2.12.6 or later, then delete it again.
+The templates that build on the base workspace have the same fix in `tre-workspace-unrestricted` 0.15.5 and `tre-workspace-airlock-import-review` 0.18.5.
+The failed delete removed the resource group and the vault from the Terraform state, so the upgrade can end in `updating_failed` with an error that the resource group already exists.
+The API keeps the new template version after a failed upgrade, so the next delete uses the corrected script.
+
+Before version 2.12.6 (`tre-workspace-unrestricted` 0.15.5, `tre-workspace-airlock-import-review` 0.18.5), the delete with `delete_backups_on_uninstall = true` failed with `DeleteShareWhenSnapshotLeased` after the vault delete, so the workspace stayed in `deleting_failed`.
+To delete such a workspace, do these steps:
+
+1. Delete the file share with its leased snapshots: `az rest --method delete --url "/subscriptions/<subscription ID>/resourceGroups/rg-<TRE ID>-ws-<short workspace ID>/providers/Microsoft.Storage/storageAccounts/stgws<short workspace ID>/fileServices/default/shares/vm-shared-storage?api-version=2023-05-01&\$include=leased-snapshots"`.
+   The URL has no host, so the Azure CLI uses the Resource Manager endpoint of its current cloud.
+2. Delete the workspace again.
 
 > **Note:** If [vault immutability](https://learn.microsoft.com/azure/backup/backup-azure-immutable-vault-concept) is enabled on the Recovery Services Vault (for example, enforced by an Azure Policy in your environment), backups cannot be deleted before they expire. In this case `delete_backups_on_uninstall = true` will not be able to remove the backups or vault, and workspace deletion may fail.
 

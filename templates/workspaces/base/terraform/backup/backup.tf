@@ -11,16 +11,16 @@ resource "azurerm_recovery_services_vault" "vault" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
       type         = "UserAssigned"
-      identity_ids = [azurerm_user_assigned_identity.encryption_identity[0].id]
+      identity_ids = [var.encryption_identity_id]
     }
   }
 
   dynamic "encryption" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
-      key_id                            = azurerm_key_vault_key.encryption_key[0].versionless_id
+      key_id                            = var.encryption_key_id
       infrastructure_encryption_enabled = true
-      user_assigned_identity_id         = azurerm_user_assigned_identity.encryption_identity[0].id
+      user_assigned_identity_id         = var.encryption_identity_id
       use_system_assigned_identity      = false
     }
   }

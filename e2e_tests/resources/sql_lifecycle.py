@@ -60,24 +60,38 @@ class SQLResources:
     def own(self, name, callback, *args, **kwargs):
         self.finalisers.append((name, partial(callback, *args, **kwargs)))
 
+    def own_last(self, name, callback, *args, **kwargs):
+        """Own a cleanup that runs after all the other owned cleanups."""
+        self.finalisers.insert(0, (name, partial(callback, *args, **kwargs)))
+
+    def keep(self, name):
+        """Stop the ownership of a resource, so that it stays after the case."""
+        self.finalisers = [entry for entry in self.finalisers if entry[0] != name]
+
     async def enter(self, name, context):
         """Enter a prerequisite context now and exit it in order with the owned resources."""
         await context.__aenter__()
         self.own(name, context.__aexit__, None, None, None)
 
-    async def setup(self, groups=False):
+    async def setup(self, groups=False, workspace_properties=None, workspace_accepted=None):
         # Keep these resources inside the SQL budget rather than session fixtures.
         # Only an Automatic workspace gets Entra ID groups, so a case that needs
         # them creates its own workspace and does not use the configured ones.
-        manual = bool(config.TEST_WORKSPACE_APP_ID) and not groups
-        existing_workspace = "" if groups else config.TEST_WORKSPACE_ID
-        existing_service = "" if groups else config.TEST_WORKSPACE_SERVICE_ID
+        # A case with its own workspace settings also creates its own workspace.
+        isolated = groups or workspace_properties is not None
+        manual = bool(config.TEST_WORKSPACE_APP_ID) and not isolated
+        existing_workspace = "" if isolated else config.TEST_WORKSPACE_ID
+        existing_service = "" if isolated else config.TEST_WORKSPACE_SERVICE_ID
         workspace_path, workspace_id = await create_or_get_test_workspace(
             auth_type="Manual" if manual else "Automatic",
             verify=self.verify,
             pre_created_workspace_id=existing_workspace,
             client_id=config.TEST_WORKSPACE_APP_ID if manual else "",
             client_secret=config.TEST_WORKSPACE_APP_SECRET if manual else "",
+            properties=workspace_properties,
+            # The case can own a clean-up when the API accepts the create of a new workspace. The clean-up
+            # of a failed install deletes the workspace, and that delete can keep resources.
+            accepted=workspace_accepted,
         )
         if not existing_workspace:
             self.own(workspace_path, clean_up_test_workspace, "", workspace_path, self.verify)
@@ -96,6 +110,20 @@ class SQLResources:
             )
         self.own(resource_path, self.delete, resource_path, token)
         return resource_path, resource_id
+
+    async def delete_now(self, name):
+        """Run the cleanup of one owned resource now, so that the case can check its result."""
+        index = next(i for i, (owned, _) in enumerate(self.finalisers) if owned == name)
+        cleanup = asyncio.create_task(self.finalisers[index][1]())
+        # The resource stays owned until its cleanup ends. If the work deadline stops the case here, the cleanup
+        # goes on, and the reserved cleanup waits for it. So no second disable or delete starts.
+        entry = (name, lambda: cleanup)
+        self.finalisers[index] = entry
+        try:
+            await asyncio.shield(cleanup)
+        finally:
+            if cleanup.done():
+                self.finalisers.remove(entry)
 
     async def delete(self, resource_path, token):
         while True:

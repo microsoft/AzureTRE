@@ -139,9 +139,63 @@ class SQLDeadlineTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual([name for name, _ in owned.finalisers], ["/workspaces/ws", "/service"])
                 owned.finalisers.clear()
         create_workspace.assert_awaited_once_with(
-            auth_type="Automatic", verify=True, pre_created_workspace_id="", client_id="", client_secret=""
+            auth_type="Automatic",
+            verify=True,
+            pre_created_workspace_id="",
+            client_id="",
+            client_secret="",
+            properties=None,
+            accepted=None,
         )
         create_service.assert_awaited_once_with("/workspaces/ws", "token", "", True)
+
+    async def test_setup_gives_the_workspace_callback_to_the_workspace_create(self):
+        # A case can own a clean-up when the API accepts the workspace create, before the install can fail.
+        seen = []
+
+        async def create_workspace(**kwargs):
+            kwargs["accepted"]("/workspaces/ws", "ws")
+            raise AssertionError("the workspace install failed")
+
+        with self.budgets(), patch.object(lifecycle, "create_or_get_test_workspace", create_workspace):
+            async with lifecycle.sql_lifecycle(True) as owned:
+                with self.assertRaises(AssertionError):
+                    await owned.setup(workspace_properties={}, workspace_accepted=lambda *args: seen.append(args))
+                self.assertEqual(owned.finalisers, [])
+        self.assertEqual(seen, [("/workspaces/ws", "ws")])
+
+    async def test_a_kept_resource_stays_after_the_case(self):
+        # A seed case owns its workspace until all the seed steps pass, and then keeps it.
+        seed, other = AsyncMock(), AsyncMock()
+        with self.budgets():
+            async with lifecycle.sql_lifecycle(True) as owned:
+                owned.own("/workspaces/seed", seed)
+                owned.own("/other", other)
+                owned.keep("/workspaces/seed")
+        seed.assert_not_awaited()
+        other.assert_awaited_once()
+
+    async def test_an_early_delete_that_the_work_deadline_stops_ends_before_the_last_cleanup(self):
+        # The kept backup clean-up runs only after the API deleted the workspace.
+        events = []
+
+        async def delete_workspace():
+            events.append("delete start")
+            await asyncio.sleep(0.1)
+            events.append("delete done")
+
+        async def remove_kept_backup():
+            events.append("kept backup")
+
+        with self.budgets(total=0.4, reserve=0.35):
+            with self.assertRaises(TimeoutError):
+                async with lifecycle.sql_lifecycle(True) as owned:
+                    owned.own("/workspaces/ws", delete_workspace)
+                    owned.own_last("retained backup", remove_kept_backup)
+                    await owned.delete_now("/workspaces/ws")
+                    await asyncio.sleep(10)
+        # The reserved clean-up waits for the same delete. It does not send a second delete.
+        self.assertEqual(events, ["delete start", "delete done", "kept backup"])
 
     async def test_job_start_deadline_reduces_work_time(self):
         with patch.dict(os.environ, SQL_VALIDATION_DEADLINE=str(time.time() + 125 * 60)):

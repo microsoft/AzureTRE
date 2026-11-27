@@ -10,11 +10,12 @@ set -o nounset
 # secure-by-default keeps soft delete enabled on Recovery Services Vaults, so Terraform
 # cannot tear down a vault that still has (soft-)protected items.
 #   delete_backups_on_uninstall=true  - stop protection with data deletion, unregister
-#       the backup containers and delete the vault, then let Terraform destroy the
-#       workspace (including its resource group).
+#       the backup containers, delete the vault and delete the file shares with their
+#       leased snapshots, then let Terraform destroy the workspace (including its
+#       resource group).
 #   delete_backups_on_uninstall=false - stop protection but keep the recovery points,
-#       then remove the vault, its resource group and the backup resources from the
-#       Terraform state so they are retained.
+#       then remove the vault, its resource group, the backup resources and the storage
+#       that the recovery points need from the Terraform state so they are retained.
 
 MGMT_RESOURCE_GROUP_NAME=$1
 MGMT_STORAGE_ACCOUNT_NAME=$2
@@ -48,15 +49,128 @@ target_subscription_id="${WORKSPACE_SUBSCRIPTION_ID:-${ARM_SUBSCRIPTION_ID:-}}"
 if [ -n "${target_subscription_id}" ]; then
   az account set --subscription "${target_subscription_id}"
 fi
+subscription_id=$(az account show --query "id" --output tsv)
+storage_account_id="/subscriptions/${subscription_id}/resourceGroups/${vault_resource_group}/providers/Microsoft.Storage/storageAccounts/stgws${short_workspace_id}"
 
-# If the vault no longer exists there is nothing to clean up. Only a genuine
-# 'not found' response is treated as "nothing to do" - any other error (for example
+# The names of the vault and the storage account have only the last four characters of the
+# workspace ID. So the resources of another workspace can have these names. Stop without a
+# change if the tre_workspace_id tag of a resource names another workspace. A resource
+# without this tag also stops the script, because its owner is not known. Terraform does not
+# update the tags, so a resource from an earlier version can have no tag. The operator adds it.
+# The first argument names the resource in the messages. The other arguments are the
+# command that shows the resource.
+assert_workspace_owns() {
+  local resource=$1 owner
+  shift
+  if ! owner=$("$@" --query "tags.tre_workspace_id" --output tsv); then
+    echo "Error: failed to read the tags of ${resource}. Aborting so the uninstall can be retried." >&2
+    exit 1
+  fi
+  if [ -z "${owner}" ]; then
+    echo "Error: ${resource} has no tre_workspace_id tag, so its owner is not known. Aborting without a change to it. If it belongs to this workspace, add the tag tre_workspace_id=${WORKSPACE_ID} to it and run the delete again." >&2
+    exit 1
+  fi
+  if [ "${owner,,}" != "${WORKSPACE_ID,,}" ]; then
+    echo "Error: ${resource} has the tag tre_workspace_id=${owner}, so it belongs to another workspace. Aborting without a change to it." >&2
+    exit 1
+  fi
+}
+
+# Remove any Azure Backup lock on the workspace storage account. Only locks scoped
+# directly to the account are removed; the scope match is case-insensitive because
+# Azure lower-cases segments of the lock id.
+remove_backup_locks() {
+  local storage_account_id_lower lock_ids lock_id
+  storage_account_id_lower=$(echo "${storage_account_id}" | tr '[:upper:]' '[:lower:]')
+  if ! lock_ids=$(az lock list --resource "${storage_account_id}" --query "[].id" --output tsv); then
+    echo "Error: failed to list resource locks on the workspace storage account. Aborting so the uninstall can be retried." >&2
+    exit 1
+  fi
+  while IFS= read -r lock_id; do
+    [ -z "${lock_id}" ] && continue
+    case "$(echo "${lock_id}" | tr '[:upper:]' '[:lower:]')" in
+      "${storage_account_id_lower}/"*)
+        echo "Deleting resource lock ${lock_id}..."
+        if ! az lock delete --ids "${lock_id}" --output none 2>/dev/null; then
+          # Only fatal if the lock still exists (ignore a delete/list race).
+          if az lock show --ids "${lock_id}" --output none 2>/dev/null; then
+            echo "Error: could not delete lock ${lock_id}. Aborting so the uninstall can be retried." >&2
+            exit 1
+          fi
+        fi
+        ;;
+    esac
+  done <<< "${lock_ids}"
+}
+
+# Return 0 if the workspace storage account exists and 1 if Azure does not find it.
+# Stop if the tre_workspace_id tag of the account does not name this workspace.
+storage_account_exists() {
+  local account_error
+  if account_error="$(az resource show --ids "${storage_account_id}" --output none 2>&1)"; then
+    assert_workspace_owns "Storage account stgws${short_workspace_id}" az resource show --ids "${storage_account_id}"
+    return 0
+  fi
+  if echo "${account_error}" | grep -qiE "ResourceNotFound|ResourceGroupNotFound|was not found|could not be found"; then
+    return 1
+  fi
+  echo "Error querying the workspace storage account: ${account_error}" >&2
+  exit 1
+}
+
+# Soft delete keeps deleted file share backup data as share snapshots, and Azure Backup keeps
+# its lease on them after the vault is gone. Terraform then cannot delete the share
+# (DeleteShareWhenSnapshotLeased). The user asked to delete the backups, so delete each share
+# of the workspace storage account together with its leased snapshots.
+delete_leased_shares() {
+  local shares_url share_names share
+  # A URL without a host uses the Resource Manager endpoint of the current cloud.
+  shares_url="${storage_account_id}/fileServices/default/shares"
+  if ! share_names=$(az rest --method get --url "${shares_url}?api-version=2023-05-01" --query "value[].name" --output tsv); then
+    echo "Error: failed to list the file shares of the workspace storage account. Aborting so the uninstall can be retried." >&2
+    exit 1
+  fi
+  for share in ${share_names}; do
+    echo "Deleting file share ${share} with its leased snapshots..."
+    if ! az rest --method delete --url "${shares_url}/${share}?api-version=2023-05-01&\$include=leased-snapshots" --output none; then
+      echo "Error: could not delete file share ${share}. Aborting so the uninstall can be retried." >&2
+      exit 1
+    fi
+  done
+}
+
+# The answers of Azure that show that the vault does not exist.
+vault_not_found_pattern="ResourceNotFound|ResourceGroupNotFound|was not found|could not be found|does not exist"
+
+# Return 0 only if Azure answers that it does not find the vault. Return 1 if the vault exists,
+# and also if the read fails for another reason, because such a failure does not show that the
+# vault is gone. The error of the last read stays in vault_show_error.
+vault_is_gone() {
+  if vault_show_error="$(az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}" --output none 2>&1)"; then
+    vault_show_error=""
+    return 1
+  fi
+  echo "${vault_show_error}" | grep -qiE "${vault_not_found_pattern}"
+}
+
+# If the vault no longer exists, there are no backup items to stop. Only a genuine
+# 'not found' response is treated as "no vault" - any other error (for example
 # a permissions or throttling problem) must fail the script so we do not silently skip
 # the cleanup and leave the workspace stuck in a 'Deleting' state.
 if vault_show_error="$(az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}" --output none 2>&1)"; then
   echo "Recovery Services Vault ${vault_name} found in resource group ${vault_resource_group}."
-elif echo "${vault_show_error}" | grep -qiE "ResourceNotFound|ResourceGroupNotFound|was not found|could not be found|does not exist"; then
-  echo "Recovery Services Vault ${vault_name} was not found - nothing to do."
+  assert_workspace_owns "Recovery Services Vault ${vault_name}" az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}"
+  # The steps below delete the locks of the storage account. So read the owner of the account here,
+  # before the first change. The function stops the script for an account of another workspace
+  # and for an account without the tag. A missing account passes this check.
+  storage_account_exists || true
+elif echo "${vault_show_error}" | grep -qiE "${vault_not_found_pattern}"; then
+  echo "Recovery Services Vault ${vault_name} was not found - no backup items to stop."
+  # An earlier delete can have deleted the vault and then failed on a leased share snapshot.
+  if [ "${DELETE_BACKUPS}" == "true" ] && storage_account_exists; then
+    remove_backup_locks
+    delete_leased_shares
+  fi
   exit 0
 else
   echo "Error querying Recovery Services Vault ${vault_name}: ${vault_show_error}" >&2
@@ -76,15 +190,19 @@ backup_management_types=(AzureStorage AzureIaasVM)
 stop_protection() {
   local bmt=$1 items attempt
   if ! items=$(az backup item list --vault-name "${vault_name}" --resource-group "${vault_resource_group}" \
-    --backup-management-type "${bmt}" --query "[].[properties.containerName, name, properties.protectionState]" --output tsv); then
+    --backup-management-type "${bmt}" \
+    --query "[].[properties.containerName, name, properties.protectionState, properties.isScheduledForDeferredDelete]" --output tsv); then
     echo "Error: failed to list ${bmt} backup items in vault ${vault_name}. Aborting so the uninstall can be retried." >&2
     exit 1
   fi
   [ -z "${items}" ] && return 0
-  while IFS=$'\t' read -r container_name item_name protection_state; do
+  while IFS=$'\t' read -r container_name item_name protection_state deferred_delete; do
     [ -z "${item_name}" ] && continue
-    # Already stopped - keep the script idempotent across the second pass and re-runs.
-    [ "${protection_state}" == "ProtectionStopped" ] && continue
+    # A deleted item waits in soft delete. Skip it, so that the second pass and re-runs stay idempotent.
+    [ "${deferred_delete,,}" == "true" ] && continue
+    # A stopped item keeps its data. Skip it only when the data stays, because an earlier delete
+    # with retained backups or an operator can have stopped it.
+    [ "${protection_state}" == "ProtectionStopped" ] && [ "${delete_backup_data}" != "true" ] && continue
     for attempt in $(seq 1 5); do
       echo "Disabling protection for '${item_name}' (delete-backup-data=${delete_backup_data}, attempt ${attempt})..."
       if az backup protection disable --vault-name "${vault_name}" --resource-group "${vault_resource_group}" \
@@ -105,31 +223,7 @@ for bmt in "${backup_management_types[@]}"; do
   stop_protection "${bmt}"
 done
 
-# Remove any Azure Backup lock on the workspace storage account. Only locks scoped
-# directly to the account are removed; the scope match is case-insensitive because
-# Azure lower-cases segments of the lock id.
-subscription_id=$(az account show --query "id" --output tsv)
-storage_account_id="/subscriptions/${subscription_id}/resourceGroups/${vault_resource_group}/providers/Microsoft.Storage/storageAccounts/stgws${short_workspace_id}"
-storage_account_id_lower=$(echo "${storage_account_id}" | tr '[:upper:]' '[:lower:]')
-if ! lock_ids=$(az lock list --resource "${storage_account_id}" --query "[].id" --output tsv); then
-  echo "Error: failed to list resource locks on the workspace storage account. Aborting so the uninstall can be retried." >&2
-  exit 1
-fi
-while IFS= read -r lock_id; do
-  [ -z "${lock_id}" ] && continue
-  case "$(echo "${lock_id}" | tr '[:upper:]' '[:lower:]')" in
-    "${storage_account_id_lower}/"*)
-      echo "Deleting resource lock ${lock_id}..."
-      if ! az lock delete --ids "${lock_id}" --output none 2>/dev/null; then
-        # Only fatal if the lock still exists (ignore a delete/list race).
-        if az lock show --ids "${lock_id}" --output none 2>/dev/null; then
-          echo "Error: could not delete lock ${lock_id}. Aborting so the uninstall can be retried." >&2
-          exit 1
-        fi
-      fi
-      ;;
-  esac
-done <<< "${lock_ids}"
+remove_backup_locks
 
 for bmt in "${backup_management_types[@]}"; do
   stop_protection "${bmt}"
@@ -142,6 +236,21 @@ terraform init -input=false -backend=true -reconfigure \
   -backend-config="storage_account_name=${MGMT_STORAGE_ACCOUNT_NAME}" \
   -backend-config="container_name=${TF_STATE_CONTAINER_NAME}" \
   -backend-config="key=${TRE_ID}-ws-${WORKSPACE_ID}"
+
+# A file share recovery point is a snapshot of the share. Azure Backup leases the snapshot,
+# so a delete of the share fails with DeleteShareWhenSnapshotLeased. A destroy of the
+# network rules opens the account to all networks. With customer-managed keys the account
+# also needs its key, the identity and the role of that identity on the key store.
+retained_storage=(
+  "azurerm_storage_account.stg"
+  "azapi_resource.shared_storage"
+  "azurerm_storage_container.stgcontainer"
+  "azurerm_storage_account_network_rules.stgrules"
+  "terraform_data.wait_for_backup_cleanup[0]"
+  "azurerm_user_assigned_identity.encryption_identity[0]"
+  "azurerm_role_assignment.kv_encryption_key_user[0]"
+  "azurerm_key_vault_key.encryption_key[0]"
+)
 
 backup_resources=(
   "azurerm_backup_protected_file_share.file_share[0]"
@@ -167,6 +276,7 @@ if [ "${DELETE_BACKUPS}" == "true" ]; then
   # unregister can briefly return CloudInternalError), then let Terraform destroy the
   # rest of the workspace including its resource group.
   vault_url="https://management.azure.com/subscriptions/${subscription_id}/resourceGroups/${vault_resource_group}/providers/Microsoft.RecoveryServices/vaults/${vault_name}?api-version=2025-08-01"
+  vault_deleted="false"
   for _ in $(seq 1 20); do
     for bmt in "${backup_management_types[@]}"; do
       for container in $(az backup container list --vault-name "${vault_name}" --resource-group "${vault_resource_group}" \
@@ -177,21 +287,40 @@ if [ "${DELETE_BACKUPS}" == "true" ]; then
       done
     done
     az rest --method delete --url "${vault_url}" --output none 2>/dev/null || true
-    if ! az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}" --output none 2>/dev/null; then
+    # A read that fails for a reason other than 'not found' does not show that the vault is
+    # gone. The loop then continues, so the shares and the Terraform state stay as they are.
+    if vault_is_gone; then
+      vault_deleted="true"
       echo "Recovery Services Vault ${vault_name} deleted."
       break
     fi
     sleep 15
   done
-  if az backup vault show --name "${vault_name}" --resource-group "${vault_resource_group}" --output none 2>/dev/null; then
+  if [ "${vault_deleted}" != "true" ]; then
     echo "Error: Recovery Services Vault ${vault_name} could not be deleted." >&2
+    if [ -n "${vault_show_error}" ]; then
+      echo "The last read of the vault failed, so Azure did not confirm the delete: ${vault_show_error}" >&2
+    fi
     exit 1
+  fi
+  if storage_account_exists; then
+    delete_leased_shares
   fi
   remove_from_state "${backup_resources[@]}"
   popd > /dev/null
   echo "Vault deleted. Terraform will destroy the remaining workspace resources, including the resource group."
 else
-  remove_from_state "${backup_resources[@]}" "azurerm_resource_group.ws"
+  # The network rules keep their values when Terraform stops their management. With local
+  # debugging on, the default action is Allow. So set Deny before the removal from the state.
+  # Azure Backup restores through the Azure services bypass.
+  if storage_account_exists; then
+    echo "Setting the default network action of the retained storage account to Deny..."
+    if ! az storage account update --ids "${storage_account_id}" --default-action Deny --bypass AzureServices --output none; then
+      echo "Error: could not set the default network action of the retained storage account to Deny. Aborting so the uninstall can be retried." >&2
+      exit 1
+    fi
+  fi
+  remove_from_state "${backup_resources[@]}" "azurerm_resource_group.ws" "${retained_storage[@]}"
   popd > /dev/null
-  echo "Backup resources retained. Terraform will delete the other workspace resources and leave the vault and its resource group in place."
+  echo "Backup resources retained. Terraform will delete the other workspace resources and leave the vault, the storage account and their resource group in place."
 fi
