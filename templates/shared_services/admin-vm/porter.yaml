@@ -60,7 +60,7 @@ parameters:
   - name: admin_jumpbox_vm_sku
     env: ADMIN_JUMPBOX_VM_SKU
     type: string
-    default: Standard_B2ls_v2
+    default: Standard_B2s
   - name: enable_cmk_encryption
     type: boolean
     default: false

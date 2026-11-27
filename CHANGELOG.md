@@ -7,14 +7,12 @@
 
 ENHANCEMENTS:
 * Report the VM sizes that the repository uses and their availability in one or more Azure regions, for VMs and Azure ML compute, with `devops/scripts/vm_size_report.py` or the **VM Size Availability** workflow. See [VM size availability](docs/tre-admins/vm-size-availability.md). (`devops` 0.8.0) ([#5289](https://github.com/microsoft/AzureTRE/issues/5289))
+* Add `Standard_B2ls_v2` as a size of the admin VM, and `Standard_B2s_v2` and `Standard_B4s_v2` as sizes of Nexus. Azure does not offer the default sizes `Standard_B2s` and `Standard_B2ms` to all subscriptions in all regions, for example in Switzerland North.
+  The defaults do not change, because the sizes that Azure offers depend on the subscription. If Azure does not offer a default size, set `resource_processor_vmss_sku`, `admin_jumpbox_vm_sku` or the Nexus `vm_size` to a size that the [VM size report](docs/tre-admins/vm-size-availability.md) shows as available.
+  (`tre-shared-service-admin-vm` 0.5.8, `tre-shared-service-sonatype-nexus` 3.11.6) ([#5289](https://github.com/microsoft/AzureTRE/issues/5289))
 
 BUG FIXES:
-* Change the default VM sizes that Azure does not offer to all subscriptions in all regions, for example Switzerland North. The resource processor and the admin VM use `Standard_B2ls_v2` in place of `Standard_B2s`. Nexus uses `Standard_B2s_v2` in place of `Standard_B2ms`, and `Standard_B4s_v2` is a new choice beside `Standard_B4ms`.
-  Each new size has the same vCPU count and memory as the old size. If a deployment does not set `resource_processor_vmss_sku`, the next core deployment resizes the resource processor.
-  If that resize fails, set `resource_processor_vmss_sku` to the size that the deployment used before, for example `Standard_B2s`, or to a size that the [VM size report](docs/tre-admins/vm-size-availability.md) shows as available in the region. Then deploy the core again.
-  An upgrade keeps the size of an existing admin VM. If a Nexus service has no stored `vm_size`, for example a Nexus from before bundle 3.2.3, the upgrade resizes its VM to `Standard_B2s_v2` and restarts it.
-  The AML compute instance bundle default is now `Standard_D2_v3`, the same as its schema, because `Standard_DS2_v3` does not exist.
-  (`core` 0.20.0, `tre-shared-service-admin-vm` 0.5.8, `tre-shared-service-sonatype-nexus` 3.11.6, `tre-user-resource-aml-compute-instance` 0.5.16) ([#5289](https://github.com/microsoft/AzureTRE/issues/5289))
+* Change the Porter default of the AML compute instance bundle from `Standard_DS2_v3` to `Standard_D2_v3`, the same as its schema. `Standard_DS2_v3` does not exist. (`tre-user-resource-aml-compute-instance` 0.5.16) ([#5289](https://github.com/microsoft/AzureTRE/issues/5289))
 * Make apt on the Guacamole Linux VM use the Ubuntu archive key for the Ubuntu sources from Nexus, and make Nexus get the Ubuntu packages over HTTPS, the same as its other proxies. An upgrade does not change the apt sources of an existing VM. (`tre-service-guacamole-linuxvm` 1.4.10, `tre-shared-service-sonatype-nexus` 3.11.6) ([#5291](https://github.com/microsoft/AzureTRE/issues/5291))
 * Create the network rules of the Gitea storage account together with the account. A separate resource set them after the create and changed them again before the delete. An upgrade removes the separate resource from the Terraform state and keeps the rules.
   An uninstall uses the installed bundle version, so complete an upgrade of the service first to keep the rules during the uninstall. (`tre-workspace-service-gitea` 2.0.1) ([#5292](https://github.com/microsoft/AzureTRE/issues/5292))

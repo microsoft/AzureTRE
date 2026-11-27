@@ -66,6 +66,18 @@ A size can have a different status for each service. For example, the VM SKU lis
 
 The report does not check quota. A size can be available and still have no free quota. Azure ML has a separate quota.
 
+## Use another size
+
+The sizes that Azure offers depend on the subscription. So a default size can be blocked in one subscription and available in another. If the report shows a default size as blocked or not offered, set another size before the deployment:
+
+| Resource | Where to set the size |
+| --- | --- |
+| Resource processor | `resource_processor_vmss_sku` in `config.yaml`, or the variable `RESOURCE_PROCESSOR_VMSS_SKU` in GitHub |
+| Admin VM shared service | The property `admin_jumpbox_vm_sku` at install, from the list of the template |
+| Nexus shared service | The property `vm_size` at install, from the list of the template |
+
+Other bundles set a fixed size or a fixed list of sizes. To use another size there, change the bundle and register a new version.
+
 ## Refresh the catalogue
 
 The file `devops/scripts/vm_size_catalogue.txt` lists all VM sizes that Azure offers in any region. Azure removes retired sizes from its API. For this reason, the script finds names that look like VM sizes, and uses the catalogue to identify names that do not exist.
