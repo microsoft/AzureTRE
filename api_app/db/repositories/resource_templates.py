@@ -216,11 +216,6 @@ class ResourceTemplateRepository(BaseRepository):
 
     @staticmethod
     def _validate_resource_type_matches(template_input: ResourceTemplateInCreate, resource_type: ResourceType):
-        """
-        Rejects a template whose declared resourceType does not match the endpoint it was sent to,
-        e.g. a workspace service template posted to the workspace templates endpoint.
-        Templates that do not declare a resourceType are not checked.
-        """
         declared = template_input.resourceType
         if declared is None:
             return

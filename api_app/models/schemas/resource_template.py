@@ -14,8 +14,7 @@ class ResourceTemplateInCreate(BaseModel):
     resourceType: Optional[str] = Field(
         default=None,
         title="Type of resource this template is for",
-        description="Optional. If provided, it must match the endpoint the template is registered with, "
-        "for example 'workspace' or 'workspace-service' ('workspace_service' is also accepted).",
+        description="If set, must match the endpoint, e.g. 'workspace' or 'workspace-service'.",
     )
 
 
