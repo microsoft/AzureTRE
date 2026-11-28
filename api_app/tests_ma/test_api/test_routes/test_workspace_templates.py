@@ -324,6 +324,26 @@ class TestWorkspaceTemplate:
 
         create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.Workspace, "")
 
+    # POST /workspace-templates
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
+    async def test_creating_a_workspace_template_with_workspace_service_resource_type_returns_422(
+        self,
+        get_template_by_name_and_version_mock,
+        create_template_mock,
+        app,
+        client,
+        input_workspace_template,
+    ):
+        payload = input_workspace_template.model_dump()
+        payload["resourceType"] = "workspace_service"  # as sent by devops/scripts/register_bundle_with_api.sh
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+        assert "resourceType 'workspace_service'" in response.text
+        create_template_mock.assert_not_called()
+
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")

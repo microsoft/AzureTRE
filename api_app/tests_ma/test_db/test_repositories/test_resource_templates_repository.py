@@ -388,3 +388,69 @@ async def test_create_template_with_null_pipeline_creates_template_without_pipel
     input_user_resource_template.json_schema["pipeline"] = None
     created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
     assert created.pipeline is None
+
+
+@pytest.mark.parametrize(
+    "resource_type, declared_resource_type",
+    [
+        (ResourceType.Workspace, "workspace-service"),
+        (ResourceType.Workspace, "workspace_service"),
+        (ResourceType.WorkspaceService, "workspace"),
+        (ResourceType.SharedService, "workspace"),
+        (ResourceType.UserResource, "shared_service"),
+        (ResourceType.Workspace, "not-a-resource-type"),
+    ],
+)
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.create_template")
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.get_template_by_name_and_version")
+async def test_create_and_validate_template_rejects_mismatched_resource_type(
+    get_template_by_name_and_version_mock,
+    create_template_mock,
+    resource_template_repo,
+    input_workspace_template,
+    resource_type,
+    declared_resource_type,
+):
+    input_workspace_template.resourceType = declared_resource_type
+
+    with pytest.raises(InvalidInput) as exc_info:
+        await resource_template_repo.create_and_validate_template(input_workspace_template, resource_type)
+
+    assert declared_resource_type in str(exc_info.value)
+    get_template_by_name_and_version_mock.assert_not_called()
+    create_template_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "resource_type, declared_resource_type",
+    [
+        (ResourceType.Workspace, None),
+        (ResourceType.Workspace, "workspace"),
+        (ResourceType.WorkspaceService, "workspace-service"),
+        (ResourceType.WorkspaceService, "workspace_service"),
+        (ResourceType.WorkspaceService, "Workspace_Service"),
+        (ResourceType.UserResource, "user_resource"),
+        (ResourceType.SharedService, "shared_service"),
+    ],
+)
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.enrich_template")
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.create_template")
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.get_current_template")
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.get_template_by_name_and_version")
+async def test_create_and_validate_template_accepts_matching_or_missing_resource_type(
+    get_template_by_name_and_version_mock,
+    get_current_template_mock,
+    create_template_mock,
+    enrich_template_mock,
+    resource_template_repo,
+    input_workspace_template,
+    resource_type,
+    declared_resource_type,
+):
+    get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
+    get_current_template_mock.side_effect = EntityDoesNotExist
+    input_workspace_template.resourceType = declared_resource_type
+
+    await resource_template_repo.create_and_validate_template(input_workspace_template, resource_type)
+
+    create_template_mock.assert_called_once_with(input_workspace_template, resource_type, "")

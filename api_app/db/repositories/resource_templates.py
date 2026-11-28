@@ -191,6 +191,7 @@ class ResourceTemplateRepository(BaseRepository):
         Updates the current version for the template
         Saves to the database and returns the enriched template
         """
+        self._validate_resource_type_matches(template_input, resource_type)
         try:
             template = await self.get_template_by_name_and_version(
                 template_input.name, template_input.version, resource_type, workspace_service_template_name
@@ -212,6 +213,18 @@ class ResourceTemplateRepository(BaseRepository):
                 template_input, resource_type, workspace_service_template_name
             )
             return self.enrich_template(created_template)
+
+    @staticmethod
+    def _validate_resource_type_matches(template_input: ResourceTemplateInCreate, resource_type: ResourceType):
+        declared = template_input.resourceType
+        if declared is None:
+            return
+
+        if declared.strip().lower().replace("_", "-") != resource_type.value:
+            raise InvalidInput(
+                f"Invalid template - resourceType '{declared}' does not match the endpoint, "
+                f"which registers '{resource_type.value}' templates."
+            )
 
     def _validate_pipeline_has_unique_step_ids(self, pipeline):
         if pipeline is None:

@@ -5,6 +5,8 @@
 ENHANCEMENTS:
 
 BUG FIXES:
+* Reject a template registration with HTTP 422 when its `resourceType` does not match the endpoint, for example a workspace service template posted to `/workspace-templates`. Before this fix, the API ignored `resourceType` and registered the template as the endpoint's type.
+  `resourceType` stays optional, and both `workspace_service` and `workspace-service` spellings are accepted. (`api` 0.29.1) ([#1123](https://github.com/microsoft/AzureTRE/issues/1123))
 
 ## (0.30.0)
 **BREAKING CHANGES**

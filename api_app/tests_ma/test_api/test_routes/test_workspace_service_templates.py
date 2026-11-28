@@ -197,6 +197,26 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         )
 
     # POST /workspace-service-templates/
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_template")
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_template_by_name_and_version")
+    async def test_creating_a_workspace_service_template_with_workspace_resource_type_returns_422(
+        self,
+        get_template_by_name_and_version_mock,
+        create_template_mock,
+        app,
+        client,
+        input_workspace_service_template,
+    ):
+        payload = input_workspace_service_template.model_dump()
+        payload["resourceType"] = ResourceType.Workspace.value
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+        assert "resourceType 'workspace'" in response.text
+        create_template_mock.assert_not_called()
+
+    # POST /workspace-service-templates/
     @patch(
         "api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template",
         side_effect=EntityVersionExist,
